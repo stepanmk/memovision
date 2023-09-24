@@ -1,0 +1,9 @@
+:root {
+    --popper-theme-background-color: black;
+    --popper-theme-background-color-hover: black;
+    --popper-theme-text-color: #ffffff;
+    --popper-theme-border-width: 0px;
+    --popper-theme-border-style: solid;
+    --popper-theme-border-radius: 6px;
+    --popper-theme-padding: 6px;
+  }

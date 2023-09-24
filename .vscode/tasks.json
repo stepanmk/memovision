@@ -1,0 +1,38 @@
+
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Flask Dev Server",
+            "type": "shell",
+            "command": "cd backend; & c:/python-venv/mos-backend/Scripts/python.exe c:/code/memory-of-sound/memory-of-sound-web/backend/run.py",
+            "windows": {
+                "command": "cd backend; & c:/python-venv/mos-backend/Scripts/python.exe c:/code/memory-of-sound/memory-of-sound-web/backend/run.py"
+            },
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+            },
+            "runOptions": {
+                "runOn": "folderOpen",
+            }
+        },
+        {
+            "label": "Vite Dev Server",
+            "type": "shell",
+            "command": "cd frontend; pnpm run dev",
+            "windows": {
+                "command": "cd frontend; pnpm run dev"
+            },
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "runOptions": {
+                "runOn": "folderOpen",
+            }
+        }
+    ]
+}

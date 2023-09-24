@@ -1,0 +1,7 @@
+# Ignore all npy files
+#*.npy
+
+# Ignore folders
+__pycache__
+.idea
+.venv

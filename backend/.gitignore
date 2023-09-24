@@ -1,0 +1,8 @@
+# editor directories and files
+.idea/
+
+# python cache files
+*.pyc
+
+# user uploads folder
+user_uploads/

@@ -1,0 +1,41 @@
+form:
+  email: Email
+  username: Username
+  pswd: Password
+  pswdagain: Repeat password
+  register: Sign Up
+  login: Sign In
+
+login: 
+  notregistered: Not registered?
+  goregister: Create an account.
+
+register:
+  emailmissing: Email address must be filled in.
+  emailbadformat: Email adress is invalid.
+
+  usernamemissing: Username must be filled in.
+  usernametooshort: Username is too short.
+
+  pswdnomatch: Passwords do not match.
+  pswdtooshort: Password is too short.
+  pswdmissing: Password must be filled in.
+
+  alreadyregistered: Already signed up?
+  gologin: Sign In.
+
+  registersuccess: Sign up successful. You may now sign in.
+
+button:
+  signup: Sign up
+  signin: Sign in
+  signout: Sign out
+
+alert:
+  wrongpassword: You have entered your password incorrectly!
+  wrongusername: Username does not exist!
+
+  emailexists: Email address is already taken.
+  usernameexists: Username is already taken.
+
+not-found: Not Found

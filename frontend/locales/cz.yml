@@ -1,0 +1,41 @@
+form:
+  email: Email
+  username: Uživatelské jméno
+  pswd: Heslo
+  pswdagain: Heslo znovu
+  register: Registrace nového uživatele
+  login: Přihlášení uživatele
+
+login: 
+  notregistered: Nejste zaregistrovaní?
+  goregister: Vytvořit nový účet.
+
+register:
+  emailmissing: Emailová adresa musí být vyplněna.
+  emailbadformat: Špatný formát emailové adresy.
+
+  usernamemissing: Uživatelské jméno musí být vyplněno.
+  usernametooshort: Uživatelské jméno je příliš krátké.
+
+  pswdnomatch: Zadaná hesla se neshodují.
+  pswdtooshort: Heslo je příliš krátké.
+  pswdmissing: Heslo musí být vyplněno.
+
+  alreadyregistered: Jste již zaregistrovaní?
+  gologin: Přihlásit se.
+
+  registersuccess: Registrace byla úspěšná, nyní se můžete přihlásit.
+
+button:
+  signup: Registrovat
+  signin: Přihlásit se
+  signout: Odhlásit se
+
+alert:
+  wrongpassword: Zadali jste nesprávné heslo.
+  wrongusername: Uživatelské jméno neexistuje.
+
+  emailexists: Emailová adresa je již použitá.
+  usernameexists: Uživatelské jméno již existuje.
+
+not-found: Nenalezeno
