@@ -6,7 +6,7 @@ MemoVision software aims to provide an interface for comparative performance mus
 
 ## Current state
 
-Keep in mind that this is a work in progress. First official version should be released in January 2024.
+Keep in mind that this is a work in progress. The first official version should be released in January 2024. More information will be added soon.
 
 Modules: 
 - Track manager
