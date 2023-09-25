@@ -12,9 +12,9 @@ Modules:
 - Interpretation player
 - Visualization
 
-[x] User interface via a web browser
+- [x] User interface via a web browser
 
-[x] Allows uploading of music recordings (different versions of the same piece), ground-truth annotations (measure/downbeat positions), and binary labels
+- [x] Allows uploading of music recordings (different versions of the same piece), ground-truth annotations (measure/downbeat positions), and binary labels
 
 [x] Parameter extraction -- dynamics (RMS and loudness based on EBU R 128) and timing (measure durations, tempo of measures)
 
