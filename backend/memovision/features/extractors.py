@@ -11,6 +11,7 @@ def compute_rms(y, frame_length=1024, hop_length=256):
 def compute_loudness(y, sr):
     meter = pyln.Meter(sr)
     lufs, loudness = meter.integrated_loudness(y)
+    # print(lufs, -20*np.log10(np.abs(np.max(y)) + 0.00001))
     loudness = np.nan_to_num(loudness, neginf=-100)
     return loudness
 
