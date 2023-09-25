@@ -5,9 +5,9 @@
         {
             "label": "Flask Dev Server",
             "type": "shell",
-            "command": "cd backend; & c:/python-venv/mos-backend/Scripts/python.exe c:/code/memory-of-sound/memory-of-sound-web/backend/run.py",
+            "command": "cd backend; & c:/python-venv/memovision/Scripts/python.exe c:/code/memory-of-sound/memory-of-sound-web/backend/run.py",
             "windows": {
-                "command": "cd backend; & c:/python-venv/mos-backend/Scripts/python.exe c:/code/memory-of-sound/memory-of-sound-web/backend/run.py"
+                "command": "cd backend; & c:/python-venv/memovision/Scripts/python.exe c:/code/memory-of-sound/memory-of-sound-web/backend/run.py"
             },
             "group": "none",
             "presentation": {
