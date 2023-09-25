@@ -6,12 +6,15 @@ MemoVision software aims to provide an interface for comparative performance mus
 
 ## Current state
 
+Keep in mind that this is a work in progress. First official version should be released in January 2024.
+
 Modules: 
 - Track manager
 - Section selector
 - Interpretation player
 - Visualization
 
+Progress:
 - [x] User interface via a web browser
 - [x] Allows uploading of music recordings (different versions of the same piece), ground-truth annotations (measure/downbeat positions), and binary labels
 - [x] Parameter extraction -- dynamics (RMS and loudness based on EBU R 128) and timing (measure durations, tempo of measures)
