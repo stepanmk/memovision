@@ -17,12 +17,12 @@ Modules:
 Progress:
 - [x] User interface via a web browser
 - [x] Allows uploading of music recordings (different versions of the same piece), ground-truth annotations (measure/downbeat positions), and binary labels
-- [x] Parameter extraction -- dynamics (RMS and loudness based on EBU R 128) and timing (measure durations, tempo of measures)
-- [x] Processing -- tuning deviation estimation, chroma features, duplicate finder, structural differences detection, audio-to-audio synchronization (combined approach: MrMsDTW and activation function from TCN beat tracker)
-- [x] Feature selection -- Max-Relevance method on the duration of measures to rank each measure based on its relevance to given binary labels
+- [x] Parameter extraction: dynamics (RMS and loudness based on EBU R 128) and timing (measure durations, tempo of measures)
+- [x] Processing: tuning deviation estimation, chroma features, duplicate finder, structural differences detection, audio-to-audio synchronization (combined approach: MrMsDTW and activation function from TCN beat tracker)
+- [x] Feature selection: Max-Relevance method on the duration of measures to rank each measure based on its relevance to given binary labels
 - [x] Playback of synchronized tracks, easy piece-wise orientation, colorbar of selected relevance
-- [ ] Visualization -- Plotting of performance parameters of any sections of interest
-- [ ] Piano roll -- automatic transcription to MIDI piano roll, onset positions and distribution (available only for piano recordings)
+- [ ] Visualization: Plotting of performance parameters of any sections of interest
+- [ ] Piano roll: automatic transcription to MIDI piano roll, onset positions and distribution (available only for piano recordings)
   
 ### Acknowledgment
 
