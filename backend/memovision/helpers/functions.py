@@ -27,15 +27,11 @@ threshold_rec = 10 ** 6
 def convert_audio(audio_path, sr=22050, mono=True, db_level=-23):
     dirname, filename = os.path.split(audio_path)
     filename_out = dirname + '/' + os.path.splitext(filename)[0] + f'_{sr}.ogg'
-    try:
-        if mono:
-            channels = '1'
-        else:
-            channels = '2'
+    try:	
         cmd = 'ffmpeg-normalize "{}" -ar {} -t {} -o "{}" -f -q -c:a libvorbis'.format(audio_path,                                                                                       
-                                                                        sr,
-                                                                        db_level,
-                                                                        filename_out)
+                                                                                    sr,
+                                                                                    db_level,
+                                                                                    filename_out)
         subprocess.call(cmd, shell=True)
     except IOError:
         sys.exit(1)        

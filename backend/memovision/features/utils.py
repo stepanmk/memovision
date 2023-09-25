@@ -35,14 +35,17 @@ def get_segment(len_feature, start_measure, end_measure):
     return start_pos, end_pos
 
 
-def get_resampled_feature(len_y, feature, measures, fps=20):
-    measures_start = measures[:-1]
-    measures_end = measures[1:]
+def get_resampled_feature(len_y, feature, measures, fps=10):
     output = []
-    for start_point, end_point in zip(measures_start, measures_end):
-        start_percentage, end_percentage = get_segment(len_y, start_point, end_point)
-        s = feature[int(len(feature) * start_percentage):int(len(feature) * end_percentage)]
-        segment = signal.resample(s, fps)
+    previous_value = 0
+    for start_point, end_point in zip(measures[:-1], measures[1:]):
+        try:
+            start_percentage, end_percentage = get_segment(len_y, start_point, end_point)
+            s = feature[int(len(feature) * start_percentage):int(len(feature) * end_percentage)]
+            segment = signal.resample(s, fps)
+        except:
+            segment = previous_value
+        previous_value = segment
         output.extend(segment)
     return output
 
