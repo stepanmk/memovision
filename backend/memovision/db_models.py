@@ -58,9 +58,7 @@ class Track(db.Model):
     num_bad_regions = db.Column(db.Integer, unique=False)
     gt_measures = db.Column(db.Boolean, unique=False, default=False)
     tf_measures = db.Column(db.Boolean, unique=False, default=False)
-    # one-to-one relationship with features (uselist=False)
-    features = db.relationship('TrackFeatures', backref='track', uselist=False, passive_deletes=True)
-    # one-to-many relationship with regions
+    # one-to-many relationship with regions and labels
     regions = db.relationship('TrackRegion', backref='track', passive_deletes=True)
     diff_regions = db.relationship('DiffRegion', backref='track', passive_deletes=True)
     labels = db.relationship('TrackLabel', backref='track', passive_deletes=True, order_by='TrackLabel.label_name')

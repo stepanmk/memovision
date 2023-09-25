@@ -1,5 +1,4 @@
-from memovision import db, bcrypt, jwt
-from memovision.db_models import User, Session, Track
+from memovision.db_models import Session, Track
 from memovision.features.extractors import compute_duration, compute_tempo
 from memovision.features.utils import load_measures, get_feature_data
 from memovision.features.relevance import compute_relevance

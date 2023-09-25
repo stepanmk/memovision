@@ -3,9 +3,6 @@ from memovision.db_models import Session, Track, DiffRegion
 from memovision.helpers.functions import compute_chroma_from_audio, compute_dtw_path, transfer_step_annotations, PreProcessor
 from memovision.duplicate_finder.functions import run_duplicate_finder, run_structure_checker, save_chromaImage
 
-import json
-import scipy
-import numpy as np
 from flask import request, jsonify, Blueprint
 from flask_jwt_extended import jwt_required, current_user
 from madmom.audio import Signal
@@ -15,6 +12,11 @@ from madmom.features.beats import DBNBeatTrackingProcessor
 from tensorflow import keras
 from librosa import load
 
+import numpy as np
+import scipy
+import os 
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 beat_tracking_model = keras.models.load_model('./models/simple_tcn_dp_skip_dilations_22_fps50.h5')
 sync_routes = Blueprint('sync_routes', __name__)
 
