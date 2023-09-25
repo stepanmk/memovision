@@ -1,5 +1,5 @@
 from memovision import db
-from memovision.db_models import Session, Track, TrackFeatures
+from memovision.db_models import Session, Track
 
 import os
 import subprocess
@@ -68,12 +68,8 @@ def upload_audio_file():
                     path_22=path_22,
                     disk_space = disk_space,
                     tuning_offset = tuning_offset_hz,
-                    # relationship of track to a user must be explicitly defined
                     session_id=session.id)
-        # relationship of track to features must be explicitly defined
-        track_features = TrackFeatures(track=track)
         db.session.add(track)
-        db.session.add(track_features)
         db.session.commit()
         return jsonify({'message': 'file succesfully uploaded', 'obj': track.get_data()})
     else:

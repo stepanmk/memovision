@@ -61,8 +61,6 @@ class Track(db.Model):
     gt_measures = db.Column(db.Boolean, unique=False, default=False)
     tf_measures = db.Column(db.Boolean, unique=False, default=False)
     # one-to-one relationship with features (uselist=False)
-    features = db.relationship('TrackFeatures', backref='track', uselist=False, passive_deletes=True)
-    # one-to-many relationship with regions
     regions = db.relationship('TrackRegion', backref='track', passive_deletes=True)
     diff_regions = db.relationship('DiffRegion', backref='track', passive_deletes=True)
     labels = db.relationship('TrackLabel', backref='track', passive_deletes=True, order_by='TrackLabel.label_name')
@@ -112,26 +110,3 @@ class DiffRegion(db.Model):
     end_time_ref = db.Column(db.Float(), unique=False, nullable=True)
     start_time = db.Column(db.Float(), unique=False, nullable=True)
     end_time = db.Column(db.Float(), unique=False, nullable=True)
-
-
-class TrackFeatures(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
-    # rms
-    rms = db.Column(db.Boolean, unique=False, default=False)
-    measure_rms = db.Column(db.Boolean, unique=False, default=False)
-    rms_path = db.Column(db.String(512), unique=False, nullable=True)
-    measure_rms_path = db.Column(db.String(512), unique=False, nullable=True)
-    # loudness
-    loudness = db.Column(db.Boolean, unique=False, default=False)
-    measure_loudness = db.Column(db.Boolean, unique=False, default=False)
-    loudness_path = db.Column(db.String(512), unique=False, nullable=True)
-    measure_loudness_path = db.Column(db.String(512), unique=False, nullable=True)
-    #
-    mean_loudness = db.Column(db.Float(), unique=False, nullable=True)
-    # measure durations
-    measure_durations = db.Column(db.Boolean, unique=False, default=False)
-    measure_durations_path = db.Column(db.String(512), unique=False, nullable=True)
-    # measure tempo
-    measure_tempo = db.Column(db.Boolean, unique=False, default=False)
-    measure_tempo_path = db.Column(db.String(512), unique=False, nullable=True)
