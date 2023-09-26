@@ -28,7 +28,6 @@ def delete_from_db():
     session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
     filename = request.json['data']
     track = Track.query.filter_by(filename=filename, session_id=session.id).first()
-    db.session.delete(track.features)
     db.session.delete(track)
     db.session.commit()
     filepath = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{filename}'
@@ -43,7 +42,6 @@ def delete_all_from_db():
     session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
     tracks = session.tracks
     for track in tracks:
-        db.session.delete(track.features)
         db.session.delete(track)
     db.session.commit()
     shutil.rmtree(f'./user_uploads/{current_user.username}/{current_user.selected_session}/')

@@ -62,13 +62,8 @@ def upload_audio_file():
         # remove original file
         os.remove(filepath)
         # add track to the database
-        track = Track(filename=filename,
-                    length_sec=length_sec,
-                    path_44=path_44,
-                    path_22=path_22,
-                    disk_space = disk_space,
-                    tuning_offset = tuning_offset_hz,
-                    session_id=session.id)
+        track = Track(filename=filename, length_sec=length_sec, path_44=path_44, path_22=path_22,
+                      disk_space = disk_space, tuning_offset = tuning_offset_hz, session_id=session.id)
         db.session.add(track)
         db.session.commit()
         return jsonify({'message': 'file succesfully uploaded', 'obj': track.get_data()})
