@@ -1,10 +1,13 @@
 from sklearn.preprocessing import StandardScaler
-from memovision.classification.mrmr_funcs import f_classif
+from memovision.features.mrmr_funcs import f_classif
 from memovision._modules.track_manager.label_routes import get_label_data
 from flask import jsonify
 import numpy as np
 import pandas as pd
 import functools
+import pickle
+import os
+
 
 
 def get_per_measure_feature(feature, fpm, method=None):
@@ -39,6 +42,16 @@ def create_relevance_object(relevance, label_name, label_type):
     return final_relevance
 
 
+def compute_one_vs_rest(tracks, relevance_func, X):
+    one_vs_rest = []
+    for i, track in enumerate(tracks):
+        y = np.zeros(X.shape[0], dtype=np.int64)
+        y[i] = 1
+        relevance = relevance_func(**{'X': pd.DataFrame(X), 'y': pd.Series(y)})
+        one_vs_rest.append(create_relevance_object(relevance, track.filename, 'oneVsRest'))
+    return one_vs_rest
+
+
 def compute_relevance(username, session, feature_name, fpm=None, resampled=False, downsample_method=None, scale=True):
     res_str = ''
     if (resampled): res_str = '_resampled'
@@ -55,13 +68,22 @@ def compute_relevance(username, session, feature_name, fpm=None, resampled=False
         scaler = StandardScaler(with_mean=True, with_std=True)
         X = scaler.fit_transform(X)
     relevance_func = functools.partial(f_classif, n_jobs=1)
-    # compute relevance for each track (1 vs rest)
+    # compute relevance for each track (one vs rest)
     one_vs_rest = []
-    for i, track in enumerate(session.tracks):
-        y = np.zeros(X.shape[0], dtype=np.int64)
-        y[i] = 1
-        relevance = relevance_func(**{'X': pd.DataFrame(X), 'y': pd.Series(y)})
-        one_vs_rest.append(create_relevance_object(relevance, track.filename, 'oneVsRest'))
+    one_vs_rest_path = f'./user_uploads/{username}/{session.name}/relevance/{feature_name}_one_vs_rest.pkl'
+    if (os.path.exists(one_vs_rest_path)):
+        with open(one_vs_rest_path, 'rb') as f:
+            one_vs_rest_file = pickle.load(f)
+        if filenames == one_vs_rest_file['filenames']:
+            one_vs_rest = one_vs_rest_file['data']
+        else:
+            one_vs_rest = compute_one_vs_rest(session.tracks, relevance_func, X)
+            with open(one_vs_rest_path, 'wb') as f:
+                pickle.dump({'data': one_vs_rest, 'filenames': filenames}, f)
+    else:
+        one_vs_rest = compute_one_vs_rest(session.tracks, relevance_func, X)
+        with open(one_vs_rest_path, 'wb') as f:
+            pickle.dump({'data': one_vs_rest, 'filenames': filenames}, f)
     # compute relevance according to the custom labels
     label_data = get_label_data(session)
     custom = []

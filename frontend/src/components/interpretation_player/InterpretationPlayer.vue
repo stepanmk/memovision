@@ -443,6 +443,7 @@ function hideAllRegions()
         regionLengths.value.fill(0);
         const view = peaksInstance.views.getView('zoomview');
         view.enableAutoScroll(true);
+        view.setZoom({seconds: 'auto'});
     })
     regionSelected = false;
 }
@@ -871,39 +872,66 @@ function selectRelevanceLabel(idx)
 
             </div>
 
-            <div id="settings-bar" class="w-full h-[3rem]  border-b relative flex px-5 items-center gap-1">
-                <button class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
-                @click="labelMenu = true; relevanceMenu = false">
-                    Select label
-                </button>
-                
-                <div v-if="labelMenu" class="absolute bg-white z-50 top-[2.5rem] rounded-md text-sm flex flex-col gap-1 border p-1"
-                @mouseleave="relevanceMenu = false; labelMenu = false;">
-                    <p v-for="(obj, i) in measureData.labels" 
-                    class="h-7 flex shrink-0 items-center hover:cursor-pointer hover:bg-neutral-200 px-2 rounded-md"
-                    @click="selectRelevanceLabel(i)">
-                        {{ obj }}
-                    </p>
-                </div>
+            <div id="settings-bar" class="w-full h-[3rem] border-b flex flex-row px-5 items-center justify-between">
+                <div class="flex flex-row h-full items-center gap-1 relative">
 
-                <button class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
-                @click="relevanceMenu = true; labelMenu = false;">
-                    Select feature
-                </button>
-                
-                <div v-if="relevanceMenu" class="absolute bg-white z-50 top-[2.5rem] left-[7.3rem] rounded-md text-sm flex flex-col gap-1 border p-1"
-                @mouseleave="relevanceMenu = false; labelMenu = false;">
-                    <p v-for="(obj, i) in measureData.relevanceFeatures" 
+                    <button class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
+                    flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
+                    @click="relevanceMenu = true; labelMenu = false;">
+                        Select feature
+                    </button>
+                    
+                    <div v-if="relevanceMenu" class="absolute bg-white z-50 top-[2.5rem] rounded-md text-sm flex flex-col gap-1 border p-1"
+                    @mouseleave="relevanceMenu = false; labelMenu = false;">
+                        <p v-for="(obj, i) in measureData.relevanceFeatures" 
+                            class="h-7 flex shrink-0 items-center hover:cursor-pointer hover:bg-neutral-200 px-2 rounded-md"
+                            @click="selectRelevanceFeature(obj.id, obj.name)">
+                            {{ obj.name }}
+                        </p>
+                    </div>
+
+                    <button class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
+                    flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
+                    @click="labelMenu = true; relevanceMenu = false">
+                        Select label
+                    </button>
+                    
+                    <div v-if="labelMenu" class="absolute bg-white z-50 top-[2.5rem] left-[7.05rem] rounded-md text-sm flex flex-col gap-1 border p-1"
+                    @mouseleave="relevanceMenu = false; labelMenu = false;">
+                        <p v-for="(obj, i) in measureData.labels" 
                         class="h-7 flex shrink-0 items-center hover:cursor-pointer hover:bg-neutral-200 px-2 rounded-md"
-                        @click="selectRelevanceFeature(obj.id, obj.name)">
-                        {{ obj.name }}
-                    </p>
-                </div>
+                        @click="selectRelevanceLabel(i)">
+                            {{ obj }}
+                        </p>
+                    </div>
 
-                <p class="text-sm bg-cyan-700 text-white rounded-md flex items-center px-2">Feature: {{ selectedRelevanceFeatureStr }}</p>
-                <p class="text-sm bg-cyan-700 text-white rounded-md flex items-center px-2">Label: {{ selectedLabel }}</p>
+                    <div class="h-full">
+                        <div class="h-full flex flex-col justify-between py-1 font-semibold relative">
+                            <div class="flex flex-row text-xs gap-1">
+                                <p>Selected feature:</p>
+                                <p class=" bg-neutral-900 text-white rounded-md flex items-center px-2">{{ selectedRelevanceFeatureStr }}</p>
+                            </div>
+
+                            <div class="flex flex-row text-xs gap-1">
+                                <p>Selected label:</p>
+                                <p class=" bg-neutral-900 text-white rounded-md flex items-center px-2">{{ selectedLabel }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-row justify-center items-center h-10 text-sm gap-1 bg-neutral-200 px-2 rounded-md">
+                    <input type="text" id="name" required minlength="1" maxlength="256" size="20" autocomplete="off" 
+                    class="input-field-nomargin h-7" placeholder="Region name:" v-on:keyup.enter="saveRegion()">
+                    
+                    <div id="measure-input" class="flex flex-row gap-1 items-center">
+                        <div class="text-sm flex items-center select-none">Beats per measure:</div>
+                        <input type="number" id="beats-per-measure" autocomplete="off" min="1" placeholder="1"
+                        class="input-field-nomargin w-12 h-7">
+                    </div>
+                    <button class="btn btn-blue" @click="">
+                        Save region
+                    </button>
+                </div>
             </div>
 
             <div id="container" class="flex flex-row items-end w-full transition" 
@@ -939,7 +967,7 @@ function selectRelevanceLabel(idx)
 
                             </div>
                             
-                            <div class="h-full w-[0.5rem] rounded-r-md" :class="{'bg-red-600': trackLabels[i], 'bg-blue-600': !trackLabels[i]}">
+                            <div class="h-full w-[0.5rem] rounded-r-md" :class="{'bg-red-600': !trackLabels[i], 'bg-blue-600': trackLabels[i]}">
                                 
                             </div>
                         

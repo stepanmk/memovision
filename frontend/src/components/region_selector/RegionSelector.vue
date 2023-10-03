@@ -678,7 +678,7 @@ watch(metronomeVolume, () => {
             <span class="text-sm select-none">Selected regions</span>
         </div>
 
-        <div class="h-[calc(100%-27.75rem)] w-full overflow-y-auto flex flex-col items-left px-5 py-3 gap-1 dark:border-gray-700 border-b relative">
+        <div class="h-[calc(100%-24.75rem)] w-full overflow-y-auto flex flex-col items-left px-5 py-3 gap-1 dark:border-gray-700 border-b relative">
             
             <div v-for="(obj, i) in regionRef.regions" :id="`region-${i}`" :key="i"
             class="flex justify-between items-center bg-neutral-200 rounded-md w-full text-sm h-7 hover:bg-neutral-300 px-2"

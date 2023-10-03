@@ -24,36 +24,36 @@ step_weights = np.array([1.5, 1.5, 2.0])
 threshold_rec = 10 ** 6
 
 
-def convert_audio(audio_path, sr=22050, mono=True, db_level=-23):
-    dirname, filename = os.path.split(audio_path)
-    filename_out = dirname + '/' + os.path.splitext(filename)[0] + f'_{sr}.ogg'
-    try:	
-        cmd = 'ffmpeg-normalize "{}" -ar {} -t {} -o "{}" -f -q -c:a libvorbis'.format(audio_path,                                                                                       
-                                                                                    sr,
-                                                                                    db_level,
-                                                                                    filename_out)
-        subprocess.call(cmd, shell=True)
-    except IOError:
-        sys.exit(1)        
-    return filename_out
-
-
-# def convert_audio(audio_path, sr=22050, mono=True):
+# def convert_audio(audio_path, sr=22050, mono=True, db_level=-23):
 #     dirname, filename = os.path.split(audio_path)
 #     filename_out = dirname + '/' + os.path.splitext(filename)[0] + f'_{sr}.ogg'
-#     try:
-#         if mono:
-#             channels = '1'
-#         else:
-#             channels = '2'
-#         cmd = 'ffmpeg -y -loglevel fatal -i "{}" -ac {} -ar {} -vn {} -f f32le'.format(audio_path,
-#                                                                                        channels,
-#                                                                                        sr,
-#                                                                                        filename_out)
+#     try:	
+#         cmd = 'ffmpeg-normalize "{}" -ar {} -t {} -o "{}" -f -q -c:a libvorbis'.format(audio_path,                                                                                       
+#                                                                                     sr,
+#                                                                                     db_level,
+#                                                                                     filename_out)
 #         subprocess.call(cmd, shell=True)
 #     except IOError:
-#         sys.exit(1)
+#         sys.exit(1)        
 #     return filename_out
+
+
+def convert_audio(audio_path, sr=22050, mono=True):
+    dirname, filename = os.path.split(audio_path)
+    filename_out = dirname + '/' + os.path.splitext(filename)[0] + f'_{sr}.ogg'
+    try:
+        if mono:
+            channels = '1'
+        else:
+            channels = '2'
+        cmd = 'ffmpeg -y -loglevel fatal -i "{}" -ac {} -ar {} -vn {} -f f32le'.format(audio_path,
+                                                                                       channels,
+                                                                                       sr,
+                                                                                       filename_out)
+        subprocess.call(cmd, shell=True)
+    except IOError:
+        sys.exit(1)
+    return filename_out
 
 
 def strip_extension(filename):

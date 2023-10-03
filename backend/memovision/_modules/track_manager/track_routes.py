@@ -46,4 +46,5 @@ def delete_all_from_db():
     db.session.commit()
     shutil.rmtree(f'./user_uploads/{current_user.username}/{current_user.selected_session}/')
     os.mkdir(f'./user_uploads/{current_user.username}/{current_user.selected_session}/')
+    os.mkdir(f'./user_uploads/{current_user.username}/{current_user.selected_session}/relevance')
     return jsonify({'message': 'success'})

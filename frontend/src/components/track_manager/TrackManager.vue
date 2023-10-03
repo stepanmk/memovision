@@ -149,11 +149,14 @@ function openLabelAssignment() {
 
 async function closeLabelAssignment() {
     labelAssignmentVisible.value = false;
+    numThingsToCompute.value = 1;
     isLoading.value = true;
     loadingMessage.value = 'Computing feature relevance...'
+    numComputed.value = 1;
     await getAllFeatures();
     isDisabled.value = false;
     isLoading.value = false;
+    resetProgress();
 }
 
 </script>
