@@ -19,6 +19,7 @@ import Popper from 'vue3-popper';
 
 import ModuleTemplate from '../ModuleTemplate.vue';
 import LoadingWindow from '../LoadingWindow.vue';
+import TextBtnGray from './subcomponents/TextBtnGray.vue';
 
 import colormap from 'colormap'
 
@@ -86,7 +87,9 @@ const regionLengths = ref([]);
 
 const relevanceMenu = ref(false);
 const labelMenu = ref(false);
+const regionMenu = ref(false);
 const selectedRelevanceFeature = ref('');
+const regionToSave = ref(false);
 
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
@@ -135,7 +138,8 @@ modulesVisible.$subscribe((mutation, state) => {
         getMeasureData();
         getSyncPoints();
         getAllRegions();
-        
+        selectRelevanceFeature(measureData.relevanceFeatures[0].id);
+
         setTimeout(() => {
             tracksFromDb.syncTracks.forEach((track, idx) => {
                 addTrack(track.filename, idx);
@@ -143,7 +147,6 @@ modulesVisible.$subscribe((mutation, state) => {
             addListeners();
         }, 50);
         measuresVisible.value = true;
-        selectRelevanceFeature(measureData.relevanceFeatures[0].id);
 
     }
     else if(interpPlayerOpened)
@@ -218,14 +221,6 @@ onKeyStroke('m', (e) => {
     if (modulesVisible.interpretationPlayer) toggleMeasures();
 })
 
-onKeyStroke('+', (e) => {
-    if (modulesVisible.interpretationPlayer) zoomIn();
-})
-
-onKeyStroke('-', (e) => {
-    if (modulesVisible.interpretationPlayer) zoomOut();
-})
-
 onKeyStroke('Escape', (e) => {
     if (modulesVisible.interpretationPlayer)
     {
@@ -234,7 +229,12 @@ onKeyStroke('Escape', (e) => {
         }
         regionOverlay.value.fill(false);
         if (isPlaying.value) playPause();
-        hideAllRegions();
+        peaksInstances.forEach((peaksInstance) => {
+            peaksInstance.segments.removeAll();
+            const view = peaksInstance.views.getView('zoomview');
+            view.setZoom({seconds: 'auto'});
+        })
+        regionToSave.value = false;
     } 
 })
 
@@ -317,15 +317,14 @@ function addTrack(filename, idx)
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
-        zoomLevels: [1024, 2048, 4096, 'auto']
     };
     Peaks.init(options, (err, peaks) => 
     {
         if (err) console.log(err);
         peaksInstances[idx] = peaks;
         if (idx === 0) {
-            selectPeaks(idx)
-            selectOneVsRestRelevance(idx)
+            selectPeaks(idx);
+            selectRelevanceLabel(idx, 'oneVsRest');
             selectedRelevanceFeatureStr.value = measureData.relevanceFeatures[0].name;
             measureCount = measureData.relevance.duration.oneVsRest[idx].measureRelevance.length;
             oneVsRestRelevance.value[0] = true;
@@ -351,12 +350,16 @@ function addTrack(filename, idx)
         addMeasuresToPeaksInstance(idx);
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
+        const view = peaksInstances[idx].views.getView('zoomview');
+        view.enableAutoScroll(false);
+        view.setZoom({seconds: 'auto'});
     });
 }
 
 async function selectRegion(regionIdx, obj)
 {
     hideAllRegions();
+    regionToSave.value = false;
     regionObjects.selected[regionIdx] = !regionObjects.selected[regionIdx];
     regionObjects.selected.forEach((arrayValue, i) => {
         if (i !== regionIdx) regionObjects.selected[i] = false;
@@ -368,10 +371,8 @@ async function selectRegion(regionIdx, obj)
     peaksInstances[activePeaksIdx].player.pause();
     isPlaying.value = false;
     regionOverlay.value.fill(false);
-
     if(regionObjects.selected[regionIdx])
     {   
-        regionSelected = true;  
         const startIdx = findClosestTimeIdx(refIdx, regionObjects.regions[regionIdx].startTime);
         const endIdx = findClosestTimeIdx(refIdx, regionObjects.regions[regionIdx].endTime);
         switch (obj.type) {
@@ -383,7 +384,7 @@ async function selectRegion(regionIdx, obj)
             addDifferenceRegion(refIdx, targetIdx, obj);
             break;
         case 'relevantMeasure':
-            addSelectedRegion(startIdx, endIdx, obj);
+            addRelevantMeasure(obj);
             break;
         }
     }
@@ -412,7 +413,23 @@ function addSelectedRegion(startIdx, endIdx, obj)
     {
         regionOverlay.value[j] = true;
     }
-    zoomOnSelectedRegion();
+    zoomOnMeasureSelection(startMeasure, endMeasure);
+}
+
+function addRelevantMeasure(obj)
+{
+    for (let i = 0; i < peaksInstances.length; i++)
+    {
+        peaksInstances[i].segments.add({
+            color: obj.color,
+            borderColor: obj.color,
+            startTime: selectedMeasureData[i][obj.measureIdx],
+            endTime: selectedMeasureData[i][obj.measureIdx + 1],
+            id: 'relevantMeasure'
+        });
+    }
+    regionOverlay.value[obj.measureIdx] = true;
+    zoomOnMeasureSelection(obj.measureIdx, obj.measureIdx);
 }
 
 function addDifferenceRegion(refIdx, targetIdx, obj)
@@ -441,9 +458,6 @@ function hideAllRegions()
     peaksInstances.forEach((peaksInstance) => {
         peaksInstance.segments.removeAll();
         regionLengths.value.fill(0);
-        const view = peaksInstance.views.getView('zoomview');
-        view.enableAutoScroll(true);
-        view.setZoom({seconds: 'auto'});
     })
     regionSelected = false;
 }
@@ -545,20 +559,6 @@ async function rewind()
     fadeIn();
 }
 
-function zoomIn()
-{
-    peaksInstances.forEach((instance) => {
-        instance.zoom.zoomIn();
-    })
-}
-
-function zoomOut()
-{
-    peaksInstances.forEach((instance) => {
-        instance.zoom.zoomOut();
-    })
-}
-
 function zoomOnSelectedRegion()
 {
     for (let i = 0; i < peaksInstances.length; i++)
@@ -566,8 +566,8 @@ function zoomOnSelectedRegion()
         if (peaksInstances[i].segments.getSegment('selectedRegion') === null) { continue; };
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
-        view.setZoom({seconds: segment.endTime - segment.startTime});
-        view.setStartTime(segment.startTime);
+        view.setZoom({seconds: (segment.endTime - segment.startTime) + 2});
+        view.setStartTime(segment.startTime - 1);
     }
 }
 
@@ -576,12 +576,15 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx)
     if (isPlaying.value) playPause();
     regionSelected = true;
     hideAllRegions();
-    for (let i = 0; i < peaksInstances.length; i++)
-    {
+    let secs = -1;
+    for (let i = 0; i < peaksInstances.length; i++) {
+        const len = selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1];
+        regionLengths.value[i] = len;
+        if (len > secs) secs = len;
+    }
+    for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        const secs = selectedMeasureData[0][endMeasureIdx + 2] - selectedMeasureData[0][startMeasureIdx + 1];
-        regionLengths.value[i] = selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1];
-        view.setZoom({seconds: secs + 5});
+        view.setZoom({seconds: secs});
         view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
         view.enableAutoScroll(false);
         peaksInstances[i].segments.add({
@@ -623,31 +626,32 @@ function getTimeString(seconds, start, end)
     return new Date(seconds * 1000).toISOString().slice(start, end);
 }
 
-function toggleRegionsPanel()
-{
-    regionsPanelVisible.value = !regionsPanelVisible.value;
-}
-
 function selectRegionType(selectedType)
 {
-    hideAllRegions();
+    labelMenu.value = false;
+    relevanceMenu.value = false;
+    regionMenu.value = false;
     for(const type in regionsType)
     {
         regionsType[type] = false;
     }
     regionsType[selectedType] = true;
-
     switch (selectedType) {
     case 'selectedRegions':
         regionObjects.regions = selectedRegions
+        if (regionObjects.regions.length > 0) regionMenu.value = true;
         regionObjects.selected = new Array(selectedRegions.length).fill(false);
         break;
     case 'differenceRegions':
         regionObjects.regions = differenceRegions
+        if (regionObjects.regions.length > 0) regionMenu.value = true;
         regionObjects.selected = new Array(differenceRegions.length).fill(false);
         break;
     case 'relevantMeasures':
-        regionObjects.regions = measureData.getTopRelevance(20);
+        regionMenu.value = true;
+        let sortedRelevance = selectedRelevanceData.value.slice(0);
+        sortedRelevance.sort((a, b) => a.relevance - b.relevance).reverse();
+        regionObjects.regions = sortedRelevance.slice(0, 10);
         regionObjects.selected = new Array(differenceRegions.length).fill(false);
         break;
     }
@@ -758,7 +762,10 @@ function relevanceBarMouseUp()
     isHoldingMouseButton = false;
     const startMeasureIdx = regionOverlay.value.indexOf(true);
     const endMeasureIdx = regionOverlay.value.lastIndexOf(true);
-    if (dragged) zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx);
+    if (dragged) { 
+        regionToSave.value = true;
+        zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx);
+    }
     dragged = false;
 }
 
@@ -786,36 +793,47 @@ function horizontalScroll(event)
     scrollContainer.scrollLeft += event.deltaY;
 }
 
-function selectOneVsRestRelevance(idx)
-{
-    oneVsRestRelevance.value.fill(false);
-    trackLabels.value.fill(false);
-    oneVsRestRelevance.value[idx] = true;
-    trackLabels.value[idx] = true;
-    selectedRelevanceData.value = measureData.relevance[selectedRelevanceFeature.value].oneVsRest[idx].measureRelevance.slice();
-    selectedLabel.value = `${measureData.relevance[selectedRelevanceFeature.value].oneVsRest[idx].labelName} vs rest`;
-}
-
-
 const selectedRelevanceFeatureStr = ref('');
+const selectedLabel = ref('');
+const selectedType = ref('');
+const selectedIdx = ref(0);
+
 function selectRelevanceFeature(id, name)
 {
     selectedRelevanceFeatureStr.value = name;
     selectedRelevanceFeature.value = id;
+    if (selectedLabel.value !== '') {
+        selectedRelevanceData.value = measureData.relevance[selectedRelevanceFeature.value][selectedType.value][selectedIdx.value].measureRelevance.slice();
+        selectedLabel.value = measureData.relevance[selectedRelevanceFeature.value][selectedType.value][selectedIdx.value].labelName;
+    }
     labelMenu.value = false;
     relevanceMenu.value = false;
-    selectOneVsRestRelevance(0);
 }
 
-const selectedLabel = ref('');
-function selectRelevanceLabel(idx)
+function selectRelevanceLabel(idx, type)
 {
     oneVsRestRelevance.value.fill(false);
-    trackLabels.value = measureData.relevance[selectedRelevanceFeature.value].custom[idx].labels.slice();
-    selectedRelevanceData.value = measureData.relevance[selectedRelevanceFeature.value].custom[idx].measureRelevance.slice();
-    selectedLabel.value = measureData.relevance[selectedRelevanceFeature.value].custom[idx].labelName;
+    trackLabels.value.fill(false);
+    selectedType.value = type;
+    selectedIdx.value = idx;
+    if (type === 'oneVsRest') {
+        oneVsRestRelevance.value[idx] = true;
+        trackLabels.value[idx] = true;
+    }
+    else {
+        trackLabels.value = measureData.relevance[selectedRelevanceFeature.value][type][idx].labels.slice();
+    }
+    selectedRelevanceData.value = measureData.relevance[selectedRelevanceFeature.value][type][idx].measureRelevance.slice();
+    selectedLabel.value = measureData.relevance[selectedRelevanceFeature.value][type][idx].labelName;
     labelMenu.value = false;
     relevanceMenu.value = false;
+}
+
+function menuOnMouseLeave()
+{
+    relevanceMenu.value = false;
+    labelMenu.value = false;
+    regionMenu.value = false;
 }
 
 </script>
@@ -843,7 +861,7 @@ function selectRelevanceLabel(idx)
                 <div class="w-[calc(100%-3rem)] overflow-x-scroll overflow-y-hidden" id="top-bar">
                     
                     <div id="overview-3" class="h-[1rem] w-full flex flex-row items-center justify-start overflow-hidden">
-                        <div class="text-xs w-48 justify-center flex absolute bg-cyan-700 z-50 rounded-md text-white" 
+                        <div class="text-xs w-48 justify-center flex absolute bg-cyan-700 z-50 rounded-md text-white font-semibold" 
                         id="measure-popup">{{ measureMessage }}</div>
                     </div>
                     
@@ -874,54 +892,15 @@ function selectRelevanceLabel(idx)
 
             <div id="settings-bar" class="w-full h-[3rem] border-b flex flex-row px-5 items-center justify-between">
                 <div class="flex flex-row h-full items-center gap-1 relative">
-
-                    <button class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                    flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
-                    @click="relevanceMenu = true; labelMenu = false;">
-                        Select feature
-                    </button>
-                    
-                    <div v-if="relevanceMenu" class="absolute bg-white z-50 top-[2.5rem] rounded-md text-sm flex flex-col gap-1 border p-1"
-                    @mouseleave="relevanceMenu = false; labelMenu = false;">
-                        <p v-for="(obj, i) in measureData.relevanceFeatures" 
-                            class="h-7 flex shrink-0 items-center hover:cursor-pointer hover:bg-neutral-200 px-2 rounded-md"
-                            @click="selectRelevanceFeature(obj.id, obj.name)">
-                            {{ obj.name }}
-                        </p>
-                    </div>
-
-                    <button class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                    flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
-                    @click="labelMenu = true; relevanceMenu = false">
-                        Select label
-                    </button>
-                    
-                    <div v-if="labelMenu" class="absolute bg-white z-50 top-[2.5rem] left-[7.05rem] rounded-md text-sm flex flex-col gap-1 border p-1"
-                    @mouseleave="relevanceMenu = false; labelMenu = false;">
-                        <p v-for="(obj, i) in measureData.labels" 
-                        class="h-7 flex shrink-0 items-center hover:cursor-pointer hover:bg-neutral-200 px-2 rounded-md"
-                        @click="selectRelevanceLabel(i)">
-                            {{ obj }}
-                        </p>
-                    </div>
-
-                    <div class="h-full">
-                        <div class="h-full flex flex-col justify-between py-1 font-semibold relative">
-                            <div class="flex flex-row text-xs gap-1">
-                                <p>Selected feature:</p>
-                                <p class=" bg-neutral-900 text-white rounded-md flex items-center px-2">{{ selectedRelevanceFeatureStr }}</p>
-                            </div>
-
-                            <div class="flex flex-row text-xs gap-1">
-                                <p>Selected label:</p>
-                                <p class=" bg-neutral-900 text-white rounded-md flex items-center px-2">{{ selectedLabel }}</p>
-                            </div>
-                        </div>
-                    </div>
+                    <TextBtnGray btn-text="Feature" @click="relevanceMenu = true; labelMenu = false; regionMenu = false;"/>
+                    <TextBtnGray btn-text="Label" @click="labelMenu = true; relevanceMenu = false; regionMenu = false;"/>
+                    <TextBtnGray btn-text="Selected regions" @click="selectRegionType('selectedRegions')"/>
+                    <TextBtnGray btn-text="Difference regions" @click="selectRegionType('differenceRegions')"/>
+                    <TextBtnGray btn-text="Relevant measures" @click="selectRegionType('relevantMeasures')"/>
                 </div>
-                <div class="flex flex-row justify-center items-center h-10 text-sm gap-1 bg-neutral-200 px-2 rounded-md">
+                <div v-show="regionToSave" class="flex flex-row justify-center items-center h-10 text-sm gap-1 bg-neutral-200 px-2 rounded-md">
                     <input type="text" id="name" required minlength="1" maxlength="256" size="20" autocomplete="off" 
-                    class="input-field-nomargin h-7" placeholder="Region name:" v-on:keyup.enter="saveRegion()">
+                    class="input-field-nomargin h-7" placeholder="Region name" v-on:keyup.enter="saveRegion()">
                     
                     <div id="measure-input" class="flex flex-row gap-1 items-center">
                         <div class="text-sm flex items-center select-none">Beats per measure:</div>
@@ -934,13 +913,94 @@ function selectRelevanceLabel(idx)
                 </div>
             </div>
 
-            <div id="container" class="flex flex-row items-end w-full transition" 
-            :class="{'h-[calc(100%-11.5rem)]': !regionsPanelVisible, 'h-[calc(100%-26.5rem)]': regionsPanelVisible, 
-            'opacity-25': relevanceMenu || labelMenu}">
+            <div id="container" class="flex flex-row items-end w-full transition relative h-[calc(100%-10rem)]">
+
+                <div id="label-feature" 
+                class="w-full absolute top-0 py-1 flex text-sm justify-center gap-2 font-semibold ">
+                    <div class="flex flex-row text-xs gap-1">
+                        <p>Selected feature:</p>
+                        <p class=" bg-neutral-900 text-white rounded-md flex items-center px-2">{{ selectedRelevanceFeatureStr }}</p>
+                    </div>
+
+                    <div class="flex flex-row text-xs gap-1">
+                        <p>Selected label:</p>
+                        <p class=" bg-neutral-900 text-white rounded-md flex items-center px-2">{{ selectedLabel }}</p>
+                    </div>
+                </div>
+                
+                <div id="menu-container" class="w-full absolute top-0 px-5 z-30 flex text-sm">
+                    <div>
+                        <div v-if="relevanceMenu" class="bg-white z-50 rounded-md flex flex-col gap-1 border p-1 mt-1"
+                        @mouseleave="menuOnMouseLeave()">
+                            <p v-for="(obj, i) in measureData.relevanceFeatures" 
+                                class="h-7 flex shrink-0 items-center hover:cursor-pointer hover:bg-neutral-200 px-2 rounded-md"
+                                @click="selectRelevanceFeature(obj.id, obj.name)">
+                                {{ obj.name }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div v-if="labelMenu" class="bg-white z-50 rounded-md flex flex-col gap-1 border p-1 mt-1"
+                        @mouseleave="menuOnMouseLeave()">
+                            <p v-for="(obj, i) in measureData.labels" 
+                            class="h-7 flex shrink-0 items-center hover:cursor-pointer hover:bg-neutral-200 px-2 rounded-md"
+                            @click="selectRelevanceLabel(i, 'custom')">
+                                {{ obj }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div v-if="regionMenu" class="bg-white z-50 rounded-md flex flex-col gap-1 border p-1 mt-1"
+                        @mouseleave="menuOnMouseLeave()">
+                            <div v-for="(obj, i) in regionObjects.regions" :id="`region-${i}`" :key="i"
+                            class="flex justify-between items-center rounded-md w-full text-sm h-7 hover:bg-neutral-200 px-2 shrink-0 cursor-pointer"
+                            :class="{'bg-neutral-200 dark:bg-gray-600': regionObjects.selected[i]}"
+                            @click="selectRegion(i, obj)">
+                        
+                                <p class="flex items-center w-full h-full mr-5">{{obj.regionName}}</p>
+                            
+                                <div class="flex gap-2 dark:bg-gray-400 dark:hover:bg-gray-700 h-full rounded-md py-1">
+                                    
+                                    <div v-if="regionsType.selectedRegions || regionsType.differenceRegions" class="flex flex-row gap-2">
+                                        <p class="flex items-center h-full">Reference: </p>
+                                        <p class="flex items-center justify-center bg-green-500 rounded-md text-white text-xs w-20 select-none">
+                                        {{getTimeString(obj.startTime, 14, 22)}}</p>
+                                        <p class="flex items-center justify-center bg-red-500 rounded-md text-white text-xs w-20 select-none">
+                                        {{getTimeString(obj.endTime, 14, 22)}}</p>
+                                    </div>
+                                    <div v-if="regionsType.differenceRegions" class="flex flex-row gap-2">
+                                        <p>Target: </p>
+                                        <p class="flex items-center justify-center bg-green-500 rounded-md text-white text-xs w-20 select-none">
+                                        {{getTimeString(obj.startTimeTarget, 14, 22)}}</p>
+                                        <p class="flex items-center justify-center bg-red-500 rounded-md text-white text-xs w-20 select-none">
+                                        {{getTimeString(obj.endTimeTarget, 14, 22)}}</p>
+                                    </div>
+                                    
+                                    <p v-if="regionsType.selectedRegions" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-28 select-none">
+                                        Measures: {{getStartMeasure(obj.startTime)}}–{{getEndMeasure(obj.endTime)}}
+                                    </p>
+                                    <p v-if="regionsType.selectedRegions" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-36 select-none">
+                                        Beats per measure: {{obj.beatsPerMeasure}}
+                                    </p>
+                                    <p v-if="regionsType.relevantMeasures" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-28 select-none">
+                                        Relevance: {{obj.relevance.toFixed(2)}}
+                                    </p>
+                                    <p v-if="regionsType.relevantMeasures" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-40 select-none">
+                                        Absolute relevance: {{Number(obj.absoluteRelevance).toFixed(2)}}
+                                    </p>
+                                
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
 
                 <div id="audio-container" class="flex flex-row w-full h-full overflow-y-scroll dark:border-gray-700">
                     
-                    <div id="audio-controls" class="w-[10rem] flex flex-col items-center justify-start gap-2 py-5 pl-5">
+                    <div id="audio-controls" class="w-[10rem] flex flex-col items-center justify-start gap-2 py-6 pl-5">
                      
                         <div v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-controls-${i}`" :key="obj.filename" 
                         class="w-full h-16 bg-neutral-200 flex flex-row items-center justify-start shrink-0 rounded-md">
@@ -960,7 +1020,7 @@ function selectRelevanceLabel(idx)
                                         <Icon icon="material-symbols:volume-up-outline" width="20"/>
                                     </div>
                                     <div class="h-[1.5rem] p-2 flex items-center justify-center hover:bg-cyan-600 hover:text-white rounded-md select-none cursor-pointer"
-                                    :class="{'bg-cyan-700 text-white': oneVsRestRelevance[i]}" @click="selectOneVsRestRelevance(i)">
+                                    :class="{'bg-cyan-700 text-white': oneVsRestRelevance[i]}" @click="selectRelevanceLabel(i, 'oneVsRest')">
                                         <p class="text-xs">Relevance</p>
                                     </div>
                                 </div>
@@ -976,99 +1036,24 @@ function selectRelevanceLabel(idx)
                         <div id="audio-controls-pb" class="w-full h-3 shrink-0"></div>
                     </div>
 
-                    <div id="audio-tracks" class="w-[calc(100%-10rem)] flex flex-col gap-2 dark:border-gray-700 py-5 px-2">
-
+                    <div id="audio-tracks" class="w-[calc(100%-10rem)] flex flex-col gap-2 dark:border-gray-700 py-6 px-2">
+                        
                         <div v-for="(obj, i) in tracksFromDb.syncTracks" class="w-full h-16 shrink-0 flex flex-row gap-2">
                             <div class="border dark:border-gray-500 dark:bg-gray-400 w-[calc(100%-8rem)]" :id="`track-div-${i}`"></div>
                             <div class="dark:bg-gray-400 w-[7.5rem] bg-neutral-200 h-full rounded-md text-black text-sm flex flex-col items-center justify-center">
                                 <div class="flex items-center text-xs justify-center font-semibold">
                                     <p class="w-14">{{ getTimeString(trackTimes[i], 14, 22) }}</p>
-                                    <!-- <p>/</p> -->
-                                    <!-- <p class="w-14">{{ getTimeString(obj.length_sec, 14, 22) }}</p> -->
                                 </div>
                                 <div class="flex items-center text-xs justify-center font-semibold bg-neutral-900 px-[0.2rem] rounded-md text-white">
                                     <p class="w-full">Sel: {{ getTimeString(regionLengths[i], 14, 22) }}</p>
                                 </div>
                             </div>
                         </div>
+                        
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>
 
                 </div>
-
-            </div>
-
-            <div id="regions" class="absolute flex flex-col w-full bottom-6 border-t transition-[height] dark:border-gray-700" 
-            :class="{'h-[18rem]': regionsPanelVisible, 'h-[3rem]': !regionsPanelVisible}">
-                
-                <div id="regions-show-button" class="w-full h-6 cursor-pointer hover:bg-gray-100" @click="toggleRegionsPanel()"></div>
-
-                <div v-if="regionsPanelVisible" id="regions-type" class="w-full h-12 border-t flex flex-row items-center p-5 gap-5 dark:border-gray-700">
-                
-                    <button id="sel-regions-button" class="btn text-neutral-900 bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                    flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
-                    :class="{'text-[color:white] bg-cyan-700': regionsType.selectedRegions}"
-                    @click="selectRegionType('selectedRegions')">Selected regions</button>
-
-                    <button id="sel-regions-button" class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                    flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600" 
-                    :class="{'text-[color:white] bg-cyan-700': regionsType.differenceRegions}"
-                    @click="selectRegionType('differenceRegions')">Difference regions</button>
-
-                    <button id="sel-regions-button" class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                    flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600"
-                    :class="{'text-[color:white] bg-cyan-700': regionsType.relevantMeasures}" 
-                    @click="selectRegionType('relevantMeasures')">Relevant measures</button>
-
-                </div>
-
-                <Transition name=regions-transition>
-                    <div v-if="regionsPanelVisible" id="regions-container" class="w-full h-[calc(100%-6rem)] flex flex-col px-5 py-3 overflow-y-scroll border-t dark:border-gray-700">
-                        
-                        <div class="flex flex-col gap-1">
-
-                            <div v-for="(obj, i) in regionObjects.regions" :id="`region-${i}`" :key="i"
-                            class="flex justify-between items-center bg-neutral-200 rounded-md w-full text-sm h-7 hover:bg-violet-200 px-2 shrink-0"
-                            :class="{'bg-violet-200 dark:bg-gray-600': regionObjects.selected[i]}">
-                        
-                                <p class="flex items-center cursor-pointer w-full h-full" @click="selectRegion(i, obj)">
-                                {{obj.regionName}}</p>
-                            
-                                <div class="flex gap-2 dark:bg-gray-400 dark:hover:bg-gray-700 h-full rounded-md py-1">
-                                
-                                <p>Reference: </p>
-                                <p class="flex items-center justify-center bg-green-500 rounded-md text-white text-xs w-20 select-none">
-                                {{getTimeString(obj.startTime, 14, 22)}}</p>
-                                <p class="flex items-center justify-center bg-red-500 rounded-md text-white text-xs w-20 select-none">
-                                {{getTimeString(obj.endTime, 14, 22)}}</p>
-
-                                <div v-if="regionsType.differenceRegions" class="flex flex-row gap-2">
-                                    <p>Target: </p>
-                                    <p class="flex items-center justify-center bg-green-500 rounded-md text-white text-xs w-20 select-none">
-                                    {{getTimeString(obj.startTimeTarget, 14, 22)}}</p>
-                                    <p class="flex items-center justify-center bg-red-500 rounded-md text-white text-xs w-20 select-none">
-                                    {{getTimeString(obj.endTimeTarget, 14, 22)}}</p>
-                                </div>
-                                
-                                <p v-if="regionsType.selectedRegions" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-28 select-none">
-                                    Measures: {{getStartMeasure(obj.startTime)}}–{{getEndMeasure(obj.endTime)}}
-                                </p>
-                                <p v-if="regionsType.selectedRegions" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-36 select-none">
-                                    Beats per measure: {{obj.beatsPerMeasure}}
-                                </p>
-                                <p v-if="regionsType.relevantMeasures" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-28 select-none">
-                                    Relevance: {{obj.relevance.toFixed(2)}}
-                                </p>
-                                <p v-if="regionsType.relevantMeasures" class="flex items-center justify-center bg-neutral-700 rounded-md text-white text-xs w-40 select-none">
-                                    Absolute relevance: {{obj.absoluteRelevance}}
-                                </p>
-                                </div>
-                            </div>
-
-                        </div>
-
-                    </div>
-                </Transition>
 
             </div>
 
@@ -1088,20 +1073,7 @@ function selectRelevanceLabel(idx)
                         h-[2rem] w-[2.5rem] flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600">
                             <Icon icon="ph:skip-back" width="20"/>
                     </button>
-
-                    <button id="zoom-in-button" @click="zoomIn()" 
-                    class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                    h-[2rem] w-[2.5rem] flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600">
-                        <Icon icon="iconoir:zoom-in" width="22"/>
-                    </button>
-
-                    <button id="zoom-out-button" @click="zoomOut()" 
-                    class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
-                    h-[2rem] w-[2.5rem] flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600">
-                        <Icon icon="iconoir:zoom-out" width="22"/>
-                    </button>
-
-                                    
+ 
                     <button id="measure-button" @click="toggleMeasures()" 
                     class="btn btn-blue text-black bg-neutral-200 hover:bg-cyan-600 duration-100 hover:text-white
                     h-[2rem] w-[2.5rem] flex items-center justify-center dark:bg-gray-400 dark:hover:bg-cyan-600"
@@ -1134,6 +1106,10 @@ function selectRelevanceLabel(idx)
 .regions-transition-enter-from,
 .regions-transition-leave-to {
     opacity: 0;
+}
+
+input:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 </style>

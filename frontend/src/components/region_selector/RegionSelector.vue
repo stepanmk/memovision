@@ -1,6 +1,4 @@
 <script setup>
-
-
 import { reactive, computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
@@ -10,9 +8,6 @@ import { showAlert } from '../../alerts';
 import { getCookie } from '../../sharedFunctions';
 import { api } from '../../axiosInstance';
 import ModuleTemplate from '../ModuleTemplate.vue';
-
-// add horizontal and vertical zoom to the zoomview
-// add volume controls for the reference track and the metronome
 
 // pinia stores
 const modulesVisible = useModulesVisible();
@@ -33,7 +28,6 @@ let refPeaksInstance;
 let refPeaksReady = ref(false);
 let prevVisible = false;
 let measuresVisible = ref(false);
-let measuresReady = ref(false);
 let loopingActive = ref(false);
 let metronomeActive = ref(false);
 
@@ -125,7 +119,6 @@ function saveRegion()
             lengthSec: endTime.value - startTime.value,
             beatsPerMeasure: beatsPerMeasure.value
         }
-
         const axiosConfig = {
             headers: {
                 'X-CSRF-TOKEN': getCookie('csrf_access_token')
@@ -204,10 +197,10 @@ function createRefPeaks()
         zoomview: {
             container: document.getElementById('zoomview-container'),
             segmentOptions: {
-                // style: 'overlay',
-                // overlayOffset: 0,
-                // overlayOpacity: 0.2,
-                // overlayCornerRadius: 0  
+                style: 'overlay',
+                overlayOffset: 0,
+                overlayOpacity: 0.2,
+                overlayCornerRadius: 0  
             },
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
@@ -264,13 +257,8 @@ function createRefPeaks()
         metronomeElement.volume = 0.25;
         const metronomeAudio = audioStore.metronomeClick;
         metronomeElement.src = URL.createObjectURL(metronomeAudio);
-
         getAllRegions();
-
         peaks.on('player.timeupdate', (time) => {
-            const percentage = (time / referenceTrack.value.length_sec) * 100;
-            // timeline.style.backgroundSize = `${percentage}% 100%`;
-            // timeline.value = percentage;
             let timeString = new Date(time * 1000).toISOString().slice(14, 19);
             currentTime.value = timeString;
         });
@@ -539,7 +527,6 @@ function getStartMeasure(start)
         closestStartIdx = closestStartIdx + 1;
     }
     return closestStartIdx;
-    
 }
 
 function getEndMeasure(end)
@@ -562,11 +549,8 @@ function getEndMeasure(end)
     }
 }
 
-
 const refVolume = ref(1);
 const metronomeVolume = ref(0.5);
-// const b = Math.pow((1. / 0.1 - 1.), 2)
-// const a = 1.  / (b - 1.);
 
 watch(refVolume, () => {
     const audioElement = document.getElementById('audio-element');
@@ -606,23 +590,9 @@ watch(metronomeVolume, () => {
                     <Icon icon="ic:baseline-minus" width="20"/>
                 </div>
             </div>
-            
-            <!-- <div id="zoomview-time" class="w-32 h-7 mr-8 absolute flex flex-row items-center justify-center">
-                <div class="w-full h-full flex flex-row items-center justify-between bg-neutral-300 rounded-md bg-opacity-20 backdrop-blur-sm border">
-                    <Icon icon="ic:baseline-minus" width="20"/>
-                    <input type="range" min="-120" max="-5" step="0.01" class="accent-cyan-600 w-20 h-1" id="time-zoom" v-model="timeZoom">
-                    <Icon icon="ic:baseline-plus" width="20"/>
-                </div>
-            </div> -->
         </div>
 
-
-
         <audio id="audio-element" class="w-full"></audio>
-
-        <!-- <div id="player-seeking" class="w-full h-6 px-3 py-3 flex items-center border-b dark:border-gray-700">
-            <input type="range" id="timeline" max="100" value="0" step="0.01" class="w-full h-1 rounded-md">
-        </div> -->
         
         <div id="player-controls" class="h-[3rem] w-full border-b flex flex-row justify-between items-center pl-5 pr-5 gap-2 dark:border-gray-700">
             <div class="flex flex-row items-center justify-center h-full gap-1">
@@ -753,8 +723,7 @@ watch(metronomeVolume, () => {
         </div>
 
     </template>
-
-            
+    
     </ModuleTemplate>
 
 </template>
