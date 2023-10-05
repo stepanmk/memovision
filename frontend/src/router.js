@@ -1,14 +1,13 @@
-import {createRouter, createWebHistory} from 'vue-router'
-import Home from './views/Home.vue'
-import Login from './views/Login.vue'
-import Register from './views/Register.vue'
-import Sessions from './views/Sessions.vue'
+import Home from './views/Home.vue';
+import Login from './views/Login.vue';
+import Register from './views/Register.vue';
+import Sessions from './views/Sessions.vue';
 
-import { getSecureConfig, getSessions } from './sharedFunctions'
-import { useUserInfo } from './globalStores'
-import { showAlert } from './alerts'
-import { api } from './axiosInstance'
-
+import { createRouter, createWebHistory } from 'vue-router';
+import { getSecureConfig, getSessions } from './sharedFunctions';
+import { useUserInfo } from './globalStores';
+import { showAlert } from './alerts';
+import { api } from './axiosInstance';
 
 const routes = [
     {
@@ -24,17 +23,15 @@ const routes = [
                     userInfo.username = res.data.username;
                     userInfo.selectedSession = res.data.selectedSession;
                     userInfo.preciseSync = res.data.preciseSync;
-                }
-                else {
+                } else {
                     showAlert('Login expired.', 2000);
-                    return {name: 'Login'};
+                    return { name: 'Login' };
                 }
-            }
-            else {
+            } else {
                 showAlert('You need to be logged in!', 2000);
-                return {name: 'Login'};
+                return { name: 'Login' };
             }
-        }
+        },
     },
     {
         path: '/sessions',
@@ -47,17 +44,15 @@ const routes = [
                 const res = await api.get('/login-check', axiosConfig);
                 if (res.data.valid) {
                     userInfo.sessions = await getSessions();
-                }
-                else {
+                } else {
                     showAlert('Login expired.', 2000);
-                    return {name: 'Login'};
+                    return { name: 'Login' };
                 }
-            }
-            else {
+            } else {
                 showAlert('You need to be logged in!', 2000);
-                return {name: 'Login'};
+                return { name: 'Login' };
             }
-        }
+        },
     },
     {
         path: '/signin',
@@ -67,13 +62,13 @@ const routes = [
     {
         path: '/signup',
         name: 'Register',
-        component: Register
-    }
-]
+        component: Register,
+    },
+];
 
 const router = createRouter({
     history: createWebHistory(),
-    routes
-})
+    routes,
+});
 
-export default router
+export default router;
