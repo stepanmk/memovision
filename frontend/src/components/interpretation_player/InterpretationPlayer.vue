@@ -106,7 +106,7 @@ watch(volume, () => {
 
 // subscribe to pinia modulesVisible state
 modulesVisible.$subscribe((mutation, state) => {
-    if (state.interpretationPlayer) {
+    if (state.interpretationPlayer && !interpPlayerOpened) {
         interpPlayerOpened = true;
         // init helper variables
         tracksFromDb.syncTracks.forEach((track, idx) => {
@@ -134,7 +134,7 @@ modulesVisible.$subscribe((mutation, state) => {
             addListeners();
         }, 50);
         measuresVisible.value = true;
-    } else if (interpPlayerOpened) {
+    } else if (!state.interpretationPlayer && interpPlayerOpened) {
         if (isPlaying.value) playPause();
         interpPlayerOpened = false;
         removeListeners();
@@ -281,7 +281,7 @@ function addTrack(filename, idx) {
     const options = {
         zoomview: {
             segmentOptions: {
-                overlay: true,
+                style: 'overlay',
                 overlayOffset: 0,
                 overlayOpacity: 0.15,
                 overlayCornerRadius: 0,
@@ -331,7 +331,7 @@ function addTrack(filename, idx) {
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
-        // view.enableAutoScroll(false);
+        view.enableAutoScroll(false, {});
         view.setZoom({ seconds: 'auto' });
     });
 }
@@ -443,6 +443,9 @@ function seekCallback(time) {
     selectedIndices.forEach((idx) => {
         peaksInstances[idx].player.seek(syncPoints[idx][closestTimeIdx]);
     });
+    // if (time >= selectedMeasureData[activePeaksIdx][repeatMeasureIdxEnd.value] - 0.05 && regionSelected) {
+    //     goToMeasure(repeatMeasureIdxStart.value);
+    // }
 }
 
 let prevPeaksIdx = null;
@@ -467,7 +470,7 @@ async function selectPeaks(idx) {
     if (isPlaying.value) {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== undefined) {
+        if (selectedRegion !== null) {
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             await sleep(10);
             fadeIn();
@@ -495,7 +498,7 @@ async function playPause() {
     } else {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== undefined) {
+        if (selectedRegion !== null) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
             fadeIn();
         }
@@ -518,7 +521,7 @@ async function rewind() {
 function zoomOnSelectedRegion() {
     let secs = -1;
     for (let i = 0; i < peaksInstances.length; i++) {
-        if (peaksInstances[i].segments.getSegment('selectedRegion') === undefined) {
+        if (peaksInstances[i].segments.getSegment('selectedRegion') === null) {
             continue;
         }
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
@@ -529,13 +532,13 @@ function zoomOnSelectedRegion() {
     const segment = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
     peaksInstances[activePeaksIdx].player.seek(segment.startTime);
     for (let i = 0; i < peaksInstances.length; i++) {
-        if (peaksInstances[i].segments.getSegment('selectedRegion') === undefined) {
+        if (peaksInstances[i].segments.getSegment('selectedRegion') === null) {
             continue;
         }
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
         view.setZoom({ seconds: secs + 0.5 });
-        view.setStartTime(segment.startTime);
+        view.setStartTime(segment.startTime - 1);
     }
 }
 
@@ -707,6 +710,8 @@ function relevanceBarMouseDown(event) {
     firstMeasure = dragOverMeasureIdx;
 }
 
+const repeatMeasureIdxStart = ref(0);
+const repeatMeasureIdxEnd = ref(0);
 function relevanceBarMouseUp() {
     isHoldingMouseButton = false;
     const startMeasureIdx = regionOverlay.value.indexOf(true);
@@ -716,6 +721,8 @@ function relevanceBarMouseUp() {
         const referenceName = tracksFromDb.refTrack.filename;
         const refIdx = tracksFromDb.getIdx(referenceName);
         zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx);
+        repeatMeasureIdxStart.value = startMeasureIdx;
+        repeatMeasureIdxEnd.value = endMeasureIdx + 2;
         startTime.value = selectedMeasureData[refIdx][startMeasureIdx + 1];
         endTime.value = selectedMeasureData[refIdx][endMeasureIdx + 2];
     }

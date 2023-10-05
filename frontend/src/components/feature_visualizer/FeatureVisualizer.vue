@@ -65,12 +65,12 @@ function destroyFeatVisualizer() {
 let featVisualizerOpened = false;
 
 modulesVisible.$subscribe((mutation, state) => {
-    if (state.featureVisualizer) {
+    if (state.featureVisualizer && !featVisualizerOpened) {
         featVisualizerOpened = true;
         initFeatVisualizer();
 
         console.log('Feat Visualizer opened!');
-    } else if (featVisualizerOpened) {
+    } else if (!state.featureVisualizer && featVisualizerOpened) {
         featVisualizerOpened = false;
         destroyFeatVisualizer();
 
@@ -134,7 +134,7 @@ function addTrack(filename, idx) {
         peaksInstances[idx] = peaks;
         const view = peaksInstances[idx].views.getView('zoomview');
         view.setZoom({ seconds: 'auto' });
-        view.enableAutoScroll(false);
+        view.enableAutoScroll(false, {});
         if (idx === 0) selectPeaks(idx);
     });
 }

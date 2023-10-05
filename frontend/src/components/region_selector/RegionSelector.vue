@@ -199,7 +199,7 @@ function createRefPeaks() {
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
             playheadColor: 'red',
-            playheadClickTolerance: 10,
+            // playheadClickTolerance: 10,
         },
         overview: {
             container: document.getElementById('overview-container'),
@@ -209,7 +209,7 @@ function createRefPeaks() {
             playheadColor: 'red',
         },
         segmentOptions: {
-            overlay: true,
+            style: 'overlay',
             overlayOffset: 0,
             overlayOpacity: 0.15,
             overlayCornerRadius: 0,
