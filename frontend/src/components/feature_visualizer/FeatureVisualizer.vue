@@ -1,11 +1,7 @@
 <script setup>
 import ModuleTemplate from '../ModuleTemplate.vue';
 import { api } from '../../axiosInstance';
-import {
-    useModulesVisible,
-    useTracksFromDb,
-    useAudioStore,
-} from '../../globalStores';
+import { useModulesVisible, useTracksFromDb, useAudioStore } from '../../globalStores';
 import { truncateFilename, getSecureConfig } from '../../sharedFunctions';
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
@@ -107,10 +103,7 @@ function addTrack(filename, idx) {
     // get waveform data
     const waveformData = audioStore.getWaveformData(filename);
     const waveformContainer = document.getElementById(`track-div-${idx}`);
-    waveformContainer.addEventListener(
-        'mousedown',
-        waveformListener.bind(event, idx)
-    );
+    waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
     // peaks.js options
     const options = {
         zoomview: {
@@ -181,8 +174,7 @@ async function selectPeaks(idx) {
     // if playing is active
     if (isPlaying.value) {
         // play currently selected region if it is not null
-        const selectedRegion =
-            peaksInstances[idx].segments.getSegment('selectedRegion');
+        const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
         if (selectedRegion !== null) {
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             await sleep(10);
@@ -230,15 +222,11 @@ function sleep(ms) {
                             class="flex h-full w-[2rem] items-center justify-center rounded-r-md hover:bg-cyan-600 hover:text-white"
                             :class="{ 'bg-cyan-700 text-white': playing[i] }"
                             @click="selectPeaks(i)">
-                            <Icon
-                                icon="material-symbols:volume-up-outline"
-                                width="20" />
+                            <Icon icon="material-symbols:volume-up-outline" width="20" />
                         </div>
                     </div>
                 </div>
-                <div
-                    id="feature-content"
-                    class="h-full w-[calc(100%-24rem)] overflow-y-scroll">
+                <div id="feature-content" class="h-full w-[calc(100%-24rem)] overflow-y-scroll">
                     <div
                         id="audio-tracks"
                         class="flex w-full flex-col gap-2 bg-cyan-100 px-2 py-5 dark:border-gray-700">
@@ -251,9 +239,7 @@ function sleep(ms) {
                                 hidden: !tracksVisible[i],
                             }"></div>
 
-                        <audio
-                            v-for="(obj, i) in tracksFromDb.syncTracks"
-                            :id="`audio-${i}`"></audio>
+                        <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>
                 </div>
                 <div class="h-full w-[12rem] bg-red-100"></div>

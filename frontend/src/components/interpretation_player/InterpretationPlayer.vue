@@ -1,11 +1,6 @@
 <script setup>
-import {
-    useModulesVisible,
-    useTracksFromDb,
-    useAudioStore,
-    useMeasureData,
-} from '../../globalStores';
-
+import { useModulesVisible, useTracksFromDb, useAudioStore, useMeasureData } from '../../globalStores';
+import { showAlert } from '../../alerts';
 import { getSecureConfig, truncateFilename } from '../../sharedFunctions';
 import { reactive, computed, ref, watch } from 'vue';
 import { api } from '../../axiosInstance';
@@ -14,12 +9,11 @@ import { Icon } from '@iconify/vue';
 import { onKeyStroke } from '@vueuse/core';
 import Peaks from 'peaks.js';
 import Popper from 'vue3-popper';
+import colormap from 'colormap';
 
 import ModuleTemplate from '../ModuleTemplate.vue';
 import LoadingWindow from '../LoadingWindow.vue';
 import TextBtnGray from './subcomponents/TextBtnGray.vue';
-
-import colormap from 'colormap';
 
 // pinia stores
 const modulesVisible = useModulesVisible(pinia);
@@ -40,9 +34,7 @@ const allPeaksReady = computed(() => {
 const numPeaksLoaded = ref(0);
 const percLoaded = ref(0);
 watch(numPeaksLoaded, () => {
-    percLoaded.value = Math.round(
-        (numPeaksLoaded.value / (tracksFromDb.syncTracks.length - 1)) * 100
-    );
+    percLoaded.value = Math.round((numPeaksLoaded.value / (tracksFromDb.syncTracks.length - 1)) * 100);
 });
 
 let regionObjects = reactive({
@@ -104,10 +96,8 @@ function createFadeRamps() {
 }
 
 // 10 ms fade in and fade out to prevent clicking when switching recordings
-const fadeIn = () =>
-    gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
-const fadeOut = () =>
-    gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
+const fadeIn = () => gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
+const fadeOut = () => gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
 
 watch(volume, () => {
     gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
@@ -252,9 +242,7 @@ function getMeasureData() {
                 regionOverlay.value.push(false);
             }
         } else {
-            selectedMeasureData.push(
-                measureData.getObject(filename).tf_measures
-            );
+            selectedMeasureData.push(measureData.getObject(filename).tf_measures);
         }
     }
 }
@@ -264,12 +252,8 @@ let differenceRegions;
 async function getAllRegions() {
     const selRegionsRes = await api.get('/get-all-regions', getSecureConfig());
     selectedRegions = selRegionsRes.data;
-    const diffRegionsRes = await api.get(
-        '/get-diff-regions',
-        getSecureConfig()
-    );
+    const diffRegionsRes = await api.get('/get-diff-regions', getSecureConfig());
     differenceRegions = diffRegionsRes.data.diff_regions;
-
     regionObjects.regions = selectedRegions;
     regionObjects.selected = new Array(selectedRegions.length).fill(false);
 }
@@ -290,19 +274,14 @@ function addTrack(filename, idx) {
     const audio = audioStore.getAudio(filename);
     audioElement.src = URL.createObjectURL(audio);
     const waveformContainer = document.getElementById(`track-div-${idx}`);
-    waveformContainer.addEventListener(
-        'mousedown',
-        waveformListener.bind(event, idx)
-    );
+    waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
     const audioSource = audioCtx.createMediaElementSource(audioElement);
     audioSource.connect(gainNode);
-    // get waveform data
     const waveformData = audioStore.getWaveformData(filename);
-    // peaks.js options
     const options = {
         zoomview: {
             segmentOptions: {
-                style: 'overlay',
+                overlay: true,
                 overlayOffset: 0,
                 overlayOpacity: 0.15,
                 overlayCornerRadius: 0,
@@ -328,24 +307,19 @@ function addTrack(filename, idx) {
         if (idx === 0) {
             selectPeaks(idx);
             selectRelevanceLabel(idx, 'oneVsRest');
-            selectedRelevanceFeatureStr.value =
-                measureData.relevanceFeatures[0].name;
-            measureCount =
-                measureData.relevance.duration.oneVsRest[idx].measureRelevance
-                    .length;
+            selectedRelevanceFeatureStr.value = measureData.relevanceFeatures[0].name;
+            measureCount = measureData.relevance.duration.oneVsRest[idx].measureRelevance.length;
             oneVsRestRelevance.value[0] = true;
             trackLabels.value[0] = true;
         }
         if (filename === tracksFromDb.refTrack.filename) {
             peaksInstances[idx].on('player.timeupdate', (time) => {
                 trackTimes.value[idx] = time;
-                const measureIdx = getStartMeasure(time);
+                // add 1 ms to the time to indicate the proper measure
+                const measureIdx = getStartMeasure(time + 0.001);
                 currentMeasure.value = measureIdx - 2;
                 if (currentMeasure.value >= 0) {
-                    currentRelevance.value =
-                        selectedRelevanceData.value[
-                            currentMeasure.value
-                        ].relevance.toFixed(2);
+                    currentRelevance.value = selectedRelevanceData.value[currentMeasure.value].relevance.toFixed(2);
                 }
             });
         } else {
@@ -357,7 +331,7 @@ function addTrack(filename, idx) {
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
-        view.enableAutoScroll(false);
+        // view.enableAutoScroll(false);
         view.setZoom({ seconds: 'auto' });
     });
 }
@@ -377,14 +351,8 @@ async function selectRegion(regionIdx, obj) {
     isPlaying.value = false;
     regionOverlay.value.fill(false);
     if (regionObjects.selected[regionIdx]) {
-        const startIdx = findClosestTimeIdx(
-            refIdx,
-            regionObjects.regions[regionIdx].startTime
-        );
-        const endIdx = findClosestTimeIdx(
-            refIdx,
-            regionObjects.regions[regionIdx].endTime
-        );
+        const startIdx = findClosestTimeIdx(refIdx, regionObjects.regions[regionIdx].startTime);
+        const endIdx = findClosestTimeIdx(refIdx, regionObjects.regions[regionIdx].endTime);
         switch (obj.type) {
             case 'selectedRegion':
                 addSelectedRegion(startIdx, endIdx, obj);
@@ -418,7 +386,7 @@ function addSelectedRegion(startIdx, endIdx, obj) {
     for (let j = startMeasure; j < endMeasure; j++) {
         regionOverlay.value[j] = true;
     }
-    zoomOnMeasureSelection(startMeasure, endMeasure);
+    zoomOnSelectedRegion();
 }
 
 function addRelevantMeasure(obj) {
@@ -498,9 +466,8 @@ async function selectPeaks(idx) {
     // if playing is active
     if (isPlaying.value) {
         // play currently selected region if it is not null
-        const selectedRegion =
-            peaksInstances[idx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
+        const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
+        if (selectedRegion !== undefined) {
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             await sleep(10);
             fadeIn();
@@ -527,15 +494,9 @@ async function playPause() {
         peaksInstances[activePeaksIdx].player.pause();
     } else {
         // play currently selected region if it is not null
-        const selectedRegion =
-            peaksInstances[activePeaksIdx].segments.getSegment(
-                'selectedRegion'
-            );
-        if (selectedRegion !== null) {
-            peaksInstances[activePeaksIdx].player.playSegment(
-                selectedRegion,
-                true
-            );
+        const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+        if (selectedRegion !== undefined) {
+            peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
             fadeIn();
         }
         // otherwise just continue playing at the current cursor position
@@ -555,34 +516,45 @@ async function rewind() {
 }
 
 function zoomOnSelectedRegion() {
+    let secs = -1;
     for (let i = 0; i < peaksInstances.length; i++) {
-        if (peaksInstances[i].segments.getSegment('selectedRegion') === null) {
+        if (peaksInstances[i].segments.getSegment('selectedRegion') === undefined) {
+            continue;
+        }
+        const segment = peaksInstances[i].segments.getSegment('selectedRegion');
+        const len = segment.endTime - segment.startTime;
+        regionLengths.value[i] = len;
+        if (len > secs) secs = len;
+    }
+    const segment = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+    peaksInstances[activePeaksIdx].player.seek(segment.startTime);
+    for (let i = 0; i < peaksInstances.length; i++) {
+        if (peaksInstances[i].segments.getSegment('selectedRegion') === undefined) {
             continue;
         }
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
-        view.setZoom({ seconds: segment.endTime - segment.startTime + 2 });
-        view.setStartTime(segment.startTime - 1);
+        view.setZoom({ seconds: secs + 0.5 });
+        view.setStartTime(segment.startTime);
     }
 }
 
-function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
-    if (isPlaying.value) playPause();
+async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
+    if (isPlaying.value) await playPause();
     regionSelected = true;
     hideAllRegions();
     let secs = -1;
     for (let i = 0; i < peaksInstances.length; i++) {
-        const len =
-            selectedMeasureData[i][endMeasureIdx + 2] -
-            selectedMeasureData[i][startMeasureIdx + 1];
+        const len = selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1];
         regionLengths.value[i] = len;
         if (len > secs) secs = len;
     }
+    peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        view.setZoom({ seconds: secs });
+        view.setZoom({ seconds: secs + 0.5 });
         view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
-        view.enableAutoScroll(false);
+        view.enableAutoScroll(false, {});
         peaksInstances[i].segments.add({
             color: 'blue',
             borderColor: 'blue',
@@ -594,12 +566,10 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
 }
 
 function getStartMeasure(start) {
-    const closestStart = measureData.refTrack.gt_measures.reduce(
-        (prev, curr) =>
-            Math.abs(curr - start) < Math.abs(prev - start) ? curr : prev
+    const closestStart = measureData.refTrack.gt_measures.reduce((prev, curr) =>
+        Math.abs(curr - start) < Math.abs(prev - start) ? curr : prev
     );
-    let closestStartIdx =
-        measureData.refTrack.gt_measures.indexOf(closestStart);
+    let closestStartIdx = measureData.refTrack.gt_measures.indexOf(closestStart);
     if (measureData.refTrack.gt_measures[closestStartIdx] < start) {
         closestStartIdx = closestStartIdx + 1;
     }
@@ -633,25 +603,19 @@ function selectRegionType(selectedType) {
         case 'selectedRegions':
             regionObjects.regions = selectedRegions;
             if (regionObjects.regions.length > 0) regionMenu.value = true;
-            regionObjects.selected = new Array(selectedRegions.length).fill(
-                false
-            );
+            regionObjects.selected = new Array(selectedRegions.length).fill(false);
             break;
         case 'differenceRegions':
             regionObjects.regions = differenceRegions;
             if (regionObjects.regions.length > 0) regionMenu.value = true;
-            regionObjects.selected = new Array(differenceRegions.length).fill(
-                false
-            );
+            regionObjects.selected = new Array(differenceRegions.length).fill(false);
             break;
         case 'relevantMeasures':
             regionMenu.value = true;
             let sortedRelevance = selectedRelevanceData.value.slice(0);
             sortedRelevance.sort((a, b) => a.relevance - b.relevance).reverse();
             regionObjects.regions = sortedRelevance.slice(0, 10);
-            regionObjects.selected = new Array(differenceRegions.length).fill(
-                false
-            );
+            regionObjects.selected = new Array(differenceRegions.length).fill(false);
             break;
     }
 }
@@ -699,19 +663,12 @@ async function goToMeasure(measureIdx) {
 const measureMessage = ref(null);
 function logMeasure(i) {
     measureMessage.value =
-        'Measure: ' +
-        (i + 1) +
-        ', Relevance: ' +
-        selectedRelevanceData.value[i].relevance.toFixed(2);
+        'Measure: ' + (i + 1) + ', Relevance: ' + selectedRelevanceData.value[i].relevance.toFixed(2);
     const popup = document.getElementById('measure-popup');
     const width = measureCount * 16;
     const topBar = document.getElementById('top-bar');
     popup.style.left =
-        Math.round(((i + 1) / measureCount) * width) -
-        topBar.scrollLeft -
-        popup.offsetWidth / 2 +
-        18 +
-        'px';
+        Math.round(((i + 1) / measureCount) * width) - topBar.scrollLeft - popup.offsetWidth / 2 + 18 + 'px';
 }
 
 function clearMessage() {
@@ -756,7 +713,11 @@ function relevanceBarMouseUp() {
     const endMeasureIdx = regionOverlay.value.lastIndexOf(true);
     if (dragged) {
         regionToSave.value = true;
+        const referenceName = tracksFromDb.refTrack.filename;
+        const refIdx = tracksFromDb.getIdx(referenceName);
         zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx);
+        startTime.value = selectedMeasureData[refIdx][startMeasureIdx + 1];
+        endTime.value = selectedMeasureData[refIdx][endMeasureIdx + 2];
     }
     dragged = false;
 }
@@ -770,8 +731,7 @@ function relevanceBarMouseMove(event) {
         regionOverlay.value.fill(false);
         const x = event.clientX - bounds.left;
         let dragOverMeasureIdx = Math.floor((x / barWidth) * measureCount);
-        if (dragOverMeasureIdx > measureCount)
-            dragOverMeasureIdx = measureCount - 1;
+        if (dragOverMeasureIdx > measureCount) dragOverMeasureIdx = measureCount - 1;
         for (let i = firstMeasure; i < dragOverMeasureIdx + 1; i++) {
             regionOverlay.value[i] = true;
         }
@@ -794,13 +754,11 @@ function selectRelevanceFeature(id, name) {
     selectedRelevanceFeature.value = id;
     if (selectedLabel.value !== '') {
         selectedRelevanceData.value =
-            measureData.relevance[selectedRelevanceFeature.value][
-                selectedType.value
-            ][selectedIdx.value].measureRelevance.slice();
+            measureData.relevance[selectedRelevanceFeature.value][selectedType.value][
+                selectedIdx.value
+            ].measureRelevance.slice();
         selectedLabel.value =
-            measureData.relevance[selectedRelevanceFeature.value][
-                selectedType.value
-            ][selectedIdx.value].labelName;
+            measureData.relevance[selectedRelevanceFeature.value][selectedType.value][selectedIdx.value].labelName;
     }
     labelMenu.value = false;
     relevanceMenu.value = false;
@@ -815,19 +773,11 @@ function selectRelevanceLabel(idx, type) {
         oneVsRestRelevance.value[idx] = true;
         trackLabels.value[idx] = true;
     } else {
-        trackLabels.value =
-            measureData.relevance[selectedRelevanceFeature.value][type][
-                idx
-            ].labels.slice();
+        trackLabels.value = measureData.relevance[selectedRelevanceFeature.value][type][idx].labels.slice();
     }
     selectedRelevanceData.value =
-        measureData.relevance[selectedRelevanceFeature.value][type][
-            idx
-        ].measureRelevance.slice();
-    selectedLabel.value =
-        measureData.relevance[selectedRelevanceFeature.value][type][
-            idx
-        ].labelName;
+        measureData.relevance[selectedRelevanceFeature.value][type][idx].measureRelevance.slice();
+    selectedLabel.value = measureData.relevance[selectedRelevanceFeature.value][type][idx].labelName;
     labelMenu.value = false;
     relevanceMenu.value = false;
 }
@@ -836,6 +786,32 @@ function menuOnMouseLeave() {
     relevanceMenu.value = false;
     labelMenu.value = false;
     regionMenu.value = false;
+}
+
+const regionName = ref('');
+const startTime = ref(0);
+const endTime = ref(0);
+const beatsPerMeasure = ref(1);
+
+function saveRegion() {
+    if (regionName.value !== '') {
+        const data = {
+            startTime: startTime.value,
+            endTime: endTime.value,
+            regionName: regionName.value,
+            lengthSec: endTime.value - startTime.value,
+            beatsPerMeasure: beatsPerMeasure.value,
+        };
+        api.post(`/save-region`, data, getSecureConfig()).then(() => {
+            regionToSave.value = false;
+            regionName.value = '';
+            beatsPerMeasure.value = 1;
+            showAlert(`Region ${data.regionName} successfully added.`, 1500);
+            getAllRegions();
+        });
+    } else {
+        showAlert('Region must have a name!', 1500);
+    }
 }
 </script>
 
@@ -853,11 +829,8 @@ function menuOnMouseLeave() {
         </template>
 
         <template v-slot:module-content>
-            <div
-                class="flex h-[4rem] w-full justify-center border-b dark:border-gray-700">
-                <div
-                    class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll"
-                    id="top-bar">
+            <div class="flex h-[4rem] w-full justify-center border-b dark:border-gray-700">
+                <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll" id="top-bar">
                     <div
                         id="overview-3"
                         class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
@@ -868,16 +841,13 @@ function menuOnMouseLeave() {
                         </div>
                     </div>
 
-                    <div
-                        id="overview-2"
-                        class="flex h-[1rem] flex-row rounded-md">
+                    <div id="overview-2" class="flex h-[1rem] flex-row rounded-md">
                         <div
                             v-for="(obj, i) in selectedRelevanceData"
                             :id="`meas-${i}`"
                             class="h-full w-4 shrink-0"
                             :style="{
-                                'background-color':
-                                    colors[Math.round(obj.relevance * 100)],
+                                'background-color': colors[Math.round(obj.relevance * 100)],
                             }"
                             @click="goToMeasure(i)"
                             @mouseover="logMeasure(i)"
@@ -891,16 +861,13 @@ function menuOnMouseLeave() {
                                 <div
                                     class="h-full w-full"
                                     :class="{
-                                        'bg-red-600 bg-opacity-100':
-                                            i === currentMeasure,
+                                        'bg-red-600 bg-opacity-100': i === currentMeasure,
                                     }"></div>
                             </div>
                         </div>
                     </div>
 
-                    <div
-                        id="overview-1"
-                        class="relative flex h-[1.5rem] w-full items-center">
+                    <div id="overview-1" class="relative flex h-[1.5rem] w-full items-center">
                         <div
                             v-for="(obj, i) in selectedRelevanceData"
                             :id="`meas-${i}`"
@@ -910,16 +877,13 @@ function menuOnMouseLeave() {
                                 class="absolute h-[1.3rem] w-[1px] bg-black text-xs dark:bg-gray-400">
                                 <p class="mt-2">&nbsp{{ i + 1 }}</p>
                             </div>
-                            <div
-                                class="h-[0.5rem] w-[1px] bg-black dark:bg-gray-400"></div>
+                            <div class="h-[0.5rem] w-[1px] bg-black dark:bg-gray-400"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div
-                id="settings-bar"
-                class="flex h-[3rem] w-full flex-row items-center justify-between border-b px-5">
+            <div id="settings-bar" class="flex h-[3rem] w-full flex-row items-center justify-between border-b px-5">
                 <div class="relative flex h-full flex-row items-center gap-1">
                     <TextBtnGray
                         btn-text="Feature"
@@ -935,15 +899,9 @@ function menuOnMouseLeave() {
                             relevanceMenu = false;
                             regionMenu = false;
                         " />
-                    <TextBtnGray
-                        btn-text="Selected regions"
-                        @click="selectRegionType('selectedRegions')" />
-                    <TextBtnGray
-                        btn-text="Difference regions"
-                        @click="selectRegionType('differenceRegions')" />
-                    <TextBtnGray
-                        btn-text="Relevant measures"
-                        @click="selectRegionType('relevantMeasures')" />
+                    <TextBtnGray btn-text="Selected regions" @click="selectRegionType('selectedRegions')" />
+                    <TextBtnGray btn-text="Difference regions" @click="selectRegionType('differenceRegions')" />
+                    <TextBtnGray btn-text="Relevant measures" @click="selectRegionType('relevantMeasures')" />
                 </div>
                 <div
                     v-show="regionToSave"
@@ -958,65 +916,52 @@ function menuOnMouseLeave() {
                         autocomplete="off"
                         class="input-field-nomargin h-7"
                         placeholder="Region name"
-                        v-on:keyup.enter="saveRegion()" />
+                        v-model="regionName" />
 
-                    <div
-                        id="measure-input"
-                        class="flex flex-row items-center gap-1">
-                        <div class="flex select-none items-center text-sm">
-                            Beats per measure:
-                        </div>
+                    <div id="measure-input" class="flex flex-row items-center gap-1">
+                        <div class="flex select-none items-center text-sm">Beats per measure:</div>
                         <input
                             type="number"
                             id="beats-per-measure"
                             autocomplete="off"
                             min="1"
                             placeholder="1"
+                            v-model="beatsPerMeasure"
                             class="input-field-nomargin h-7 w-12" />
                     </div>
-                    <button class="btn btn-blue" @click="">Save region</button>
+                    <button class="btn btn-blue" @click="saveRegion()">Save region</button>
                 </div>
             </div>
 
-            <div
-                id="container"
-                class="relative flex h-[calc(100%-10rem)] w-full flex-row items-end transition">
+            <div id="container" class="relative flex h-[calc(100%-10rem)] w-full flex-row items-end transition">
                 <div
                     id="label-feature"
                     class="absolute top-0 flex w-full justify-center gap-2 py-1 text-sm font-semibold">
                     <div class="flex flex-row gap-1 text-xs">
                         <p>Selected feature:</p>
-                        <p
-                            class="flex items-center rounded-md bg-neutral-900 px-2 text-white">
+                        <p class="flex items-center rounded-md bg-neutral-900 px-2 text-white">
                             {{ selectedRelevanceFeatureStr }}
                         </p>
                     </div>
 
                     <div class="flex flex-row gap-1 text-xs">
                         <p>Selected label:</p>
-                        <p
-                            class="flex items-center rounded-md bg-neutral-900 px-2 text-white">
+                        <p class="flex items-center rounded-md bg-neutral-900 px-2 text-white">
                             {{ selectedLabel }}
                         </p>
                     </div>
                 </div>
 
-                <div
-                    id="menu-container"
-                    class="absolute top-0 z-30 flex w-full px-5 text-sm">
+                <div id="menu-container" class="absolute top-0 z-30 flex w-full px-5 text-sm">
                     <div>
                         <div
                             v-if="relevanceMenu"
                             class="z-50 mt-1 flex flex-col gap-1 rounded-md border bg-white p-1"
                             @mouseleave="menuOnMouseLeave()">
                             <p
-                                v-for="(
-                                    obj, i
-                                ) in measureData.relevanceFeatures"
+                                v-for="(obj, i) in measureData.relevanceFeatures"
                                 class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
-                                @click="
-                                    selectRelevanceFeature(obj.id, obj.name)
-                                ">
+                                @click="selectRelevanceFeature(obj.id, obj.name)">
                                 {{ obj.name }}
                             </p>
                         </div>
@@ -1047,69 +992,36 @@ function menuOnMouseLeave() {
                                 :key="i"
                                 class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md px-2 text-sm hover:bg-neutral-200"
                                 :class="{
-                                    'bg-neutral-200 dark:bg-gray-600':
-                                        regionObjects.selected[i],
+                                    'bg-neutral-200 dark:bg-gray-600': regionObjects.selected[i],
                                 }"
                                 @click="selectRegion(i, obj)">
                                 <p class="mr-5 flex h-full w-full items-center">
                                     {{ obj.regionName }}
                                 </p>
 
-                                <div
-                                    class="flex h-full gap-2 rounded-md py-1 dark:bg-gray-400 dark:hover:bg-gray-700">
+                                <div class="flex h-full gap-2 rounded-md py-1 dark:bg-gray-400 dark:hover:bg-gray-700">
                                     <div
-                                        v-if="
-                                            regionsType.selectedRegions ||
-                                            regionsType.differenceRegions
-                                        "
+                                        v-if="regionsType.selectedRegions || regionsType.differenceRegions"
                                         class="flex flex-row gap-2">
-                                        <p class="flex h-full items-center">
-                                            Reference:
-                                        </p>
+                                        <p class="flex h-full items-center">Reference:</p>
                                         <p
                                             class="flex w-20 select-none items-center justify-center rounded-md bg-green-500 text-xs text-white">
-                                            {{
-                                                getTimeString(
-                                                    obj.startTime,
-                                                    14,
-                                                    22
-                                                )
-                                            }}
+                                            {{ getTimeString(obj.startTime, 14, 22) }}
                                         </p>
                                         <p
                                             class="flex w-20 select-none items-center justify-center rounded-md bg-red-500 text-xs text-white">
-                                            {{
-                                                getTimeString(
-                                                    obj.endTime,
-                                                    14,
-                                                    22
-                                                )
-                                            }}
+                                            {{ getTimeString(obj.endTime, 14, 22) }}
                                         </p>
                                     </div>
-                                    <div
-                                        v-if="regionsType.differenceRegions"
-                                        class="flex flex-row gap-2">
+                                    <div v-if="regionsType.differenceRegions" class="flex flex-row gap-2">
                                         <p>Target:</p>
                                         <p
                                             class="flex w-20 select-none items-center justify-center rounded-md bg-green-500 text-xs text-white">
-                                            {{
-                                                getTimeString(
-                                                    obj.startTimeTarget,
-                                                    14,
-                                                    22
-                                                )
-                                            }}
+                                            {{ getTimeString(obj.startTimeTarget, 14, 22) }}
                                         </p>
                                         <p
                                             class="flex w-20 select-none items-center justify-center rounded-md bg-red-500 text-xs text-white">
-                                            {{
-                                                getTimeString(
-                                                    obj.endTimeTarget,
-                                                    14,
-                                                    22
-                                                )
-                                            }}
+                                            {{ getTimeString(obj.endTimeTarget, 14, 22) }}
                                         </p>
                                     </div>
 
@@ -1117,9 +1029,7 @@ function menuOnMouseLeave() {
                                         v-if="regionsType.selectedRegions"
                                         class="flex w-28 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
                                         Measures:
-                                        {{ getStartMeasure(obj.startTime) }}–{{
-                                            getEndMeasure(obj.endTime)
-                                        }}
+                                        {{ getStartMeasure(obj.startTime) }}–{{ getEndMeasure(obj.endTime) }}
                                     </p>
                                     <p
                                         v-if="regionsType.selectedRegions"
@@ -1137,11 +1047,7 @@ function menuOnMouseLeave() {
                                         v-if="regionsType.relevantMeasures"
                                         class="flex w-40 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
                                         Absolute relevance:
-                                        {{
-                                            Number(
-                                                obj.absoluteRelevance
-                                            ).toFixed(2)
-                                        }}
+                                        {{ Number(obj.absoluteRelevance).toFixed(2) }}
                                     </p>
                                 </div>
                             </div>
@@ -1149,12 +1055,8 @@ function menuOnMouseLeave() {
                     </div>
                 </div>
 
-                <div
-                    id="audio-container"
-                    class="flex h-full w-full flex-row overflow-y-scroll dark:border-gray-700">
-                    <div
-                        id="audio-controls"
-                        class="flex w-[10rem] flex-col items-center justify-start gap-2 py-6 pl-5">
+                <div id="audio-container" class="flex h-full w-full flex-row overflow-y-scroll dark:border-gray-700">
+                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 py-6 pl-5">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :id="`audio-controls-${i}`"
@@ -1165,8 +1067,7 @@ function menuOnMouseLeave() {
                                 <div
                                     class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs"
                                     :class="{
-                                        'bg-violet-800 text-white':
-                                            obj.reference,
+                                        'bg-violet-800 text-white': obj.reference,
                                     }">
                                     <p class="font-bold">{{ i + 1 }}</p>
                                     <Popper
@@ -1176,12 +1077,7 @@ function menuOnMouseLeave() {
                                         :arrow="true"
                                         class="select-none text-sm">
                                         <p class="text-xs">
-                                            {{
-                                                truncateFilename(
-                                                    obj.filename,
-                                                    11
-                                                )
-                                            }}
+                                            {{ truncateFilename(obj.filename, 11) }}
                                         </p>
                                     </Popper>
                                 </div>
@@ -1190,23 +1086,17 @@ function menuOnMouseLeave() {
                                     <div
                                         class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md hover:bg-cyan-600 hover:text-white"
                                         :class="{
-                                            'bg-cyan-700 text-white':
-                                                playing[i],
+                                            'bg-cyan-700 text-white': playing[i],
                                         }"
                                         @click="selectPeaks(i)">
-                                        <Icon
-                                            icon="material-symbols:volume-up-outline"
-                                            width="20" />
+                                        <Icon icon="material-symbols:volume-up-outline" width="20" />
                                     </div>
                                     <div
                                         class="flex h-[1.5rem] cursor-pointer select-none items-center justify-center rounded-md p-2 hover:bg-cyan-600 hover:text-white"
                                         :class="{
-                                            'bg-cyan-700 text-white':
-                                                oneVsRestRelevance[i],
+                                            'bg-cyan-700 text-white': oneVsRestRelevance[i],
                                         }"
-                                        @click="
-                                            selectRelevanceLabel(i, 'oneVsRest')
-                                        ">
+                                        @click="selectRelevanceLabel(i, 'oneVsRest')">
                                         <p class="text-xs">Relevance</p>
                                     </div>
                                 </div>
@@ -1220,9 +1110,7 @@ function menuOnMouseLeave() {
                                 }"></div>
                         </div>
 
-                        <div
-                            id="audio-controls-pb"
-                            class="h-3 w-full shrink-0"></div>
+                        <div id="audio-controls-pb" class="h-3 w-full shrink-0"></div>
                     </div>
 
                     <div
@@ -1236,35 +1124,23 @@ function menuOnMouseLeave() {
                                 :id="`track-div-${i}`"></div>
                             <div
                                 class="flex h-full w-[7.5rem] flex-col items-center justify-center rounded-md bg-neutral-200 text-sm text-black dark:bg-gray-400">
-                                <div
-                                    class="flex items-center justify-center text-xs font-semibold">
+                                <div class="flex items-center justify-center text-xs font-semibold">
                                     <p class="w-14">
-                                        {{
-                                            getTimeString(trackTimes[i], 14, 22)
-                                        }}
+                                        {{ getTimeString(trackTimes[i], 14, 22) }}
                                     </p>
                                 </div>
                                 <div
                                     v-show="regionLengths[i] > 0"
                                     class="flex flex-row items-center justify-center gap-1 text-xs font-semibold">
                                     <p>Sel:</p>
-                                    <p
-                                        class="w-full rounded-md bg-neutral-900 px-[0.2rem] text-white">
-                                        {{
-                                            getTimeString(
-                                                regionLengths[i],
-                                                14,
-                                                22
-                                            )
-                                        }}
+                                    <p class="w-full rounded-md bg-neutral-900 px-[0.2rem] text-white">
+                                        {{ getTimeString(regionLengths[i], 14, 22) }}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        <audio
-                            v-for="(obj, i) in tracksFromDb.syncTracks"
-                            :id="`audio-${i}`"></audio>
+                        <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>
                 </div>
             </div>
@@ -1278,11 +1154,7 @@ function menuOnMouseLeave() {
                         @click="playPause()"
                         class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600"
                         :class="{ 'bg-cyan-700 dark:bg-cyan-700': isPlaying }">
-                        <Icon
-                            v-if="isPlaying"
-                            icon="ph:pause"
-                            width="20"
-                            class="text-white" />
+                        <Icon v-if="isPlaying" icon="ph:pause" width="20" class="text-white" />
                         <Icon v-else icon="ph:play" width="20" />
                     </button>
 
@@ -1308,9 +1180,7 @@ function menuOnMouseLeave() {
                 </div>
 
                 <div class="flex flex-row items-center justify-center gap-1">
-                    <Icon
-                        icon="material-symbols:volume-up-outline"
-                        width="24" />
+                    <Icon icon="material-symbols:volume-up-outline" width="24" />
                     <input
                         type="range"
                         min="0.0"

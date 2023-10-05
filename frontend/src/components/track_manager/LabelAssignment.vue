@@ -1,12 +1,7 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import { useVuelidate } from '@vuelidate/core';
-import {
-    required,
-    minLength,
-    maxLength,
-    alphaNum,
-} from '@vuelidate/validators';
+import { required, minLength, maxLength, alphaNum } from '@vuelidate/validators';
 
 import { useTracksFromDb, useMeasureData } from '../../globalStores';
 import { getSecureConfig } from '../../sharedFunctions';
@@ -129,19 +124,13 @@ async function deleteLabel(label) {
             <div
                 v-for="(label, i) in labelNames"
                 class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 px-2 hover:bg-neutral-300">
-                <p
-                    class="flex h-full w-[calc(100%-1.5rem)] items-center"
-                    @click="openLabel(label)">
+                <p class="flex h-full w-[calc(100%-1.5rem)] items-center" @click="openLabel(label)">
                     {{ label }}
                 </p>
                 <div
                     class="flex h-full w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
                     :id="`remove-button-${i}`">
-                    <Icon
-                        icon="fluent:delete-48-regular"
-                        :inline="true"
-                        width="18"
-                        @click="deleteLabel(label)" />
+                    <Icon icon="fluent:delete-48-regular" :inline="true" width="18" @click="deleteLabel(label)" />
                 </div>
             </div>
         </div>
@@ -163,8 +152,7 @@ async function deleteLabel(label) {
             </div>
         </div>
 
-        <div
-            class="flex h-[3rem] w-full items-center justify-between gap-5 rounded-b-md px-5 text-sm">
+        <div class="flex h-[3rem] w-full items-center justify-between gap-5 rounded-b-md px-5 text-sm">
             <div class="flex items-center gap-5">
                 <input
                     v-model="v$.labelName0.$model"
@@ -190,44 +178,28 @@ async function deleteLabel(label) {
 
                 <button
                     v-if="!labelBeingAdded"
-                    @click="
-                        v$.labelName0.$invalid || v$.labelName1.$invalid
-                            ? null
-                            : addNewLabel()
-                    "
+                    @click="v$.labelName0.$invalid || v$.labelName1.$invalid ? null : addNewLabel()"
                     class="btn btn-blue"
                     :class="{
-                        'btn-disabled':
-                            v$.labelName0.$invalid || v$.labelName1.$invalid,
+                        'btn-disabled': v$.labelName0.$invalid || v$.labelName1.$invalid,
                     }">
                     Add new labels
                 </button>
             </div>
             <div class="flex items-center">
-                <button
-                    v-if="!labelBeingAdded"
-                    class="btn btn-blue"
-                    @click="$emit('closeLabelAssignment')">
+                <button v-if="!labelBeingAdded" class="btn btn-blue" @click="$emit('closeLabelAssignment')">
                     Close
                 </button>
                 <button
                     v-if="labelBeingAdded && labelBeingEdited"
                     class="btn btn-blue"
                     :class="{
-                        'btn-disabled':
-                            v$.labelName0.$invalid || v$.labelName1.$invalid,
+                        'btn-disabled': v$.labelName0.$invalid || v$.labelName1.$invalid,
                     }"
-                    @click="
-                        v$.labelName0.$invalid || v$.labelName1.$invalid
-                            ? null
-                            : editLabel()
-                    ">
+                    @click="v$.labelName0.$invalid || v$.labelName1.$invalid ? null : editLabel()">
                     Accept
                 </button>
-                <button
-                    v-if="labelBeingAdded && !labelBeingEdited"
-                    class="btn btn-blue"
-                    @click="saveLabel()">
+                <button v-if="labelBeingAdded && !labelBeingEdited" class="btn btn-blue" @click="saveLabel()">
                     Save label
                 </button>
             </div>

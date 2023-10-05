@@ -1,11 +1,6 @@
 import { showAlert } from '../../alerts';
 import { api } from '../../axiosInstance';
-import {
-    useFeatureData,
-    useFeatureLists,
-    useTracksFromDb,
-    useUserInfo,
-} from '../../globalStores';
+import { useFeatureData, useFeatureLists, useTracksFromDb, useUserInfo } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getSecureConfig } from '../../sharedFunctions';
 import { getMeasureData } from './_fetch_functions';
@@ -160,10 +155,7 @@ function sleep(ms) {
 }
 
 async function getFeatureNames() {
-    const resDynamics = await api.get(
-        '/feat-names-dynamics',
-        getSecureConfig()
-    );
+    const resDynamics = await api.get('/feat-names-dynamics', getSecureConfig());
     const resRhythm = await api.get('/feat-names-rhythm', getSecureConfig());
     featureLists.dynamics = resDynamics.data.featureList;
     featureLists.rhythm = resRhythm.data.featureList;
@@ -240,11 +232,7 @@ async function processAllTracks() {
 
 function setPreciseSync() {
     userInfo.preciseSync = preciseSync.value;
-    api.put(
-        '/set-precise-sync',
-        { preciseSync: preciseSync.value },
-        getSecureConfig()
-    );
+    api.put('/set-precise-sync', { preciseSync: preciseSync.value }, getSecureConfig());
 }
 
 function resetProgress() {

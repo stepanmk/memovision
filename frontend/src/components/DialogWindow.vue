@@ -15,8 +15,7 @@ const props = defineProps({
         </div>
         <slot name="dialog-content"></slot>
 
-        <div
-            class="flex h-[3rem] w-full items-center justify-between rounded-b-md px-5">
+        <div class="flex h-[3rem] w-full items-center justify-between rounded-b-md px-5">
             <slot name="dialog-buttons"></slot>
         </div>
     </div>

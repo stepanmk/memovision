@@ -79,21 +79,15 @@ function loginUser(data) {
             :placeholder="t('form.pswd')"
             autocomplete="password" />
 
-        <button
-            @click="loginUser(formData)"
-            type="submit"
-            class="btn btn-blue h-8 text-base font-semibold">
+        <button @click="loginUser(formData)" type="submit" class="btn btn-blue h-8 text-base font-semibold">
             {{ t('button.signin') }}
         </button>
 
-        <div
-            class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
+        <div class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
             <p>{{ t('login.notregistered') }}</p>
-            <router-link
-                :to="{ path: '/signup' }"
-                class="text-green-400 hover:text-white"
-                >{{ t('login.goregister') }}</router-link
-            >
+            <router-link :to="{ path: '/signup' }" class="text-green-400 hover:text-white">{{
+                t('login.goregister')
+            }}</router-link>
         </div>
     </form>
 </template>

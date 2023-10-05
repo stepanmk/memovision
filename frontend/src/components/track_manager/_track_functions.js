@@ -77,9 +77,4 @@ function deleteAllFilesFromDb() {
     });
 }
 
-export {
-    deleteAllFilesFromDb,
-    deleteFileFromDb,
-    setReference,
-    updateAllMetadata,
-};
+export { deleteAllFilesFromDb, deleteFileFromDb, setReference, updateAllMetadata };

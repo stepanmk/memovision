@@ -7,11 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { storeToRefs } from 'pinia';
 import { onClickOutside } from '@vueuse/core';
 
-import {
-    useUserInfo,
-    useTracksFromDb,
-    useComponentsVisible,
-} from '../globalStores';
+import { useUserInfo, useTracksFromDb, useComponentsVisible } from '../globalStores';
 
 import { darkMode, disableDarkMode } from '../sharedFunctions';
 import { showAlert } from '../alerts';
@@ -58,18 +54,12 @@ function logoutUser(data) {
     <div
         id="navbar"
         class="flex h-16 w-full flex-row items-center justify-between border-b bg-white px-7 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-        <div
-            id="first"
-            class="flex h-full w-[calc(100%-7rem)] flex-row items-center justify-start text-xl font-bold">
+        <div id="first" class="flex h-full w-[calc(100%-7rem)] flex-row items-center justify-start text-xl font-bold">
             MemoVision
         </div>
 
-        <div
-            id="second"
-            class="flex h-full w-[4rem] items-center justify-center">
-            <div
-                id="dark-toggle-container"
-                class="flex h-full w-full items-center justify-center dark:text-gray-900">
+        <div id="second" class="flex h-full w-[4rem] items-center justify-center">
+            <div id="dark-toggle-container" class="flex h-full w-full items-center justify-center dark:text-gray-900">
                 <div
                     id="toggle-bg"
                     class="h-[1.2rem] w-[2.5rem] cursor-pointer rounded-full bg-neutral-400 dark:bg-gray-600"
@@ -80,24 +70,14 @@ function logoutUser(data) {
                         :class="{
                             'ml-[1.25rem] duration-100': darkModeEnabled,
                         }">
-                        <Icon
-                            v-if="!darkModeEnabled"
-                            icon="ic:outline-light-mode"
-                            :inline="true"
-                            width="20" />
-                        <Icon
-                            v-else
-                            icon="ic:outline-dark-mode"
-                            :inline="true"
-                            width="20" />
+                        <Icon v-if="!darkModeEnabled" icon="ic:outline-light-mode" :inline="true" width="20" />
+                        <Icon v-else icon="ic:outline-dark-mode" :inline="true" width="20" />
                     </div>
                 </div>
             </div>
         </div>
 
-        <div
-            id="third"
-            class="flex h-full w-[3rem] items-center justify-center text-black">
+        <div id="third" class="flex h-full w-[3rem] items-center justify-center text-black">
             <div
                 id="user-icon"
                 class="dark:text-gray flex cursor-pointer flex-row items-center justify-center gap-1 hover:text-neutral-600 dark:text-gray-300 dark:hover:text-white"
@@ -112,17 +92,12 @@ function logoutUser(data) {
         id="user-menu"
         class="absolute right-0 top-0 z-20 mt-14 mr-12 flex w-60 flex-col rounded-md border bg-white pt-3 pb-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
         ref="target">
-        <div class="flex gap-1 pl-5 pr-5 pt-1 pb-1 text-base font-semibold">
-            User: {{ username }}
-        </div>
+        <div class="flex gap-1 pl-5 pr-5 pt-1 pb-1 text-base font-semibold">User: {{ username }}</div>
 
         <div
             @click="changeSession()"
             class="flex cursor-pointer gap-1 pl-5 pr-5 pt-1 pb-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
-            <Icon
-                icon="material-symbols:swap-horiz-rounded"
-                :inline="true"
-                width="20" />
+            <Icon icon="material-symbols:swap-horiz-rounded" :inline="true" width="20" />
             Change session
         </div>
 

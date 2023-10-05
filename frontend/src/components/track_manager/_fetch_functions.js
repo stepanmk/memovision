@@ -1,10 +1,5 @@
 import { api } from '../../axiosInstance';
-import {
-    useAudioStore,
-    useMeasureData,
-    useTracksFromDb,
-    useUserInfo,
-} from '../../globalStores';
+import { useAudioStore, useMeasureData, useTracksFromDb, useUserInfo } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getSecureConfig } from '../../sharedFunctions';
 
@@ -34,14 +29,8 @@ async function getTrackData() {
 }
 
 async function getAudioData(filename) {
-    const audioRes = await api.get(
-        `/get-audio/${filename}`,
-        getSecureConfig('blob')
-    );
-    const waveformRes = await api.get(
-        `/get-waveform-data/${filename}`,
-        getSecureConfig('blob')
-    );
+    const audioRes = await api.get(`/get-audio/${filename}`, getSecureConfig('blob'));
+    const waveformRes = await api.get(`/get-waveform-data/${filename}`, getSecureConfig('blob'));
     audioStore.audioObjects.push({
         filename: filename,
         audio: audioRes.data,
@@ -74,10 +63,4 @@ async function downloadMeasures() {
     URL.revokeObjectURL(url);
 }
 
-export {
-    downloadMeasures,
-    getAudioData,
-    getMeasureData,
-    getMetronomeClick,
-    getTrackData,
-};
+export { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData };

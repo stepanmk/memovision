@@ -98,16 +98,14 @@ function registerUser(data) {
             class="input-field-nomargin border-2"
             :placeholder="t('form.username')"
             :class="{
-                'border-green-400 transition duration-500':
-                    !v$.username.$invalid,
+                'border-green-400 transition duration-500': !v$.username.$invalid,
                 'border-2 border-gray-300': v$.username.$invalid,
             }"
             autocomplete="username" />
 
         <div class="mb-1 mt-1 h-5 text-xs text-white">
             <div v-if="v$.username.$error">
-                <span
-                    v-if="v$.username.$errors[0].$validator === 'lengthCheck'">
+                <span v-if="v$.username.$errors[0].$validator === 'lengthCheck'">
                     {{ t('register.usernametooshort') }}
                 </span>
             </div>
@@ -119,22 +117,17 @@ function registerUser(data) {
             class="input-field-nomargin border-2"
             :placeholder="t('form.pswd')"
             :class="{
-                'border-green-400 transition duration-500':
-                    !v$.password.$invalid,
+                'border-green-400 transition duration-500': !v$.password.$invalid,
                 'border-2 border-gray-300': v$.password.$invalid,
             }"
             autocomplete="new-password" />
 
         <div class="mb-1 mt-1 h-5 text-xs text-white">
             <div v-if="v$.password.$error">
-                <span
-                    v-if="v$.password.$errors[0].$validator === 'lengthCheck'">
+                <span v-if="v$.password.$errors[0].$validator === 'lengthCheck'">
                     {{ t('register.pswdtooshort') }}
                 </span>
-                <span
-                    v-if="
-                        v$.password.$errors[0].$validator === 'passwordMatch'
-                    ">
+                <span v-if="v$.password.$errors[0].$validator === 'passwordMatch'">
                     {{ t('register.pswdnomatch') }}
                 </span>
             </div>
@@ -146,61 +139,39 @@ function registerUser(data) {
             class="input-field-nomargin border-2"
             :placeholder="t('form.pswdagain')"
             :class="{
-                'border-green-400 transition duration-500':
-                    !v$.passwordRepeat.$invalid,
+                'border-green-400 transition duration-500': !v$.passwordRepeat.$invalid,
                 'border-2 border-gray-300': v$.passwordRepeat.$invalid,
             }"
             autocomplete="new-password" />
 
         <div class="mb-1 mt-1 h-5 text-xs text-white">
             <div v-if="v$.passwordRepeat.$error">
-                <span
-                    v-if="
-                        v$.passwordRepeat.$errors[0].$validator ===
-                        'lengthCheck'
-                    ">
+                <span v-if="v$.passwordRepeat.$errors[0].$validator === 'lengthCheck'">
                     {{ t('register.pswdtooshort') }}
                 </span>
-                <span
-                    v-if="
-                        v$.passwordRepeat.$errors[0].$validator ===
-                        'passwordMatch'
-                    ">
+                <span v-if="v$.passwordRepeat.$errors[0].$validator === 'passwordMatch'">
                     {{ t('register.pswdnomatch') }}
                 </span>
             </div>
         </div>
 
-        <div
-            v-if="
-                !v$.email.$invalid &&
-                !v$.username.$invalid &&
-                !v$.password.$invalid &&
-                !v$.passwordRepeat.$invalid
-            ">
-            <button
-                type="submit"
-                @click="registerUser(formData)"
-                class="btn btn-blue h-8 text-base font-semibold">
+        <div v-if="!v$.email.$invalid && !v$.username.$invalid && !v$.password.$invalid && !v$.passwordRepeat.$invalid">
+            <button type="submit" @click="registerUser(formData)" class="btn btn-blue h-8 text-base font-semibold">
                 {{ t('button.signup') }}
             </button>
         </div>
 
         <div v-else>
-            <button
-                type="button"
-                class="btn btn-disabled h-8 text-base font-semibold">
+            <button type="button" class="btn btn-disabled h-8 text-base font-semibold">
                 {{ t('button.signup') }}
             </button>
         </div>
 
         <div class="mt-5 flex flex-row gap-1 font-semibold text-white">
             <p>{{ t('register.alreadyregistered') }}</p>
-            <router-link
-                :to="{ name: 'Login' }"
-                class="text-green-400 hover:text-white"
-                >{{ t('register.gologin') }}</router-link
-            >
+            <router-link :to="{ name: 'Login' }" class="text-green-400 hover:text-white">{{
+                t('register.gologin')
+            }}</router-link>
         </div>
     </form>
 </template>

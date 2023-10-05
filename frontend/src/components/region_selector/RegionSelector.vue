@@ -3,12 +3,7 @@ import { reactive, computed, ref, watch } from 'vue';
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
 
-import {
-    useModulesVisible,
-    useTracksFromDb,
-    useMeasureData,
-    useAudioStore,
-} from '../../globalStores';
+import { useModulesVisible, useTracksFromDb, useMeasureData, useAudioStore } from '../../globalStores';
 import { showAlert } from '../../alerts';
 import { getCookie } from '../../sharedFunctions';
 import { api } from '../../axiosInstance';
@@ -173,9 +168,7 @@ function updateRegion(regionIdx) {
             'X-CSRF-TOKEN': getCookie('csrf_access_token'),
         },
     };
-    api.put('/update-region', regionRef.regions[regionIdx], axiosConfig).then(
-        (response) => {}
-    );
+    api.put('/update-region', regionRef.regions[regionIdx], axiosConfig).then((response) => {});
 }
 
 const audioCtx = new AudioContext();
@@ -191,9 +184,7 @@ osc.connect(metronomeGainNode);
 osc.start();
 
 function createRefPeaks() {
-    const waveformData = audioStore.getWaveformData(
-        referenceTrack.value.filename
-    );
+    const waveformData = audioStore.getWaveformData(referenceTrack.value.filename);
 
     const audioElement = document.getElementById('audio-element');
     const audio = audioStore.getAudio(referenceTrack.value.filename);
@@ -204,12 +195,6 @@ function createRefPeaks() {
     const options = {
         zoomview: {
             container: document.getElementById('zoomview-container'),
-            segmentOptions: {
-                style: 'overlay',
-                overlayOffset: 0,
-                overlayOpacity: 0.2,
-                overlayCornerRadius: 0,
-            },
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
@@ -217,17 +202,17 @@ function createRefPeaks() {
             playheadClickTolerance: 10,
         },
         overview: {
-            segmentOptions: {
-                style: 'overlay',
-                overlayOffset: 0,
-                overlayOpacity: 0.2,
-                overlayCornerRadius: 0,
-            },
             container: document.getElementById('overview-container'),
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
             playheadColor: 'red',
+        },
+        segmentOptions: {
+            overlay: true,
+            overlayOffset: 0,
+            overlayOpacity: 0.15,
+            overlayCornerRadius: 0,
         },
         mediaElement: audioElement,
         dataUri: {
@@ -274,32 +259,19 @@ function createRefPeaks() {
             if (regionBeingAdded) {
                 startTime.value = event.segment.startTime;
                 endTime.value = event.segment.endTime;
-                startTimeString.value = new Date(event.segment.startTime * 1000)
-                    .toISOString()
-                    .slice(14, 22);
-                endTimeString.value = new Date(event.segment.endTime * 1000)
-                    .toISOString()
-                    .slice(14, 22);
+                startTimeString.value = new Date(event.segment.startTime * 1000).toISOString().slice(14, 22);
+                endTimeString.value = new Date(event.segment.endTime * 1000).toISOString().slice(14, 22);
             } else {
                 let regionIdx = regionRef.selected.indexOf(true);
-                regionRef.regions[regionIdx].startTime =
-                    event.segment.startTime;
+                regionRef.regions[regionIdx].startTime = event.segment.startTime;
                 regionRef.regions[regionIdx].endTime = event.segment.endTime;
             }
         });
 
         peaks.on('points.enter', (point) => {
             if (metronomeActive.value) {
-                metronomeGainNode.gain.setTargetAtTime(
-                    metronomeVolume.value,
-                    audioCtx.currentTime,
-                    0.001
-                );
-                metronomeGainNode.gain.setTargetAtTime(
-                    0,
-                    audioCtx.currentTime + 0.05,
-                    0.001
-                );
+                metronomeGainNode.gain.exponentialRampToValueAtTime(metronomeVolume.value, audioCtx.currentTime, 0.001);
+                metronomeGainNode.gain.setTargetAtTime(0, audioCtx.currentTime + 0.05, 0.001);
             }
         });
 
@@ -327,10 +299,7 @@ function playPause() {
     } else {
         if (regionRef.selected.includes(true) || regionBeingAdded) {
             const segmentToPlay = refPeaksInstance.segments._segments[0];
-            refPeaksInstance.player.playSegment(
-                segmentToPlay,
-                loopingActive.value
-            );
+            refPeaksInstance.player.playSegment(segmentToPlay, loopingActive.value);
         } else {
             refPeaksInstance.player.play();
         }
@@ -396,11 +365,7 @@ function toggleMeasures() {
             refPeaksInstance.points.removeAll();
             measuresVisible.value = false;
         } else {
-            for (
-                let i = 1;
-                i < measureData.refTrack.gt_measures.length - 1;
-                i++
-            ) {
+            for (let i = 1; i < measureData.refTrack.gt_measures.length - 1; i++) {
                 let labelText = `${i}`;
                 if (i === measureData.refTrack.gt_measures.length - 2) {
                     labelText = 'END';
@@ -473,13 +438,11 @@ function deleteRegion(i) {
             'X-CSRF-TOKEN': getCookie('csrf_access_token'),
         },
     };
-    api.put('/delete-region', regionRef.regions[i], axiosConfig).then(
-        (response) => {
-            getAllRegions();
-            loopingActive.value = false;
-            refPeaksInstance.segments.removeAll();
-        }
-    );
+    api.put('/delete-region', regionRef.regions[i], axiosConfig).then((response) => {
+        getAllRegions();
+        loopingActive.value = false;
+        refPeaksInstance.segments.removeAll();
+    });
 }
 
 function setMeasureRegion(start, end) {
@@ -547,29 +510,19 @@ watch(refVolume, () => {
         :module-title="'Region selection'"
         :module-identifier="'region-selector'">
         <template v-slot:module-content>
-            <span
-                class="my-2 flex h-8 items-center rounded-md bg-neutral-200 py-1 px-3 text-sm text-black"
+            <span class="my-2 flex h-8 items-center rounded-md bg-neutral-200 py-1 px-3 text-sm text-black"
                 >Selected reference: {{ refName }}</span
             >
 
-            <div
-                class="flex w-full flex-col items-center border-b px-5 dark:border-gray-700">
-                <div
-                    id="overview-container"
-                    class="h-16 w-full cursor-text dark:bg-gray-400"></div>
+            <div class="flex w-full flex-col items-center border-b px-5 dark:border-gray-700">
+                <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-400"></div>
             </div>
 
-            <div
-                class="flex w-full flex-row items-center justify-end gap-5 border-b px-5 dark:border-gray-700">
-                <div
-                    id="zoomview-container"
-                    class="h-40 w-full cursor-text dark:bg-gray-400"></div>
+            <div class="flex w-full flex-row items-center justify-end gap-5 border-b px-5 dark:border-gray-700">
+                <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-400"></div>
 
-                <div
-                    id="zoomview-amplitude"
-                    class="absolute flex h-32 w-7 flex-col items-center justify-center">
-                    <div
-                        class="flex h-full w-full flex-col items-center justify-between rounded-md bg-neutral-200">
+                <div id="zoomview-amplitude" class="absolute flex h-32 w-7 flex-col items-center justify-center">
+                    <div class="flex h-full w-full flex-col items-center justify-between rounded-md bg-neutral-200">
                         <Icon icon="ic:baseline-plus" width="20" class="" />
                         <input
                             type="range"
@@ -589,8 +542,7 @@ watch(refVolume, () => {
             <div
                 id="player-controls"
                 class="flex h-[3rem] w-full flex-row items-center justify-between gap-2 border-b pl-5 pr-5 dark:border-gray-700">
-                <div
-                    class="flex h-full flex-row items-center justify-center gap-1">
+                <div class="flex h-full flex-row items-center justify-center gap-1">
                     <button
                         id="pause-button"
                         @click="playPause()"
@@ -613,10 +565,7 @@ watch(refVolume, () => {
                         :class="{
                             'bg-cyan-700 dark:bg-cyan-700': loopingActive,
                         }">
-                        <Icon
-                            icon="mdi:loop"
-                            width="20"
-                            :class="{ 'text-white': loopingActive }" />
+                        <Icon icon="mdi:loop" width="20" :class="{ 'text-white': loopingActive }" />
                     </button>
 
                     <button
@@ -630,17 +579,13 @@ watch(refVolume, () => {
                             :class="{ 'text-white': measuresVisible }" />
                     </button>
 
-                    <div
-                        class="flex h-8 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200">
+                    <div class="flex h-8 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200">
                         <button
                             id="metronome-button"
                             @click="toggleMetronome()"
                             class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white"
                             :class="{ 'bg-cyan-700': metronomeActive }">
-                            <Icon
-                                icon="ph:metronome"
-                                width="22"
-                                :class="{ 'text-white': metronomeActive }" />
+                            <Icon icon="ph:metronome" width="22" :class="{ 'text-white': metronomeActive }" />
                         </button>
                         <input
                             type="range"
@@ -654,9 +599,7 @@ watch(refVolume, () => {
                 </div>
 
                 <div class="flex flex-row items-center justify-center gap-1">
-                    <Icon
-                        icon="material-symbols:volume-up-outline"
-                        width="24" />
+                    <Icon icon="material-symbols:volume-up-outline" width="24" />
                     <input
                         type="range"
                         min="0.0"
@@ -665,8 +608,7 @@ watch(refVolume, () => {
                         v-model="refVolume"
                         class="h-1 w-24 accent-cyan-600"
                         id="ref-volume" />
-                    <div
-                        class="flex w-20 items-center justify-start rounded-md pl-[18px] text-sm">
+                    <div class="flex w-20 items-center justify-start rounded-md pl-[18px] text-sm">
                         <p class="dark:text-white">{{ currentTime }}</p>
                     </div>
                 </div>
@@ -685,17 +627,13 @@ watch(refVolume, () => {
                     :key="i"
                     class="flex h-7 w-full items-center justify-between rounded-md bg-neutral-200 px-2 text-sm hover:bg-neutral-300"
                     :class="{
-                        'bg-neutral-300 dark:bg-gray-600':
-                            regionRef.selected[i],
+                        'bg-neutral-300 dark:bg-gray-600': regionRef.selected[i],
                     }">
-                    <p
-                        class="flex w-full cursor-pointer items-center"
-                        @click="selectRegion(i)">
+                    <p class="flex w-full cursor-pointer items-center" @click="selectRegion(i)">
                         {{ obj.regionName }}
                     </p>
 
-                    <div
-                        class="flex h-full gap-2 rounded-md py-1 dark:bg-gray-400 dark:hover:bg-gray-700">
+                    <div class="flex h-full gap-2 rounded-md py-1 dark:bg-gray-400 dark:hover:bg-gray-700">
                         <p
                             class="flex w-20 select-none items-center justify-center rounded-md bg-green-500 text-xs text-white">
                             {{ getTimeString(obj.startTime, 14, 22) }}
@@ -707,9 +645,7 @@ watch(refVolume, () => {
                         <p
                             v-if="tracksFromDb.refTrack.gt_measures"
                             class="flex w-32 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
-                            Measures: {{ getStartMeasure(obj.startTime) }}–{{
-                                getEndMeasure(obj.endTime)
-                            }}
+                            Measures: {{ getStartMeasure(obj.startTime) }}–{{ getEndMeasure(obj.endTime) }}
                         </p>
                         <p
                             v-if="tracksFromDb.refTrack.gt_measures"
@@ -719,11 +655,7 @@ watch(refVolume, () => {
                         <div
                             class="flex w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
                             :id="`remove-button-${i}`">
-                            <Icon
-                                icon="fluent:delete-48-regular"
-                                :inline="true"
-                                width="18"
-                                @click="deleteRegion(i)" />
+                            <Icon icon="fluent:delete-48-regular" :inline="true" width="18" @click="deleteRegion(i)" />
                         </div>
                     </div>
                 </div>
@@ -731,16 +663,15 @@ watch(refVolume, () => {
                 <div
                     v-if="regionBeingNamed"
                     id="region-name-overlay"
-                    class="absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-2 rounded-md bg-neutral-400 bg-opacity-80">
+                    class="absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-2 bg-white">
                     <div class="flex flex-row gap-2">
                         <span
                             class="flex w-24 select-none justify-start rounded-md bg-green-500 pl-[14px] text-white"
                             >{{ startTimeString }}</span
                         >
-                        <span
-                            class="flex w-24 select-none justify-start rounded-md bg-red-500 pl-[14px] text-white"
-                            >{{ endTimeString }}</span
-                        >
+                        <span class="flex w-24 select-none justify-start rounded-md bg-red-500 pl-[14px] text-white">{{
+                            endTimeString
+                        }}</span>
                     </div>
 
                     <input
@@ -751,16 +682,13 @@ watch(refVolume, () => {
                         maxlength="256"
                         size="20"
                         autocomplete="off"
-                        class="input-field-nomargin"
+                        class="input-field-nomargin border"
                         placeholder="Region name:"
                         v-model="regionName"
                         v-on:keyup.enter="saveRegion()" />
 
-                    <div
-                        id="measure-input"
-                        class="flex flex-row items-center gap-2">
-                        <div
-                            class="flex h-6 select-none items-center rounded-md border bg-neutral-400 p-2 text-sm">
+                    <div id="measure-input" class="flex flex-row items-center gap-2">
+                        <div class="flex h-6 select-none items-center rounded-md bg-neutral-200 p-2 text-sm">
                             Measures:
                         </div>
                         <input
@@ -771,7 +699,7 @@ watch(refVolume, () => {
                             autocomplete="off"
                             min="1"
                             placeholder="1"
-                            class="input-field-nomargin h-7 w-14"
+                            class="input-field-nomargin h-7 w-14 border"
                             v-model="startMeasure"
                             :disabled="!referenceTrack.gt_measures" />
                         <input
@@ -782,16 +710,13 @@ watch(refVolume, () => {
                             autocomplete="off"
                             min="1"
                             placeholder="1"
-                            class="input-field-nomargin h-7 w-14"
+                            class="input-field-nomargin h-7 w-14 border"
                             v-model="endMeasure"
                             :disabled="!referenceTrack.gt_measures" />
                     </div>
 
-                    <div
-                        id="measure-input"
-                        class="flex flex-row items-center gap-2">
-                        <div
-                            class="flex h-6 select-none items-center rounded-md border bg-neutral-400 p-2 text-sm">
+                    <div id="measure-input" class="flex flex-row items-center gap-2">
+                        <div class="flex h-6 select-none items-center rounded-md bg-neutral-200 p-2 text-sm">
                             Beats per measure:
                         </div>
                         <input
@@ -802,28 +727,23 @@ watch(refVolume, () => {
                             autocomplete="off"
                             min="1"
                             placeholder="1"
-                            class="input-field-nomargin h-7 w-12"
+                            class="input-field-nomargin h-7 w-12 border"
                             v-model="beatsPerMeasure"
                             :disabled="!referenceTrack.gt_measures" />
                     </div>
 
-                    <div
-                        id="region-adding-buttons"
-                        class="flex flex-row items-center justify-center gap-2">
+                    <div id="region-adding-buttons" class="flex flex-row items-center justify-center gap-2">
                         <button @click="saveRegion()" class="btn btn-blue">
                             <span>Save</span>
                         </button>
-                        <button
-                            @click="cancelRegionAdding()"
-                            class="btn btn-blue">
+                        <button @click="cancelRegionAdding()" class="btn btn-blue">
                             <span>Cancel</span>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div
-                class="flex h-[3rem] w-full flex-row items-center justify-end gap-2 p-5">
+            <div class="flex h-[3rem] w-full flex-row items-center justify-end gap-2 p-5">
                 <button @click="addRegion()" class="btn btn-blue">
                     <span>Add region</span>
                 </button>

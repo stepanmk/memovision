@@ -3,23 +3,14 @@ import router from '../router.js';
 
 import { reactive } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
-import {
-    required,
-    minLength,
-    maxLength,
-    alphaNum,
-} from '@vuelidate/validators';
+import { required, minLength, maxLength, alphaNum } from '@vuelidate/validators';
 
 import { Icon } from '@iconify/vue';
-import { useI18n } from 'vue-i18n';
 
 import { useUserInfo } from '../globalStores';
 import { getSessions, getSecureConfig } from '../sharedFunctions';
 
 import { api } from '../axiosInstance';
-
-// localization
-const { t, locale } = useI18n();
 
 // validation
 const formData = reactive({
@@ -91,8 +82,7 @@ function deleteSession(sessionName) {
         @submit.prevent="submit">
         <p class="text-3xl">Session selection</p>
 
-        <div
-            class="flex h-36 w-[40rem] flex-col items-center gap-1 overflow-y-auto rounded-md bg-white px-5 py-3">
+        <div class="flex h-36 w-[40rem] flex-col items-center gap-1 overflow-y-auto rounded-md bg-white px-5 py-3">
             <div
                 v-for="(obj, i) in userInfo.sessions"
                 class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 px-2 text-black hover:bg-neutral-300">
@@ -100,9 +90,7 @@ function deleteSession(sessionName) {
                     class="flex h-full w-[calc(100%-1.5rem)] flex-row items-center justify-between gap-5 pr-2"
                     @click="selectSession(obj.name)">
                     <p class="text-sm">{{ obj.name }}</p>
-                    <p class="text-sm">
-                        Last modified: {{ obj.last_modified }}
-                    </p>
+                    <p class="text-sm">Last modified: {{ obj.last_modified }}</p>
                 </div>
 
                 <Icon

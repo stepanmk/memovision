@@ -36,9 +36,7 @@ async function addFilesToUploadList(files) {
         files = document.getElementById('added-files').files;
     }
     for (let i = 0; i < files.length; i++) {
-        const fileAlreadyInList = uploadList.value.find(
-            (obj) => obj.filename === files[i].name
-        );
+        const fileAlreadyInList = uploadList.value.find((obj) => obj.filename === files[i].name);
         const fileAlreadyUploaded = await preUploadCheck(files[i].name);
         if (!fileAlreadyInList && !fileAlreadyUploaded) {
             uploadList.value.push({
@@ -125,10 +123,4 @@ async function uploadMeasures(filename, id) {
     }
 }
 
-export {
-    addFilesToUploadList,
-    clearUploadList,
-    removeFileFromUploadList,
-    uploadAllFiles,
-    uploadMeasures,
-};
+export { addFilesToUploadList, clearUploadList, removeFileFromUploadList, uploadAllFiles, uploadMeasures };
