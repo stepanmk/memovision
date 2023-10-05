@@ -537,8 +537,8 @@ function zoomOnSelectedRegion() {
         }
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
-        view.setZoom({ seconds: secs + 0.5 });
-        view.setStartTime(segment.startTime - 1);
+        view.setZoom({ seconds: secs + 1 });
+        view.setStartTime(segment.startTime - 0.5);
     }
 }
 
@@ -555,8 +555,8 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        view.setZoom({ seconds: secs + 0.5 });
-        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
+        view.setZoom({ seconds: secs + 1 });
+        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1] - 0.5);
         view.enableAutoScroll(false, {});
         peaksInstances[i].segments.add({
             color: 'blue',
