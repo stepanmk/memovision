@@ -221,18 +221,15 @@ function createRefPeaks() {
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
+        zoomLevels: [64, 128, 256, 512, 1024, 2048],
     };
 
     const container = document.getElementById('zoomview-container');
     container.addEventListener('mousewheel', (event) => {
         if (event.deltaY < 0) {
-            if (timeZoom.value > 10) {
-                timeZoom.value -= 5;
-            }
+            refPeaksInstance.zoom.zoomIn();
         } else {
-            if (timeZoom.value < tracksFromDb.refTrack.length_sec / 4) {
-                timeZoom.value += 5;
-            }
+            refPeaksInstance.zoom.zoomOut();
         }
     });
 
@@ -286,10 +283,12 @@ function createRefPeaks() {
             toggleMeasures();
         }
 
-        timeZoom.value = Math.round(tracksFromDb.refTrack.length_sec / 4);
-        view.setZoom({
-            seconds: Math.round(tracksFromDb.refTrack.length_sec / 4),
-        });
+        // timeZoom.value = Math.round(tracksFromDb.refTrack.length_sec / 4);
+        // view.setZoom({
+        //     seconds: Math.round(tracksFromDb.refTrack.length_sec / 4),
+        // });
+        // refPeaksInstance.zoom.zoomIn();
+        // refPeaksInstance.zoom.zoomIn();
     });
 }
 
