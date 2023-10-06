@@ -300,6 +300,7 @@ function addTrack(filename, idx) {
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
+        zoomLevels: [56, 64, 84, 92, 128, 185, 256, 320, 512, 768, 1024, 1548, 2048, 3001],
     };
     Peaks.init(options, (err, peaks) => {
         if (err) console.log(err);
@@ -538,7 +539,7 @@ function zoomOnSelectedRegion() {
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
         view.setZoom({ seconds: secs + 1 });
-        view.setStartTime(segment.startTime - 0.5);
+        view.setStartTime(segment.startTime);
     }
 }
 
@@ -555,8 +556,7 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        view.setZoom({ seconds: secs + 1 });
-        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1] - 0.5);
+        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
         view.enableAutoScroll(false, {});
         peaksInstances[i].segments.add({
             color: 'blue',
@@ -688,6 +688,18 @@ function addListeners() {
     window.addEventListener('mousemove', relevanceBarMouseMove);
     const scrollContainer = document.getElementById('top-bar');
     scrollContainer.addEventListener('wheel', horizontalScroll);
+    const container = document.getElementById('audio-container');
+    container.addEventListener('mousewheel', (event) => {
+        if (event.deltaY < 0) {
+            peaksInstances.forEach((peaksInstance) => {
+                peaksInstance.zoom.zoomIn();
+            });
+        } else {
+            peaksInstances.forEach((peaksInstance) => {
+                peaksInstance.zoom.zoomOut();
+            });
+        }
+    });
 }
 
 function removeListeners() {
