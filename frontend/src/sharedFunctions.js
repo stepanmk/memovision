@@ -89,7 +89,6 @@ function createZoomLevels(zoomviewWidth, trackLengthSec) {
         zoomLevels.push(2 ** i);
     }
     zoomLevels.push('auto');
-    console.log(zoomLevels);
     return zoomLevels;
 }
 
