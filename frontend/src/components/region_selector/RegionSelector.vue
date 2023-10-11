@@ -5,7 +5,7 @@ import Peaks from 'peaks.js';
 
 import { useModulesVisible, useTracksFromDb, useMeasureData, useAudioStore } from '../../globalStores';
 import { showAlert } from '../../alerts';
-import { getCookie } from '../../sharedFunctions';
+import { getCookie, createZoomLevels } from '../../sharedFunctions';
 import { api } from '../../axiosInstance';
 import ModuleTemplate from '../ModuleTemplate.vue';
 
@@ -16,9 +16,7 @@ const audioStore = useAudioStore();
 const measureData = useMeasureData();
 
 // computed objects
-const referenceTrack = computed(() => {
-    return tracksFromDb.trackObjects.filter((obj) => obj.reference)[0];
-});
+
 const referenceExists = computed(() => {
     return tracksFromDb.trackObjects.filter((obj) => obj.reference).length > 0;
 });
@@ -74,7 +72,7 @@ watch(timeZoom, () => {
 // subscribe to pinia modulesVisible state
 modulesVisible.$subscribe((mutation, state) => {
     if (state.regionSelector && !prevVisible && referenceExists.value) {
-        refName.value = referenceTrack.value.filename;
+        refName.value = tracksFromDb.refTrack.filename;
         setTimeout(getReferenceAudio, 20);
         prevVisible = true;
         audioCtx.resume();
@@ -99,7 +97,7 @@ modulesVisible.$subscribe((mutation, state) => {
 
 function getReferenceAudio() {
     const audioElement = document.getElementById('audio-element');
-    const audio = audioStore.getAudio(referenceTrack.value.filename);
+    const audio = audioStore.getAudio(tracksFromDb.refTrack.filename);
     audioElement.src = URL.createObjectURL(audio);
     createRefPeaks();
 }
@@ -184,17 +182,17 @@ osc.connect(metronomeGainNode);
 osc.start();
 
 function createRefPeaks() {
-    const waveformData = audioStore.getWaveformData(referenceTrack.value.filename);
-
+    const waveformData = audioStore.getWaveformData(tracksFromDb.refTrack.filename);
     const audioElement = document.getElementById('audio-element');
-    const audio = audioStore.getAudio(referenceTrack.value.filename);
+    const audio = audioStore.getAudio(tracksFromDb.refTrack.filename);
     audioElement.src = URL.createObjectURL(audio);
     const audioSource = audioCtx.createMediaElementSource(audioElement);
     audioSource.connect(gainNode);
-
+    const zoomviewContainer = document.getElementById('zoomview-container');
+    const zoomLevels = createZoomLevels(zoomviewContainer.offsetWidth, tracksFromDb.refTrack.length_sec);
     const options = {
         zoomview: {
-            container: document.getElementById('zoomview-container'),
+            container: zoomviewContainer,
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
@@ -221,7 +219,7 @@ function createRefPeaks() {
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
-        zoomLevels: [56, 64, 84, 92, 128, 185, 256, 320, 512, 768, 1024, 1548, 2048, 3001],
+        zoomLevels: zoomLevels,
     };
 
     const container = document.getElementById('zoomview-container');
@@ -277,13 +275,13 @@ function createRefPeaks() {
             return;
         }
 
-        if (referenceTrack.value.gt_measures) {
+        if (tracksFromDb.refTrack.gt_measures) {
             measuresVisible.value = false;
             metronomeActive.value = true;
             toggleMeasures();
         }
 
-        refPeaksInstance.zoom.setZoom(5);
+        refPeaksInstance.zoom.setZoom(13);
     });
 }
 
@@ -354,7 +352,7 @@ function toggleMetronome() {
 }
 
 function toggleMeasures() {
-    if (referenceTrack.value.gt_measures) {
+    if (tracksFromDb.refTrack.gt_measures) {
         if (measuresVisible.value) {
             refPeaksInstance.points.removeAll();
             measuresVisible.value = false;
@@ -695,7 +693,7 @@ watch(refVolume, () => {
                             placeholder="1"
                             class="input-field-nomargin h-7 w-14 border"
                             v-model="startMeasure"
-                            :disabled="!referenceTrack.gt_measures" />
+                            :disabled="!tracksFromDb.refTrack.gt_measures" />
                         <input
                             type="number"
                             id="end-measure"
@@ -706,7 +704,7 @@ watch(refVolume, () => {
                             placeholder="1"
                             class="input-field-nomargin h-7 w-14 border"
                             v-model="endMeasure"
-                            :disabled="!referenceTrack.gt_measures" />
+                            :disabled="!tracksFromDb.refTrack.gt_measures" />
                     </div>
 
                     <div id="measure-input" class="flex flex-row items-center gap-2">
@@ -723,7 +721,7 @@ watch(refVolume, () => {
                             placeholder="1"
                             class="input-field-nomargin h-7 w-12 border"
                             v-model="beatsPerMeasure"
-                            :disabled="!referenceTrack.gt_measures" />
+                            :disabled="!tracksFromDb.refTrack.gt_measures" />
                     </div>
 
                     <div id="region-adding-buttons" class="flex flex-row items-center justify-center gap-2">

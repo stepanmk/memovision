@@ -1,7 +1,7 @@
 <script setup>
 import { useModulesVisible, useTracksFromDb, useAudioStore, useMeasureData } from '../../globalStores';
 import { showAlert } from '../../alerts';
-import { getSecureConfig, truncateFilename } from '../../sharedFunctions';
+import { getSecureConfig, truncateFilename, createZoomLevels } from '../../sharedFunctions';
 import { reactive, computed, ref, watch } from 'vue';
 import { api } from '../../axiosInstance';
 import { pinia } from '../../piniaInstance';
@@ -211,6 +211,16 @@ onKeyStroke(
     { eventName: 'keyup' }
 );
 
+onKeyStroke(
+    'a',
+    (e) => {
+        if (modulesVisible.interpretationPlayer) {
+            zoomAlign();
+        }
+    },
+    { eventName: 'keyup' }
+);
+
 onKeyStroke('m', (e) => {
     if (modulesVisible.interpretationPlayer) toggleMeasures();
 });
@@ -278,6 +288,8 @@ function addTrack(filename, idx) {
     const audioSource = audioCtx.createMediaElementSource(audioElement);
     audioSource.connect(gainNode);
     const waveformData = audioStore.getWaveformData(filename);
+    const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
+    const zoomLevels = createZoomLevels(waveformContainer.offsetWidth, trackLengthSec);
     const options = {
         zoomview: {
             segmentOptions: {
@@ -300,7 +312,7 @@ function addTrack(filename, idx) {
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
-        zoomLevels: [56, 64, 84, 92, 128, 185, 256, 320, 512, 768, 1024, 1548, 2048, 3001],
+        zoomLevels: zoomLevels,
     };
     Peaks.init(options, (err, peaks) => {
         if (err) console.log(err);
@@ -333,7 +345,7 @@ function addTrack(filename, idx) {
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
         view.enableAutoScroll(false, {});
-        view.setZoom({ seconds: 'auto' });
+        peaksInstances[idx].zoom.setZoom(zoomLevels.length - 1);
     });
 }
 
@@ -519,17 +531,18 @@ async function rewind() {
     fadeIn();
 }
 
-function zoomOnSelectedRegion() {
-    let secs = -1;
+function zoomAlign() {
     for (let i = 0; i < peaksInstances.length; i++) {
         if (peaksInstances[i].segments.getSegment('selectedRegion') === null) {
             continue;
         }
+        const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
-        const len = segment.endTime - segment.startTime;
-        regionLengths.value[i] = len;
-        if (len > secs) secs = len;
+        view.setStartTime(segment.startTime);
     }
+}
+
+function zoomOnSelectedRegion() {
     const segment = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
     peaksInstances[activePeaksIdx].player.seek(segment.startTime);
     for (let i = 0; i < peaksInstances.length; i++) {
@@ -538,7 +551,7 @@ function zoomOnSelectedRegion() {
         }
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
-        view.setZoom({ seconds: secs + 1 });
+        regionLengths.value[i] = segment.endTime - segment.startTime;
         view.setStartTime(segment.startTime);
     }
 }
@@ -547,12 +560,6 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     if (isPlaying.value) await playPause();
     regionSelected = true;
     hideAllRegions();
-    let secs = -1;
-    for (let i = 0; i < peaksInstances.length; i++) {
-        const len = selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1];
-        regionLengths.value[i] = len;
-        if (len > secs) secs = len;
-    }
     peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
@@ -565,6 +572,8 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
             endTime: selectedMeasureData[i][endMeasureIdx + 2],
             id: 'selectedRegion',
         });
+        regionLengths.value[i] =
+            selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1];
     }
 }
 

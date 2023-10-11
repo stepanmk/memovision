@@ -1,12 +1,12 @@
+import { api } from './axiosInstance';
 import {
-    useTracksFromDb,
     useAudioStore,
-    useModulesVisible,
     useComponentsVisible,
     useMeasureData,
+    useModulesVisible,
+    useTracksFromDb,
     useUserInfo,
 } from './globalStores';
-import { api } from './axiosInstance';
 import { pinia } from './piniaInstance';
 
 async function getSessions() {
@@ -81,13 +81,26 @@ function getTimeString(seconds) {
     }
 }
 
+function createZoomLevels(zoomviewWidth, trackLengthSec) {
+    const maxZoom = Math.pow(2, Math.floor(Math.log2((trackLengthSec * 44100) / zoomviewWidth)));
+    const maxPower = Math.log2(maxZoom);
+    let zoomLevels = [];
+    for (let i = 5; i < maxPower + 1; i++) {
+        zoomLevels.push(2 ** i);
+    }
+    zoomLevels.push('auto');
+    console.log(zoomLevels);
+    return zoomLevels;
+}
+
 export {
-    getSessions,
-    getCookie,
-    getSecureConfig,
-    resetAllStores,
+    createZoomLevels,
     darkMode,
     disableDarkMode,
-    truncateFilename,
+    getCookie,
+    getSecureConfig,
+    getSessions,
     getTimeString,
+    resetAllStores,
+    truncateFilename,
 };

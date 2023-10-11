@@ -272,7 +272,7 @@ async function closeLabelAssignment() {
                             class="flex h-7 w-[calc(100%-30rem)] cursor-pointer flex-row items-center justify-between"
                             @click="setReference(obj.filename)">
                             <div
-                                class="flex w-32 items-center justify-center text-xs"
+                                class="w-30 flex items-center justify-start px-1 text-xs"
                                 :class="{
                                     'rounded-md bg-violet-800 text-white': obj.reference,
                                 }">
@@ -462,7 +462,7 @@ async function closeLabelAssignment() {
                         :id="`file-${i}`"
                         :key="obj.filename"
                         class="flex h-7 w-full rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400">
-                        <div class="flex w-[17rem] items-center pl-1 text-xs">
+                        <div class="flex w-[17rem] items-center px-1 text-xs">
                             <Popper :content="obj.filename" hover placement="right" :arrow="true" class="select-none">
                                 {{ truncateFilename(obj.filename, 14) }}
                             </Popper>
