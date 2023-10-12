@@ -28,8 +28,7 @@ export const useModulesVisible = defineStore('modulesVisible', {
         hideAllModules() {
             this.trackManager = false;
             this.regionSelector = false;
-            (this.interpretationPlayer = false),
-                (this.featureVisualizer = false);
+            (this.interpretationPlayer = false), (this.featureVisualizer = false);
         },
     },
 });
@@ -59,16 +58,12 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
         somethingUploaded: (state) => state.trackObjects.length > 0,
         nonSyncTracks: (state) => state.trackObjects.filter((obj) => !obj.sync),
         syncTracks: (state) => state.trackObjects.filter((obj) => obj.sync),
-        refTrackSelected: (state) =>
-            state.trackObjects.filter((obj) => obj.reference).length > 0,
+        refTrackSelected: (state) => state.trackObjects.filter((obj) => obj.reference).length > 0,
         refTrack: (state) => state.trackObjects.find((obj) => obj.reference),
-        restOfTracks: (state) =>
-            state.trackObjects.filter((obj) => !obj.reference),
+        restOfTracks: (state) => state.trackObjects.filter((obj) => !obj.reference),
         allTracksHaveMeasures: (state) =>
-            state.trackObjects.filter(
-                (obj) => obj.gt_measures || obj.tf_measures
-            ).length === state.trackObjects.length &&
-            state.trackObjects.length > 0,
+            state.trackObjects.filter((obj) => obj.gt_measures || obj.tf_measures).length ===
+                state.trackObjects.length && state.trackObjects.length > 0,
         somethingToSync() {
             return this.nonSyncTracks.length > 0;
         },
@@ -78,22 +73,16 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
     },
     actions: {
         getIdx(filename) {
-            return this.trackObjects.findIndex(
-                (obj) => obj.filename === filename
-            );
+            return this.trackObjects.findIndex((obj) => obj.filename === filename);
         },
         getObject(filename) {
             return this.trackObjects.find((obj) => obj.filename === filename);
         },
         filenameExists(filename) {
-            return this.trackObjects.some((obj) => obj.filename === filename)
-                ? true
-                : false;
+            return this.trackObjects.some((obj) => obj.filename === filename) ? true : false;
         },
         sortByName() {
-            this.trackObjects.sort((a, b) =>
-                a.filename.localeCompare(b.filename)
-            );
+            this.trackObjects.sort((a, b) => a.filename.localeCompare(b.filename));
         },
         addTrackData(obj) {
             this.trackObjects.push(obj);
@@ -111,8 +100,7 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
         },
         setReference(filename) {
             const idx = this.getIdx(filename);
-            this.trackObjects[idx].reference =
-                !this.trackObjects[idx].reference;
+            this.trackObjects[idx].reference = !this.trackObjects[idx].reference;
             this.trackObjects[idx].label = !this.trackObjects[idx].label;
             this.trackObjects.forEach((obj) => {
                 if (obj.filename !== filename) {
@@ -142,14 +130,11 @@ export const useMeasureData = defineStore('measureData', {
     }),
     getters: {
         refTrack: (state) => state.measureObjects.find((obj) => obj.reference),
-        restOfTracks: (state) =>
-            state.measureObjects.filter((obj) => !obj.reference),
+        restOfTracks: (state) => state.measureObjects.filter((obj) => !obj.reference),
     },
     actions: {
         getIdx(filename) {
-            return this.measureObjects.findIndex(
-                (obj) => obj.filename === filename
-            );
+            return this.measureObjects.findIndex((obj) => obj.filename === filename);
         },
         getObject(filename) {
             return this.measureObjects.find((obj) => obj.filename === filename);
@@ -158,9 +143,7 @@ export const useMeasureData = defineStore('measureData', {
             return this.measureObjects.find((obj) => obj.reference);
         },
         sortByName() {
-            this.measureObjects.sort((a, b) =>
-                a.filename.localeCompare(b.filename)
-            );
+            this.measureObjects.sort((a, b) => a.filename.localeCompare(b.filename));
         },
         addTrackData(obj) {
             this.measureObjects.push(obj);
@@ -178,9 +161,7 @@ export const useMeasureData = defineStore('measureData', {
             this.selected.splice(0);
         },
         filenameExists(filename) {
-            return this.measureObjects.some((obj) => obj.filename === filename)
-                ? true
-                : false;
+            return this.measureObjects.some((obj) => obj.filename === filename) ? true : false;
         },
     },
 });
@@ -195,9 +176,7 @@ export const useAudioStore = defineStore('audioStore', {
             return this.audioObjects.findIndex((x) => x.filename === filename);
         },
         sortByName() {
-            this.audioObjects.sort((a, b) =>
-                a.filename.localeCompare(b.filename)
-            );
+            this.audioObjects.sort((a, b) => a.filename.localeCompare(b.filename));
         },
         getAudio(filename) {
             const idx = this.getIdx(filename);

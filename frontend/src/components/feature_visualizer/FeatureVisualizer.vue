@@ -1,15 +1,20 @@
 <script setup>
 import ModuleTemplate from '../ModuleTemplate.vue';
 import { api } from '../../axiosInstance';
-import { useModulesVisible, useTracksFromDb, useAudioStore } from '../../globalStores';
+import { useModulesVisible, useTracksFromDb, useAudioStore, useFeatureData, useFeatureLists } from '../../globalStores';
 import { truncateFilename, getSecureConfig } from '../../sharedFunctions';
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
 import { ref } from 'vue';
+import { pinia } from '../../piniaInstance';
 
-const modulesVisible = useModulesVisible();
-const tracksFromDb = useTracksFromDb();
-const audioStore = useAudioStore();
+import LineChart from './LineChart.vue';
+
+const modulesVisible = useModulesVisible(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
+const audioStore = useAudioStore(pinia);
+const featureData = useFeatureData(pinia);
+const featureLists = useFeatureLists(pinia);
 
 // audio context stuff
 const audioCtx = new AudioContext();
@@ -36,6 +41,7 @@ let syncPoints = null;
 let activePeaksIdx = 0;
 let peaksInstances = [];
 let idxArray = [];
+const cursorPositions = ref([]);
 
 function initFeatVisualizer() {
     getSyncPoints();
@@ -45,6 +51,7 @@ function initFeatVisualizer() {
 
         peaksInstances.push(null);
         idxArray.push(idx);
+        cursorPositions.value.push(0);
     });
 
     setTimeout(() => {
@@ -60,6 +67,7 @@ function destroyFeatVisualizer() {
 
     peaksInstances = [];
     idxArray = [];
+    cursorPositions.value = [];
 }
 
 let featVisualizerOpened = false;
@@ -68,6 +76,8 @@ modulesVisible.$subscribe((mutation, state) => {
     if (state.featureVisualizer && !featVisualizerOpened) {
         featVisualizerOpened = true;
         initFeatVisualizer();
+
+        console.log(featureData.dynamics);
 
         console.log('Feat Visualizer opened!');
     } else if (!state.featureVisualizer && featVisualizerOpened) {
@@ -136,6 +146,9 @@ function addTrack(filename, idx) {
         view.setZoom({ seconds: 'auto' });
         view.enableAutoScroll(false, {});
         if (idx === 0) selectPeaks(idx);
+        peaksInstances[idx].on('player.timeupdate', (time) => {
+            cursorPositions.value[idx] = `${99.9 * (time / tracksFromDb.syncTracks[idx].length_sec)}%`;
+        });
     });
 }
 
@@ -203,7 +216,7 @@ function sleep(ms) {
         :is-disabled="false">
         <template v-slot:module-content>
             <div class="h-[3rem] w-full border-b bg-yellow-100"></div>
-            <div class="flex h-[calc(100%-9rem)] w-full flex-row border-b">
+            <div class="flex h-[calc(100%-6rem)] w-full flex-row border-b">
                 <div
                     id="tracklist"
                     class="flex h-full w-[12rem] flex-col items-center justify-start gap-1 overflow-y-scroll border-r p-2">
@@ -227,17 +240,34 @@ function sleep(ms) {
                     </div>
                 </div>
                 <div id="feature-content" class="h-full w-[calc(100%-24rem)] overflow-y-scroll">
-                    <div
-                        id="audio-tracks"
-                        class="flex w-full flex-col gap-2 bg-cyan-100 px-2 py-5 dark:border-gray-700">
+                    <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
                         <div
+                            class="relative"
                             v-for="(obj, i) in tracksFromDb.syncTracks"
-                            class="h-16 w-full shrink-0 border dark:border-gray-500 dark:bg-gray-400"
-                            :id="`track-div-${i}`"
                             :class="{
-                                'bg-neutral-200': obj.label,
                                 hidden: !tracksVisible[i],
-                            }"></div>
+                            }">
+                            <div class="">
+                                <div
+                                    class="z-20 h-16 w-full shrink-0 bg-slate-200 dark:border-gray-500 dark:bg-gray-400"
+                                    :id="`track-div-${i}`"></div>
+                            </div>
+                            <div v-for="(feat, j) in featureLists.dynamics">
+                                <LineChart
+                                    :data="featureData.dynamics[feat.id][i].featData"
+                                    :y-min="feat.yMin"
+                                    :y-max="feat.yMax"
+                                    class="h-[10rem]" />
+                            </div>
+                            <div class="z-20 w-full bg-yellow-100">
+                                <div></div>
+                                <div
+                                    class="absolute top-0 z-30 h-full w-[1px] bg-[red]"
+                                    :style="{
+                                        left: cursorPositions[i],
+                                    }"></div>
+                            </div>
+                        </div>
 
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>

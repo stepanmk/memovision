@@ -16,7 +16,9 @@ feature_list = [
         'id': 'rms', 
         'name': 'Root mean square', 
         'units': '[–]',
-        'fpm': 10, 
+        'fpm': 10,
+        'yMin': 0,
+        'yMax': 0.4, 
         'resampled': True,  
         'relevance': False,
         'computed': False
@@ -26,6 +28,8 @@ feature_list = [
         'name': 'Loudness', 
         'units': 'LUFS', 
         'fpm': 10,
+        'yMin': -80,
+        'yMax': 0, 
         'resampled': True,  
         'relevance': True,
         'computed': False

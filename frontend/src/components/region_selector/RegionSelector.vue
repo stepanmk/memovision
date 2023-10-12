@@ -281,7 +281,7 @@ function createRefPeaks() {
             toggleMeasures();
         }
 
-        refPeaksInstance.zoom.setZoom(13);
+        refPeaksInstance.zoom.setZoom(zoomLevels.length - 1);
     });
 }
 
