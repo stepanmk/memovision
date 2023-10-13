@@ -27,6 +27,8 @@ use([
 
 const props = defineProps({
     showAxis: Boolean,
+    xMin: Number,
+    xMax: Number,
     yMin: Number,
     yMax: Number,
     data: Array,
@@ -58,6 +60,8 @@ const compAxis = computed(() => {
 const option = ref({
     animation: false,
     xAxis: {
+        min: props.xMin,
+        max: props.xMax,
         data: compAxis.value,
         show: false,
         type: 'category',
@@ -83,7 +87,8 @@ const option = ref({
             type: 'line',
             showSymbol: false,
             lineStyle: {
-                width: 1.5,
+                width: 1,
+                color: '#0891b2',
             },
             // markLine: {
             //     data: markLinePos,
@@ -101,7 +106,7 @@ const option = ref({
     ],
 
     grid: {
-        left: 0,
+        left: 30,
         right: 0,
         top: 20,
         bottom: 20,

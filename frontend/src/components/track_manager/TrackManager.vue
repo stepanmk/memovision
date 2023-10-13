@@ -398,7 +398,7 @@ async function closeLabelAssignment() {
             <!-- legend end -->
 
             <!-- buttons top -->
-            <div class="flex h-[3rem] w-full items-center justify-end gap-5 border-b px-7 dark:border-gray-700">
+            <div class="flex h-[3rem] w-full items-center justify-end gap-2 border-b px-7 dark:border-gray-700">
                 <div class="flex flex-row items-center gap-2">
                     <label for="precise-check" class="text-sm">Precise synchronization</label>
                     <input
@@ -499,7 +499,7 @@ async function closeLabelAssignment() {
 
             <!-- buttons bottom -->
             <div class="flex h-[3rem] w-full items-center justify-end px-7">
-                <div class="flex gap-5">
+                <div class="flex gap-2">
                     <input
                         id="added-files"
                         type="file"

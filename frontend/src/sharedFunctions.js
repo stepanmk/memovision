@@ -85,8 +85,8 @@ function createZoomLevels(zoomviewWidth, trackLengthSec) {
     const maxZoom = Math.pow(2, Math.floor(Math.log2((trackLengthSec * 44100) / zoomviewWidth)));
     const maxPower = Math.log2(maxZoom);
     let zoomLevels = [];
-    for (let i = 5; i < maxPower + 1; i++) {
-        zoomLevels.push(2 ** i);
+    for (let i = 64; i < maxZoom; i += 300) {
+        zoomLevels.push(i);
     }
     zoomLevels.push('auto');
     return zoomLevels;

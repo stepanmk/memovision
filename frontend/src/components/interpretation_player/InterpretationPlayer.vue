@@ -702,10 +702,12 @@ function addListeners() {
         if (event.deltaY < 0) {
             peaksInstances.forEach((peaksInstance) => {
                 peaksInstance.zoom.zoomIn();
+                zoomAlign();
             });
         } else {
             peaksInstances.forEach((peaksInstance) => {
                 peaksInstance.zoom.zoomOut();
+                zoomAlign();
             });
         }
     });
@@ -858,7 +860,7 @@ function saveRegion() {
 
         <template v-slot:module-content>
             <div class="flex h-[4rem] w-full justify-center border-b dark:border-gray-700">
-                <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll" id="top-bar">
+                <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll bg-slate-200" id="top-bar">
                     <div
                         id="overview-3"
                         class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
@@ -912,7 +914,7 @@ function saveRegion() {
             </div>
 
             <div id="settings-bar" class="flex h-[3rem] w-full flex-row items-center justify-between border-b px-5">
-                <div class="relative flex h-full flex-row items-center gap-1">
+                <div class="relative flex h-full flex-row items-center gap-2">
                     <TextBtnGray
                         btn-text="Feature"
                         @click="

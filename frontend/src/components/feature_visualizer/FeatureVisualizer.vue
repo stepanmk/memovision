@@ -1,7 +1,14 @@
 <script setup>
 import ModuleTemplate from '../ModuleTemplate.vue';
 import { api } from '../../axiosInstance';
-import { useModulesVisible, useTracksFromDb, useAudioStore, useFeatureData, useFeatureLists } from '../../globalStores';
+import {
+    useModulesVisible,
+    useTracksFromDb,
+    useAudioStore,
+    useFeatureData,
+    useFeatureLists,
+    useMeasureData,
+} from '../../globalStores';
 import { truncateFilename, getSecureConfig } from '../../sharedFunctions';
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
@@ -9,12 +16,14 @@ import { ref } from 'vue';
 import { pinia } from '../../piniaInstance';
 
 import LineChart from './LineChart.vue';
+import MeasureSelector from './MeasureSelector.vue';
 
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 const audioStore = useAudioStore(pinia);
 const featureData = useFeatureData(pinia);
 const featureLists = useFeatureLists(pinia);
+const measureData = useMeasureData(pinia);
 
 // audio context stuff
 const audioCtx = new AudioContext();
@@ -36,15 +45,18 @@ gainNode.connect(audioCtx.destination);
 const isPlaying = ref(false);
 const tracksVisible = ref([]);
 const playing = ref([]);
+const regionOverlay = ref([]);
 
 let syncPoints = null;
 let activePeaksIdx = 0;
 let peaksInstances = [];
 let idxArray = [];
+let selectedMeasureData = [];
 const cursorPositions = ref([]);
 
 function initFeatVisualizer() {
     getSyncPoints();
+    getMeasureData();
     tracksFromDb.syncTracks.forEach((track, idx) => {
         tracksVisible.value.push(true);
         playing.value.push(false);
@@ -68,6 +80,8 @@ function destroyFeatVisualizer() {
     peaksInstances = [];
     idxArray = [];
     cursorPositions.value = [];
+    regionOverlay.value = [];
+    selectedMeasureData = [];
 }
 
 let featVisualizerOpened = false;
@@ -76,9 +90,6 @@ modulesVisible.$subscribe((mutation, state) => {
     if (state.featureVisualizer && !featVisualizerOpened) {
         featVisualizerOpened = true;
         initFeatVisualizer();
-
-        console.log(featureData.dynamics);
-
         console.log('Feat Visualizer opened!');
     } else if (!state.featureVisualizer && featVisualizerOpened) {
         featVisualizerOpened = false;
@@ -91,6 +102,22 @@ modulesVisible.$subscribe((mutation, state) => {
 async function getSyncPoints() {
     const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
     syncPoints = syncPointsRes.data;
+}
+
+function getMeasureData() {
+    for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
+        const filename = tracksFromDb.syncTracks[i].filename;
+        if (tracksFromDb.syncTracks[i].gt_measures) {
+            const measures = measureData.getObject(filename).gt_measures;
+            selectedMeasureData.push(measures);
+            for (let j = 1; j < measures.length - 2; j++) {
+                regionOverlay.value.push(false);
+            }
+        } else {
+            selectedMeasureData.push(measureData.getObject(filename).tf_measures);
+        }
+    }
+    console.log(selectedMeasureData);
 }
 
 function makeVisible(idx) {
@@ -145,9 +172,12 @@ function addTrack(filename, idx) {
         const view = peaksInstances[idx].views.getView('zoomview');
         view.setZoom({ seconds: 'auto' });
         view.enableAutoScroll(false, {});
-        if (idx === 0) selectPeaks(idx);
+        if (idx === 0) {
+            selectPeaks(idx);
+        }
         peaksInstances[idx].on('player.timeupdate', (time) => {
-            cursorPositions.value[idx] = `${99.9 * (time / tracksFromDb.syncTracks[idx].length_sec)}%`;
+            console.log(100 * (time / tracksFromDb.syncTracks[idx].length_sec));
+            cursorPositions.value[idx] = `calc(${99.9 * (time / tracksFromDb.syncTracks[idx].length_sec)}%)`;
         });
     });
 }
@@ -215,8 +245,10 @@ function sleep(ms) {
         :visible="modulesVisible.featureVisualizer"
         :is-disabled="false">
         <template v-slot:module-content>
+            <MeasureSelector :measure-message="''" :measure-data="selectedMeasureData[0]" />
+
             <div class="h-[3rem] w-full border-b bg-yellow-100"></div>
-            <div class="flex h-[calc(100%-6rem)] w-full flex-row border-b">
+            <div class="flex h-[calc(100%-10rem)] w-full flex-row border-b">
                 <div
                     id="tracklist"
                     class="flex h-full w-[12rem] flex-col items-center justify-start gap-1 overflow-y-scroll border-r p-2">
@@ -239,7 +271,7 @@ function sleep(ms) {
                         </div>
                     </div>
                 </div>
-                <div id="feature-content" class="h-full w-[calc(100%-24rem)] overflow-y-scroll">
+                <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-y-scroll">
                     <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
                         <div
                             class=""
@@ -247,26 +279,28 @@ function sleep(ms) {
                             :class="{
                                 hidden: !tracksVisible[i],
                             }">
-                            <div class="">
+                            <div class="pl-[30px]">
                                 <div
-                                    class="z-20 h-16 w-full shrink-0 bg-slate-200 dark:border-gray-500 dark:bg-gray-400"
+                                    class="z-20 h-10 w-full shrink-0 bg-slate-200 dark:border-gray-500 dark:bg-gray-400"
                                     :id="`track-div-${i}`"></div>
                             </div>
-                            <div class="relative bg-yellow-100">
-                                <div v-for="(feat, j) in featureLists.dynamics">
-                                    <LineChart
-                                        :data="featureData.dynamics[feat.id][i].featData"
-                                        :y-min="feat.yMin"
-                                        :y-max="feat.yMax"
-                                        class="h-[10rem]" />
+                            <div class="relative">
+                                <div class="absolute flex h-full w-full flex-row">
+                                    <div class="w-[30px]"></div>
+                                    <div class="w-[calc(100%-30px)]">
+                                        <div
+                                            class="h-full w-[1px] bg-[red]"
+                                            :style="{ marginLeft: cursorPositions[i] }"></div>
+                                    </div>
                                 </div>
-                                <div class="z-20 w-full bg-yellow-100">
-                                    <div></div>
-                                    <div
-                                        class="absolute top-0 z-30 h-full w-[1px] bg-[red]"
-                                        :style="{
-                                            left: cursorPositions[i],
-                                        }"></div>
+                                <div class="">
+                                    <div v-for="(feat, j) in featureLists.dynamics" class="flex flex-col gap-2">
+                                        <LineChart
+                                            :data="featureData.dynamics[feat.id][i].featData"
+                                            :y-min="feat.yMin"
+                                            :y-max="feat.yMax"
+                                            class="h-[10rem]" />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -274,7 +308,7 @@ function sleep(ms) {
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>
                 </div>
-                <div class="h-full w-[12rem] bg-red-100"></div>
+                <!-- <div class="h-full w-[12rem] bg-red-100"></div> -->
             </div>
         </template>
     </ModuleTemplate>
