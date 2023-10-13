@@ -242,7 +242,7 @@ function sleep(ms) {
                 <div id="feature-content" class="h-full w-[calc(100%-24rem)] overflow-y-scroll">
                     <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
                         <div
-                            class="relative"
+                            class=""
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :class="{
                                 hidden: !tracksVisible[i],
@@ -252,20 +252,22 @@ function sleep(ms) {
                                     class="z-20 h-16 w-full shrink-0 bg-slate-200 dark:border-gray-500 dark:bg-gray-400"
                                     :id="`track-div-${i}`"></div>
                             </div>
-                            <div v-for="(feat, j) in featureLists.dynamics">
-                                <LineChart
-                                    :data="featureData.dynamics[feat.id][i].featData"
-                                    :y-min="feat.yMin"
-                                    :y-max="feat.yMax"
-                                    class="h-[10rem]" />
-                            </div>
-                            <div class="z-20 w-full bg-yellow-100">
-                                <div></div>
-                                <div
-                                    class="absolute top-0 z-30 h-full w-[1px] bg-[red]"
-                                    :style="{
-                                        left: cursorPositions[i],
-                                    }"></div>
+                            <div class="relative bg-yellow-100">
+                                <div v-for="(feat, j) in featureLists.dynamics">
+                                    <LineChart
+                                        :data="featureData.dynamics[feat.id][i].featData"
+                                        :y-min="feat.yMin"
+                                        :y-max="feat.yMax"
+                                        class="h-[10rem]" />
+                                </div>
+                                <div class="z-20 w-full bg-yellow-100">
+                                    <div></div>
+                                    <div
+                                        class="absolute top-0 z-30 h-full w-[1px] bg-[red]"
+                                        :style="{
+                                            left: cursorPositions[i],
+                                        }"></div>
+                                </div>
                             </div>
                         </div>
 
