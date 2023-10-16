@@ -18,7 +18,7 @@ feature_list = [
         'units': '[–]',
         'fpm': 10,
         'yMin': 0,
-        'yMax': 0.4, 
+        'yMax': 0.5, 
         'resampled': True,  
         'relevance': False,
         'computed': False

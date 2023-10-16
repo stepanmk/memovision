@@ -1,25 +1,40 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useTracksFromDb } from '../../globalStores';
-import { pinia } from '../../piniaInstance';
+import { ref } from 'vue';
 
 const props = defineProps({
-    measureMessage: String,
     measureData: Array,
+    peaksInstances: Array,
 });
 
-const tracksFromDb = useTracksFromDb(pinia);
-let measureCount;
+const regionOverlay = ref([]);
+const measureMessage = ref(null);
+let measureCount = 0;
+let firstMeasure = null;
+let regionSelected = false;
+let isHoldingMouseButton = false;
+let dragged = false;
 
-onMounted(() => {
-    addListeners();
+defineExpose({
+    init,
+    destroy,
+});
+
+const emit = defineEmits(['zoomOn']);
+
+function init() {
     measureCount = props.measureData.length;
     for (let i = 0; i < measureCount; i++) {
         regionOverlay.value.push(false);
     }
-});
+    addListeners();
+}
 
-const measureMessage = ref(null);
+function destroy() {
+    measureCount = 0;
+    regionOverlay.value = [];
+    removeListeners();
+}
+
 function logMeasure(i) {
     measureMessage.value = 'Measure: ' + (i + 1);
     const popup = document.getElementById('measure-popup');
@@ -33,13 +48,11 @@ function clearMessage() {
     measureMessage.value = null;
 }
 
-const regionOverlay = ref([]);
-
-let regionSelected = false;
-
-let firstMeasure = null;
-let isHoldingMouseButton = false;
-let dragged = false;
+function horizontalScroll(event) {
+    event.preventDefault();
+    const scrollContainer = document.getElementById('top-bar');
+    scrollContainer.scrollLeft += event.deltaY;
+}
 function addListeners() {
     const relevanceBar = document.getElementById('overview-2');
     relevanceBar.addEventListener('mousedown', relevanceBarMouseDown);
@@ -47,26 +60,6 @@ function addListeners() {
     window.addEventListener('mousemove', relevanceBarMouseMove);
     const scrollContainer = document.getElementById('top-bar');
     scrollContainer.addEventListener('wheel', horizontalScroll);
-    // const container = document.getElementById('audio-container');
-    // container.addEventListener('mousewheel', (event) => {
-    //     if (event.deltaY < 0) {
-    //         peaksInstances.forEach((peaksInstance) => {
-    //             peaksInstance.zoom.zoomIn();
-    //             zoomAlign();
-    //         });
-    //     } else {
-    //         peaksInstances.forEach((peaksInstance) => {
-    //             peaksInstance.zoom.zoomOut();
-    //             zoomAlign();
-    //         });
-    //     }
-    // });
-}
-
-function horizontalScroll(event) {
-    event.preventDefault();
-    const scrollContainer = document.getElementById('top-bar');
-    scrollContainer.scrollLeft += event.deltaY;
 }
 
 function removeListeners() {
@@ -78,32 +71,12 @@ function removeListeners() {
     scrollContainer.removeEventListener('wheel', horizontalScroll);
 }
 
-function relevanceBarMouseDown(event) {
-    const relevanceBar = document.getElementById('overview-2');
-    const bounds = relevanceBar.getBoundingClientRect();
-    const barWidth = 16 * measureCount;
-    event.preventDefault();
-    isHoldingMouseButton = true;
-    const x = event.clientX - bounds.left;
-    const dragOverMeasureIdx = Math.round((x / barWidth) * measureCount);
-    firstMeasure = dragOverMeasureIdx;
-}
-
 function relevanceBarMouseUp() {
     isHoldingMouseButton = false;
     const startMeasureIdx = regionOverlay.value.indexOf(true);
     const endMeasureIdx = regionOverlay.value.lastIndexOf(true);
     if (dragged) {
-        // regionToSave.value = true;
-        // const referenceName = tracksFromDb.refTrack.filename;
-        // const refIdx = tracksFromDb.getIdx(referenceName);
-        // zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx);
-
-        console.log(startMeasureIdx, endMeasureIdx);
-        // repeatMeasureIdxStart.value = startMeasureIdx;
-        // repeatMeasureIdxEnd.value = endMeasureIdx + 2;
-        // startTime.value = selectedMeasureData[refIdx][startMeasureIdx + 1];
-        // endTime.value = selectedMeasureData[refIdx][endMeasureIdx + 2];
+        emit('zoomOn', startMeasureIdx, endMeasureIdx);
     }
     dragged = false;
 }
@@ -122,6 +95,17 @@ function relevanceBarMouseMove(event) {
             regionOverlay.value[i] = true;
         }
     }
+}
+
+function relevanceBarMouseDown(event) {
+    const relevanceBar = document.getElementById('overview-2');
+    const bounds = relevanceBar.getBoundingClientRect();
+    const barWidth = 16 * measureCount;
+    event.preventDefault();
+    isHoldingMouseButton = true;
+    const x = event.clientX - bounds.left;
+    const dragOverMeasureIdx = Math.round((x / barWidth) * measureCount);
+    firstMeasure = dragOverMeasureIdx;
 }
 </script>
 

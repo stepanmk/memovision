@@ -41,6 +41,18 @@ gainNode.connect(audioCtx.destination);
 //         rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
 //     }
 // }
+let matplotlibColors = [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+];
 
 const isPlaying = ref(false);
 const tracksVisible = ref([]);
@@ -52,11 +64,16 @@ let activePeaksIdx = 0;
 let peaksInstances = [];
 let idxArray = [];
 let selectedMeasureData = [];
+let startTimes = [];
+let endTimes = [];
+
 const cursorPositions = ref([]);
+const measureSelector = ref(null);
 
 function initFeatVisualizer() {
     getSyncPoints();
     getMeasureData();
+
     tracksFromDb.syncTracks.forEach((track, idx) => {
         tracksVisible.value.push(true);
         playing.value.push(false);
@@ -64,12 +81,15 @@ function initFeatVisualizer() {
         peaksInstances.push(null);
         idxArray.push(idx);
         cursorPositions.value.push(0);
+        startTimes.push(0);
+        endTimes.push(track.length_sec);
     });
 
     setTimeout(() => {
         tracksFromDb.syncTracks.forEach((track, idx) => {
             addTrack(track.filename, idx);
         });
+        measureSelector.value.init();
     }, 50);
 }
 
@@ -82,6 +102,10 @@ function destroyFeatVisualizer() {
     cursorPositions.value = [];
     regionOverlay.value = [];
     selectedMeasureData = [];
+
+    startTimes = [];
+    endTimes = [];
+    measureSelector.value.destroy();
 }
 
 let featVisualizerOpened = false;
@@ -117,7 +141,6 @@ function getMeasureData() {
             selectedMeasureData.push(measureData.getObject(filename).tf_measures);
         }
     }
-    console.log(selectedMeasureData);
 }
 
 function makeVisible(idx) {
@@ -151,8 +174,8 @@ function addTrack(filename, idx) {
                 overlayCornerRadius: 0,
             },
             container: waveformContainer,
-            playheadColor: 'red',
-            playheadClickTolerance: 500,
+            playheadColor: 'rgba(0, 0, 0, 0)',
+            playheadClickTolerance: 2500,
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
@@ -170,16 +193,22 @@ function addTrack(filename, idx) {
         if (err) console.log(err);
         peaksInstances[idx] = peaks;
         const view = peaksInstances[idx].views.getView('zoomview');
-        view.setZoom({ seconds: 'auto' });
-        view.enableAutoScroll(false, {});
+        view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
+        view.enableAutoScroll(false);
+        setCursorPos(idx, 0);
         if (idx === 0) {
             selectPeaks(idx);
         }
         peaksInstances[idx].on('player.timeupdate', (time) => {
-            console.log(100 * (time / tracksFromDb.syncTracks[idx].length_sec));
-            cursorPositions.value[idx] = `calc(${99.9 * (time / tracksFromDb.syncTracks[idx].length_sec)}%)`;
+            setCursorPos(idx, time);
         });
     });
+}
+
+function setCursorPos(idx, time) {
+    cursorPositions.value[idx] = `calc(${99.9 * ((time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))}% + ${
+        30 * (1 - (time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))
+    }px)`;
 }
 
 function findClosestTimeIdx(peaksIdx, time) {
@@ -236,6 +265,50 @@ async function selectPeaks(idx) {
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+function hideAllRegions() {
+    peaksInstances.forEach((peaksInstance, idx) => {
+        startTimes[idx] = 0;
+        endTimes[idx] = tracksFromDb.syncTracks[idx].length_sec;
+        peaksInstance.segments.removeAll();
+    });
+}
+
+function zoomOut() {
+    peaksInstances.forEach((peaksInstance, idx) => {
+        const view = peaksInstance.views.getView('zoomview');
+        view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
+        setCursorPos(idx, 0);
+    });
+}
+
+function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
+    hideAllRegions();
+    console.log(startMeasureIdx);
+    if (startMeasureIdx === -1) {
+        zoomOut();
+        return;
+    }
+    peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
+    for (let i = 0; i < peaksInstances.length; i++) {
+        const view = peaksInstances[i].views.getView('zoomview');
+        startTimes[i] = selectedMeasureData[i][startMeasureIdx + 1];
+        endTimes[i] = selectedMeasureData[i][endMeasureIdx + 2];
+        setCursorPos(i, selectedMeasureData[i][startMeasureIdx + 1]);
+        view.setZoom({
+            seconds: selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1],
+        });
+        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
+        view.enableAutoScroll(false);
+        peaksInstances[i].segments.add({
+            color: 'grey',
+            borderColor: 'grey',
+            startTime: selectedMeasureData[i][startMeasureIdx + 1],
+            endTime: selectedMeasureData[i][endMeasureIdx + 2],
+            id: 'selectedRegion',
+        });
+    }
+}
 </script>
 
 <template>
@@ -245,7 +318,12 @@ function sleep(ms) {
         :visible="modulesVisible.featureVisualizer"
         :is-disabled="false">
         <template v-slot:module-content>
-            <MeasureSelector :measure-message="''" :measure-data="selectedMeasureData[0]" />
+            <MeasureSelector
+                :all-measure-data="selectedMeasureData"
+                :measure-data="selectedMeasureData[0]"
+                :peaks-instances="peaksInstances"
+                @zoom-on="zoomOnMeasureSelection"
+                ref="measureSelector" />
 
             <div class="h-[3rem] w-full border-b bg-yellow-100"></div>
             <div class="flex h-[calc(100%-10rem)] w-full flex-row border-b">
@@ -279,29 +357,34 @@ function sleep(ms) {
                             :class="{
                                 hidden: !tracksVisible[i],
                             }">
-                            <div class="pl-[30px]">
-                                <div
-                                    class="z-20 h-10 w-full shrink-0 bg-slate-200 dark:border-gray-500 dark:bg-gray-400"
-                                    :id="`track-div-${i}`"></div>
-                            </div>
-                            <div class="relative">
-                                <div class="absolute flex h-full w-full flex-row">
-                                    <div class="w-[30px]"></div>
-                                    <div class="w-[calc(100%-30px)]">
-                                        <div
-                                            class="h-full w-[1px] bg-[red]"
-                                            :style="{ marginLeft: cursorPositions[i] }"></div>
-                                    </div>
+                            <div class="relative" :class="{ 'bg-blue-50 ': playing[i] }">
+                                <div class="z-50 pl-[30px]">
+                                    <div
+                                        class="z-50 h-16 w-full shrink-0 dark:border-gray-500 dark:bg-gray-400"
+                                        :id="`track-div-${i}`"></div>
                                 </div>
                                 <div class="">
                                     <div v-for="(feat, j) in featureLists.dynamics" class="flex flex-col gap-2">
                                         <LineChart
                                             :data="featureData.dynamics[feat.id][i].featData"
+                                            :start="startTimes[i]"
+                                            :end="endTimes[i]"
                                             :y-min="feat.yMin"
                                             :y-max="feat.yMax"
+                                            :length-sec="obj.length_sec"
+                                            :color="matplotlibColors[i]"
                                             class="h-[10rem]" />
                                     </div>
                                 </div>
+                                <div
+                                    class="absolute top-0 h-full w-[1px] bg-[red]"
+                                    :style="{ marginLeft: cursorPositions[i] }"></div>
+                                <!-- <div class="absolute top-0 flex h-full w-full flex-row">
+                                    <div class="w-[30px]"></div>
+                                    <div class="w-[calc(100%-30px)]">
+
+                                    </div>
+                                </div> -->
                             </div>
                         </div>
 

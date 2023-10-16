@@ -27,26 +27,48 @@ use([
 
 const props = defineProps({
     showAxis: Boolean,
-    xMin: Number,
-    xMax: Number,
+    start: Number,
+    end: Number,
+    lengthSec: Number,
     yMin: Number,
     yMax: Number,
     data: Array,
+    color: String,
 });
 
-const compAxis = computed(() => {
-    let data = [];
-    let count = 1;
-    for (let i = 0; i < props.data.length; i++) {
-        if (i % 10 === 0) {
-            data.push(count);
-            count += 1;
-        } else {
-            data.push('');
-        }
+let data = [];
+let count = 1;
+for (let i = 0; i < props.data.length; i++) {
+    if (i % 10 === 0) {
+        data.push(count);
+        count += 1;
+    } else {
+        data.push('');
     }
-    if (true) data.push('');
-    return data;
+}
+
+const compAxis = computed(() => {
+    // if (true) data.push('');
+    const axis = {
+        min: Math.round((props.start / props.lengthSec) * props.data.length),
+        max: Math.round((props.end / props.lengthSec) * props.data.length),
+        data: data,
+        show: false,
+        type: 'category',
+        axisLine: {
+            onZero: false,
+        },
+        axisTick: {
+            alignWithLabel: true,
+            lineStyle: {
+                color: 'black',
+            },
+        },
+        // axisLabel: {
+        //     interval: 10,
+        // },
+    };
+    return axis;
 });
 
 // const markLinePos = computed(() => {
@@ -58,28 +80,19 @@ const compAxis = computed(() => {
 // });
 
 const option = ref({
-    animation: false,
-    xAxis: {
-        min: props.xMin,
-        max: props.xMax,
-        data: compAxis.value,
-        show: false,
-        type: 'category',
-        axisLine: {
-            onZero: false,
-        },
-        axisTick: {
-            alignWithLabel: true,
-        },
-        // axisLabel: {
-        //     interval: 10,
-        // },
+    textStyle: {
+        // fontFamily: 'Inter',
     },
+    animation: false,
+    xAxis: compAxis,
     yAxis: {
         min: props.yMin,
         max: props.yMax,
         axisLine: {
             onZero: true,
+        },
+        axisLabel: {
+            color: 'black',
         },
     },
     series: [
@@ -88,7 +101,7 @@ const option = ref({
             showSymbol: false,
             lineStyle: {
                 width: 1,
-                color: '#0891b2',
+                color: props.color,
             },
             // markLine: {
             //     data: markLinePos,

@@ -860,7 +860,7 @@ function saveRegion() {
 
         <template v-slot:module-content>
             <div class="flex h-[4rem] w-full justify-center border-b dark:border-gray-700">
-                <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll bg-slate-200" id="top-bar">
+                <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll" id="top-bar">
                     <div
                         id="overview-3"
                         class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
@@ -913,7 +913,9 @@ function saveRegion() {
                 </div>
             </div>
 
-            <div id="settings-bar" class="flex h-[3rem] w-full flex-row items-center justify-between border-b px-5">
+            <div
+                id="settings-bar"
+                class="flex h-[3rem] w-full flex-row items-center justify-between border-b px-5 dark:border-gray-700">
                 <div class="relative flex h-full flex-row items-center gap-2">
                     <TextBtnGray
                         btn-text="Feature"
@@ -935,7 +937,7 @@ function saveRegion() {
                 </div>
                 <div
                     v-show="regionToSave"
-                    class="flex h-10 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200 px-2 text-sm">
+                    class="flex h-10 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200 px-2 text-sm dark:bg-gray-400 dark:text-black">
                     <input
                         type="text"
                         id="name"
@@ -969,14 +971,14 @@ function saveRegion() {
                     class="absolute top-0 flex w-full justify-center gap-2 py-1 text-sm font-semibold">
                     <div class="flex flex-row gap-1 text-xs">
                         <p>Selected feature:</p>
-                        <p class="flex items-center rounded-md bg-neutral-900 px-2 text-white">
+                        <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
                             {{ selectedRelevanceFeatureStr }}
                         </p>
                     </div>
 
                     <div class="flex flex-row gap-1 text-xs">
                         <p>Selected label:</p>
-                        <p class="flex items-center rounded-md bg-neutral-900 px-2 text-white">
+                        <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
                             {{ selectedLabel }}
                         </p>
                     </div>
@@ -1091,7 +1093,7 @@ function saveRegion() {
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :id="`audio-controls-${i}`"
                             :key="obj.filename"
-                            class="flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200">
+                            class="dark: flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200 dark:bg-gray-400 dark:text-black">
                             <div
                                 class="flex h-full w-[calc(100%-0.5rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
                                 <div
@@ -1150,7 +1152,7 @@ function saveRegion() {
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             class="flex h-16 w-full shrink-0 flex-row gap-2">
                             <div
-                                class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-400"
+                                class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-300"
                                 :id="`track-div-${i}`"></div>
                             <div
                                 class="flex h-full w-[7.5rem] flex-col items-center justify-center rounded-md bg-neutral-200 text-sm text-black dark:bg-gray-400">
