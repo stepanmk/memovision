@@ -459,6 +459,17 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                 :data="featureData.rhythm[feat.id]"
                                 :colors="matplotlibColors"
                                 :visible="tracksVisible"
+                                :fpm="feat.fpm"
+                                class="h-[10rem]" />
+                        </div>
+                        <div v-for="(feat, j) in featureLists.dynamics">
+                            <LineChartMeasure
+                                :data="featureData.dynamics[feat.id]"
+                                :colors="matplotlibColors"
+                                :visible="tracksVisible"
+                                :y-min="feat.yMin"
+                                :y-max="feat.yMax"
+                                :fpm="feat.fpm"
                                 class="h-[10rem]" />
                         </div>
 

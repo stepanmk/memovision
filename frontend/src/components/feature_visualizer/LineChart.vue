@@ -96,7 +96,7 @@ const option = ref({
             type: 'line',
             showSymbol: false,
             lineStyle: {
-                width: 1,
+                width: 1.5,
                 color: props.color,
             },
             // markLine: {

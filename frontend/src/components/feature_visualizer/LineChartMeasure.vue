@@ -34,6 +34,7 @@ const props = defineProps({
     data: Object,
     colors: Array,
     visible: Array,
+    fpm: Number,
 });
 
 let data = [];
@@ -72,16 +73,20 @@ const compAxis = computed(() => {
 
 const compSeries = computed(() => {
     let series = [];
+    let featString = 'featData';
+    if (props.fpm > 1) {
+        featString = 'featDataResampled';
+    }
     props.data.forEach((featObject, i) => {
         if (props.visible[i]) {
             series.push({
                 type: 'line',
                 showSymbol: false,
                 lineStyle: {
-                    width: 1,
+                    width: 1.5,
                     color: props.colors[i],
                 },
-                data: featObject.featData,
+                data: featObject[featString],
             });
         }
     });
