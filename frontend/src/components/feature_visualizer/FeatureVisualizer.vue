@@ -12,10 +12,11 @@ import {
 import { truncateFilename, getSecureConfig } from '../../sharedFunctions';
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { pinia } from '../../piniaInstance';
 
 import LineChart from './LineChart.vue';
+import LineChartMeasure from './LineChartMeasure.vue';
 import MeasureSelector from './MeasureSelector.vue';
 
 const modulesVisible = useModulesVisible(pinia);
@@ -28,19 +29,26 @@ const measureData = useMeasureData(pinia);
 // audio context stuff
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
-gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
 gainNode.connect(audioCtx.destination);
+const volume = ref([1]);
 
-// const rampUp = new Float32Array(10);
-// const rampDown = new Float32Array(10);
-// function createFadeRamps()
-// {
-//     for (let i = 0; i < 10; i++)
-//     {
-//         rampUp[i] = Math.pow(i / 9, 3) * volume.value;
-//         rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
-//     }
-// }
+const rampUp = new Float32Array(10);
+const rampDown = new Float32Array(10);
+function createFadeRamps() {
+    for (let i = 0; i < 10; i++) {
+        rampUp[i] = Math.pow(i / 9, 3) * volume.value;
+        rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
+    }
+}
+const fadeIn = () => gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
+const fadeOut = () => gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
+
+watch(volume, () => {
+    gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
+    createFadeRamps();
+});
+
 let matplotlibColors = [
     '#1f77b4',
     '#ff7f0e',
@@ -83,6 +91,10 @@ function initFeatVisualizer() {
         cursorPositions.value.push(0);
         startTimes.push(0);
         endTimes.push(track.length_sec);
+
+        audioCtx.resume();
+        createFadeRamps();
+        measuresVisible.value = true;
     });
 
     setTimeout(() => {
@@ -103,8 +115,12 @@ function destroyFeatVisualizer() {
     regionOverlay.value = [];
     selectedMeasureData = [];
 
-    startTimes = [];
-    endTimes = [];
+    // startTimes = [];
+    // endTimes = [];
+    tracksFromDb.syncTracks.forEach((track, idx) => {
+        startTimes[idx] = 0;
+        endTimes[idx] = track.length_sec;
+    });
     measureSelector.value.destroy();
 }
 
@@ -196,6 +212,7 @@ function addTrack(filename, idx) {
         view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
         view.enableAutoScroll(false);
         setCursorPos(idx, 0);
+        addMeasuresToPeaksInstance(idx);
         if (idx === 0) {
             selectPeaks(idx);
         }
@@ -209,6 +226,33 @@ function setCursorPos(idx, time) {
     cursorPositions.value[idx] = `calc(${99.9 * ((time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))}% + ${
         30 * (1 - (time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))
     }px)`;
+}
+
+function addMeasuresToPeaksInstance(idx) {
+    for (let j = 1; j < selectedMeasureData[idx].length - 1; j++) {
+        let labelText = `${j}`;
+        peaksInstances[idx].points.add({
+            time: selectedMeasureData[idx][j],
+            labelText: labelText,
+            editable: false,
+            color: 'rgb(0, 0, 200)',
+        });
+    }
+}
+
+const measuresVisible = ref(false);
+function toggleMeasures() {
+    if (measuresVisible.value) {
+        peaksInstances.forEach((peaksInstance) => {
+            peaksInstance.points.removeAll();
+        });
+        measuresVisible.value = false;
+    } else {
+        for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
+            addMeasuresToPeaksInstance(i);
+        }
+        measuresVisible.value = true;
+    }
 }
 
 function findClosestTimeIdx(peaksIdx, time) {
@@ -262,8 +306,37 @@ async function selectPeaks(idx) {
     prevPeaksIdx = idx;
 }
 
+async function playPause() {
+    // pause playing if it is active
+    if (isPlaying.value) {
+        fadeOut();
+        await sleep(10);
+        peaksInstances[activePeaksIdx].player.pause();
+    } else {
+        // play currently selected region if it is not null
+        const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+        if (selectedRegion !== null) {
+            peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
+            fadeIn();
+        }
+        // otherwise just continue playing at the current cursor position
+        else {
+            peaksInstances[activePeaksIdx].player.play();
+            fadeIn();
+        }
+    }
+    isPlaying.value = !isPlaying.value;
+}
+
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function rewind() {
+    fadeOut();
+    await sleep(20);
+    peaksInstances[activePeaksIdx].player.seek(0);
+    fadeIn();
 }
 
 function hideAllRegions() {
@@ -379,19 +452,66 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                 <div
                                     class="absolute top-0 h-full w-[1px] bg-[red]"
                                     :style="{ marginLeft: cursorPositions[i] }"></div>
-                                <!-- <div class="absolute top-0 flex h-full w-full flex-row">
-                                    <div class="w-[30px]"></div>
-                                    <div class="w-[calc(100%-30px)]">
-
-                                    </div>
-                                </div> -->
                             </div>
+                        </div>
+                        <div v-for="(feat, j) in featureLists.rhythm">
+                            <LineChartMeasure
+                                :data="featureData.rhythm[feat.id]"
+                                :colors="matplotlibColors"
+                                :visible="tracksVisible"
+                                class="h-[10rem]" />
                         </div>
 
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>
                 </div>
                 <!-- <div class="h-full w-[12rem] bg-red-100"></div> -->
+            </div>
+            <div
+                id="interp-player-controls"
+                class="absolute bottom-0 flex h-[3rem] w-full flex-row items-center justify-between pl-5 pr-5 dark:border-gray-700">
+                <div class="flex gap-1">
+                    <button
+                        id="pause-button"
+                        @click="playPause()"
+                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600"
+                        :class="{ 'bg-cyan-700 dark:bg-cyan-700': isPlaying }">
+                        <Icon v-if="isPlaying" icon="ph:pause" width="20" class="text-white" />
+                        <Icon v-else icon="ph:play" width="20" />
+                    </button>
+
+                    <button
+                        id="back-button"
+                        @click="rewind()"
+                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600">
+                        <Icon icon="ph:skip-back" width="20" />
+                    </button>
+
+                    <button
+                        id="measure-button"
+                        @click="toggleMeasures()"
+                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600"
+                        :class="{
+                            'bg-cyan-700 dark:bg-cyan-700': measuresVisible,
+                        }">
+                        <Icon
+                            icon="akar-icons:three-line-vertical"
+                            width="20"
+                            :class="{ 'text-white': measuresVisible }" />
+                    </button>
+                </div>
+
+                <div class="flex flex-row items-center justify-center gap-1">
+                    <Icon icon="material-symbols:volume-up-outline" width="24" />
+                    <input
+                        type="range"
+                        min="0.0"
+                        max="1.0"
+                        step="0.01"
+                        v-model="volume"
+                        class="h-1 w-24 accent-cyan-600"
+                        id="ref-volume" />
+                </div>
             </div>
         </template>
     </ModuleTemplate>

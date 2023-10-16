@@ -27,13 +27,13 @@ use([
 
 const props = defineProps({
     showAxis: Boolean,
-    start: Number,
-    end: Number,
-    lengthSec: Number,
+    startMeasureIdx: Number,
+    endMeasureIdx: Number,
     yMin: Number,
     yMax: Number,
-    data: Array,
-    color: String,
+    data: Object,
+    colors: Array,
+    visible: Array,
 });
 
 let data = [];
@@ -70,6 +70,24 @@ const compAxis = computed(() => {
     return axis;
 });
 
+const compSeries = computed(() => {
+    let series = [];
+    props.data.forEach((featObject, i) => {
+        if (props.visible[i]) {
+            series.push({
+                type: 'line',
+                showSymbol: false,
+                lineStyle: {
+                    width: 1,
+                    color: props.colors[i],
+                },
+                data: featObject.featData,
+            });
+        }
+    });
+    return series;
+});
+
 // const markLinePos = computed(() => {
 //     return [{ name: 'cursor', xAxis: Math.floor((props.data.length - 1) * props.position) }];
 // });
@@ -79,6 +97,9 @@ const compAxis = computed(() => {
 // });
 
 const option = ref({
+    // textStyle: {
+    //     fontFamily: 'Inter',
+    // },
     animation: false,
     xAxis: compAxis,
     yAxis: {
@@ -91,28 +112,7 @@ const option = ref({
             color: 'black',
         },
     },
-    series: [
-        {
-            type: 'line',
-            showSymbol: false,
-            lineStyle: {
-                width: 1,
-                color: props.color,
-            },
-            // markLine: {
-            //     data: markLinePos,
-            //     symbol: 'none',
-            //     lineStyle: {
-            //         type: 'solid',
-            //         color: 'red',
-            //     },
-            //     label: {
-            //         show: false,
-            //     },
-            // },
-            data: props.data,
-        },
-    ],
+    series: compSeries,
 
     grid: {
         left: 30,
@@ -124,7 +124,7 @@ const option = ref({
 </script>
 
 <template>
-    <v-chart class="chart" :option="option" autoresize :update-options="{ notMerge: true }" />
+    <v-chart class="chart" :option="option" :autoresize="true" :update-options="{ notMerge: true }" />
     <!-- <div>{{ position }}</div> -->
 </template>
 
