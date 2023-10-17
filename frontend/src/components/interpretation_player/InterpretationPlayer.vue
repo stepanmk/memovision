@@ -968,7 +968,7 @@ function saveRegion() {
             <div id="container" class="relative flex h-[calc(100%-10rem)] w-full flex-row items-end transition">
                 <div
                     id="label-feature"
-                    class="absolute top-0 flex w-full justify-center gap-2 py-1 text-sm font-semibold">
+                    class="-100 absolute top-0 z-10 flex w-full justify-center gap-2 border-b bg-white py-1 text-sm font-semibold">
                     <div class="flex flex-row gap-1 text-xs">
                         <p>Selected feature:</p>
                         <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
@@ -1088,7 +1088,7 @@ function saveRegion() {
                 </div>
 
                 <div id="audio-container" class="flex h-full w-full flex-row overflow-y-scroll dark:border-gray-700">
-                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 py-6 pl-5">
+                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 py-8 pl-5">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :id="`audio-controls-${i}`"
@@ -1147,7 +1147,7 @@ function saveRegion() {
 
                     <div
                         id="audio-tracks"
-                        class="flex w-[calc(100%-10rem)] flex-col gap-2 py-6 px-2 dark:border-gray-700">
+                        class="flex w-[calc(100%-10rem)] flex-col gap-2 py-8 px-2 dark:border-gray-700">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             class="flex h-16 w-full shrink-0 flex-row gap-2">

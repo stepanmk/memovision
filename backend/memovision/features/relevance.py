@@ -52,15 +52,13 @@ def compute_one_vs_rest(tracks, relevance_func, X):
     return one_vs_rest
 
 
-def compute_relevance(username, session, feature_name, fpm=None, resampled=False, downsample_method=None, scale=True):
-    res_str = ''
-    if (resampled): res_str = '_resampled'
+def compute_relevance(username, session, feature_name, fpm=None, downsample_method=None, scale=True):
     feature_list = []
     filenames = []
     for track in session.tracks:
-        feature_path = f'./user_uploads/{username}/{session.name}/{track.filename}/features/{feature_name}{res_str}.npy'
+        feature_path = f'./user_uploads/{username}/{session.name}/{track.filename}/features/{feature_name}_measure.npy'
         feature = np.load(feature_path)
-        if (resampled): feature = get_per_measure_feature(feature, fpm=fpm, method=downsample_method)
+        if (fpm > 1): feature = get_per_measure_feature(feature, fpm=fpm, method=downsample_method)
         feature_list.append(np.round(feature, 4))
         filenames.append(track.filename)
     X = np.array(feature_list)

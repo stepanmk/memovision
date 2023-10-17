@@ -198,8 +198,12 @@ export const useAudioStore = defineStore('audioStore', {
 
 export const useFeatureLists = defineStore('featureLists', {
     state: () => ({
-        dynamics: [],
-        rhythm: [],
+        dynamicsMetadata: [],
+        rhythmMetadata: [],
+        dynamicsTime: [],
+        rhythmTime: [],
+        dynamicsMeasure: [],
+        rhythmMeasure: [],
     }),
 });
 

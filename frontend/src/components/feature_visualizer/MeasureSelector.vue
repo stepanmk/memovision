@@ -22,7 +22,7 @@ defineExpose({
 const emit = defineEmits(['zoomOn']);
 
 function init() {
-    measureCount = props.measureData.length;
+    measureCount = props.measureData.length - 3;
     for (let i = 0; i < measureCount; i++) {
         regionOverlay.value.push(false);
     }
@@ -120,7 +120,7 @@ function relevanceBarMouseDown(event) {
                 </div>
             </div>
             <div id="overview-2" class="flex h-[1rem] flex-row rounded-md">
-                <div v-for="(obj, i) in measureData" :id="`meas-${i}`" class="h-full w-4 shrink-0">
+                <div v-for="(obj, i) in regionOverlay" :id="`meas-${i}`" class="h-full w-4 shrink-0">
                     <div
                         class="h-full w-full hover:cursor-pointer hover:bg-red-600"
                         :class="{
@@ -140,7 +140,7 @@ function relevanceBarMouseDown(event) {
             </div>
             <div id="overview-1" class="relative flex h-[1.5rem] w-full items-center">
                 <div
-                    v-for="(obj, i) in measureData"
+                    v-for="(obj, i) in regionOverlay"
                     :id="`meas-${i}`"
                     class="flex h-[1.5rem] w-4 shrink-0 flex-col items-center justify-start">
                     <div

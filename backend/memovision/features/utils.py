@@ -10,21 +10,23 @@ def load_measures(username, session_name, filename, gt_measures):
     return measures[1:-1]
 
 
-def get_feature_data(tracks, username, session_name, feature_name, resampled=False, dtype=float):
+def get_feature_data(tracks, username, session_name, feature_name, time_axis=False, measure_axis=False, dtype=float):
     feat_list = []
     for track in tracks:
-        try:
-            feat_array = np.load(f'./user_uploads/{username}/{session_name}/{track.filename}/features/{feature_name}.npy')
-        except FileNotFoundError:
-            feat_array = np.zeros(0)
-            continue
-        feat_dict = {
-            'filename': track.filename,
-            'featData': list(feat_array.astype(dtype))
-        }
-        if resampled:
-            feat_resampled = np.load(f'./user_uploads/{username}/{session_name}/{track.filename}/features/{feature_name}_resampled.npy')
-            feat_dict['featDataResampled'] = list(feat_resampled.astype(dtype))
+        feat_dict = {'filename': track.filename}
+        if time_axis:
+            try:
+                feat_array = np.load(f'./user_uploads/{username}/{session_name}/{track.filename}/features/{feature_name}.npy')
+            except FileNotFoundError:
+                feat_array = np.zeros(0)
+                continue
+            feat_dict['featData'] = list(feat_array.astype(dtype))
+        if measure_axis:
+            try:
+                feat_measure = np.load(f'./user_uploads/{username}/{session_name}/{track.filename}/features/{feature_name}_measure.npy')
+            except FileNotFoundError:
+                feat_measure = np.zeros(0)
+            feat_dict['featDataMeasure'] = list(feat_measure.astype(dtype))
         feat_list.append(feat_dict)
     return feat_list
 

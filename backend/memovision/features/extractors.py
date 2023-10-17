@@ -1,6 +1,7 @@
 import librosa
 import numpy as np
 import pyloudnorm as pyln
+from scipy.ndimage import gaussian_filter1d
 
 
 def compute_rms(y, frame_length=1024, hop_length=256):

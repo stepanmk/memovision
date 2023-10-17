@@ -23,8 +23,6 @@ use([
     MarkLineComponent,
 ]);
 
-// provide(THEME_KEY, 'dark');
-
 const props = defineProps({
     showAxis: Boolean,
     start: Number,
@@ -70,14 +68,6 @@ const compAxis = computed(() => {
     return axis;
 });
 
-// const markLinePos = computed(() => {
-//     return [{ name: 'cursor', xAxis: Math.floor((props.data.length - 1) * props.position) }];
-// });
-
-// watch(props.position, () => {
-//     console.log(props.position);
-// });
-
 const option = ref({
     animation: false,
     xAxis: compAxis,
@@ -99,17 +89,6 @@ const option = ref({
                 width: 1.5,
                 color: props.color,
             },
-            // markLine: {
-            //     data: markLinePos,
-            //     symbol: 'none',
-            //     lineStyle: {
-            //         type: 'solid',
-            //         color: 'red',
-            //     },
-            //     label: {
-            //         show: false,
-            //     },
-            // },
             data: props.data,
         },
     ],
@@ -125,7 +104,6 @@ const option = ref({
 
 <template>
     <v-chart class="chart" :option="option" autoresize :update-options="{ notMerge: true }" />
-    <!-- <div>{{ position }}</div> -->
 </template>
 
 <style scoped></style>

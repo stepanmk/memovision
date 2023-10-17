@@ -157,8 +157,12 @@ function sleep(ms) {
 async function getFeatureNames() {
     const resDynamics = await api.get('/feat-names-dynamics', getSecureConfig());
     const resRhythm = await api.get('/feat-names-rhythm', getSecureConfig());
-    featureLists.dynamics = resDynamics.data.featureList;
-    featureLists.rhythm = resRhythm.data.featureList;
+    featureLists.dynamicsMetadata = resDynamics.data.metadata;
+    featureLists.rhythmMetadata = resRhythm.data.metadata;
+    featureLists.dynamicsTime = resDynamics.data.time;
+    featureLists.rhythmTime = resRhythm.data.time;
+    featureLists.dynamicsMeasure = resDynamics.data.measure;
+    featureLists.rhythmMeasure = resRhythm.data.measure;
 }
 
 async function computeAllFeatures() {

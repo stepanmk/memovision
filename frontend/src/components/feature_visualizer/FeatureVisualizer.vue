@@ -12,11 +12,13 @@ import {
 import { truncateFilename, getSecureConfig } from '../../sharedFunctions';
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
-import { ref, watch } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import { pinia } from '../../piniaInstance';
+import Popper from 'vue3-popper';
 
 import LineChart from './LineChart.vue';
 import LineChartMeasure from './LineChartMeasure.vue';
+import LineChartUplot from './LineChartUplot.vue';
 import MeasureSelector from './MeasureSelector.vue';
 
 const modulesVisible = useModulesVisible(pinia);
@@ -72,6 +74,7 @@ let activePeaksIdx = 0;
 let peaksInstances = [];
 let idxArray = [];
 let selectedMeasureData = [];
+let selectedFeatureLists = reactive({});
 let startTimes = [];
 let endTimes = [];
 
@@ -102,6 +105,7 @@ function initFeatVisualizer() {
             addTrack(track.filename, idx);
         });
         measureSelector.value.init();
+        getFeatureLists();
     }, 50);
 }
 
@@ -144,6 +148,31 @@ async function getSyncPoints() {
     syncPoints = syncPointsRes.data;
 }
 
+function getFeatureLists() {
+    selectedFeatureLists['dynamicsTime'] = [];
+    selectedFeatureLists['dynamicsMeasure'] = [];
+    selectedFeatureLists['rhythmTime'] = [];
+    selectedFeatureLists['rhythmMeasure'] = [];
+    featureLists.dynamicsMetadata.forEach((feat) => {
+        if (featureLists.dynamicsTime.includes(feat.id)) {
+            selectedFeatureLists['dynamicsTime'].push(feat);
+        }
+        if (featureLists.dynamicsMeasure.includes(feat.id)) {
+            selectedFeatureLists['dynamicsMeasure'].push(feat);
+        }
+    });
+    featureLists.rhythmMetadata.forEach((feat) => {
+        if (featureLists.rhythmTime.includes(feat.id)) {
+            selectedFeatureLists['rhythmTime'].push(feat);
+        }
+        if (featureLists.rhythmMeasure.includes(feat.id)) {
+            selectedFeatureLists['rhythmMeasure'].push(feat);
+        }
+    });
+}
+
+const startMeasure = ref(0);
+const endMeasure = ref(0);
 function getMeasureData() {
     for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
         const filename = tracksFromDb.syncTracks[i].filename;
@@ -157,6 +186,7 @@ function getMeasureData() {
             selectedMeasureData.push(measureData.getObject(filename).tf_measures);
         }
     }
+    endMeasure.value = selectedMeasureData[0].length - 3;
 }
 
 function makeVisible(idx) {
@@ -353,11 +383,14 @@ function zoomOut() {
         view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
         setCursorPos(idx, 0);
     });
+    startMeasure.value = 0;
+    endMeasure.value = selectedMeasureData[0].length - 3;
 }
 
 function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     hideAllRegions();
-    console.log(startMeasureIdx);
+    startMeasure.value = startMeasureIdx;
+    endMeasure.value = endMeasureIdx;
     if (startMeasureIdx === -1) {
         zoomOut();
         return;
@@ -403,7 +436,7 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                 <div
                     id="tracklist"
                     class="flex h-full w-[12rem] flex-col items-center justify-start gap-1 overflow-y-scroll border-r p-2">
-                    <div
+                    <!-- <div
                         v-for="(obj, i) in tracksFromDb.syncTracks"
                         class="flex h-7 w-full shrink-0 cursor-pointer select-none rounded-md bg-neutral-200 text-xs">
                         <p
@@ -420,6 +453,71 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                             @click="selectPeaks(i)">
                             <Icon icon="material-symbols:volume-up-outline" width="20" />
                         </div>
+                    </div> -->
+                    <div
+                        v-for="(obj, i) in tracksFromDb.syncTracks"
+                        :id="`audio-controls-${i}`"
+                        :key="obj.filename"
+                        class="dark: flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200 dark:bg-gray-400 dark:text-black">
+                        <div
+                            class="h-full w-[0.5rem] rounded-l-md"
+                            :style="{
+                                backgroundColor: matplotlibColors[i],
+                            }"></div>
+                        <div
+                            class="flex h-full w-[calc(100%-1rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
+                            <div
+                                class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs"
+                                :class="{
+                                    'bg-violet-800 text-white': obj.reference,
+                                }">
+                                <p class="font-bold">{{ i + 1 }}</p>
+                                <Popper
+                                    :content="obj.filename"
+                                    hover
+                                    placement="right"
+                                    :arrow="true"
+                                    class="select-none text-sm">
+                                    <p class="text-xs">
+                                        {{ truncateFilename(obj.filename, 11) }}
+                                    </p>
+                                </Popper>
+                            </div>
+
+                            <div class="flex flex-row gap-1">
+                                <div
+                                    class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md hover:bg-cyan-600 hover:text-white"
+                                    :class="{
+                                        'bg-cyan-700 text-white': playing[i],
+                                    }"
+                                    @click="selectPeaks(i)">
+                                    <Icon icon="material-symbols:volume-up-outline" width="20" />
+                                </div>
+                                <div
+                                    class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md hover:bg-cyan-600 hover:text-white"
+                                    :class="{
+                                        'bg-cyan-700 text-white': tracksVisible[i],
+                                    }"
+                                    @click="makeVisible(i)">
+                                    <Icon icon="material-symbols:visibility" width="20" />
+                                </div>
+                                <!-- <div
+                                    class="flex h-[1.5rem] cursor-pointer select-none items-center justify-center rounded-md p-2 hover:bg-cyan-600 hover:text-white"
+                                    :class="{
+                                        'bg-cyan-700 text-white': oneVsRestRelevance[i],
+                                    }"
+                                    @click="selectRelevanceLabel(i, 'oneVsRest')">
+                                    <p class="text-xs">Relevance</p>
+                                </div> -->
+                            </div>
+                        </div>
+
+                        <!-- <div
+                            class="h-full w-[0.5rem] rounded-r-md"
+                            :class="{
+                                'bg-red-600': !trackLabels[i],
+                                'bg-blue-600': trackLabels[i],
+                            }"></div> -->
                     </div>
                 </div>
                 <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-y-scroll">
@@ -436,8 +534,8 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                         class="z-50 h-16 w-full shrink-0 dark:border-gray-500 dark:bg-gray-400"
                                         :id="`track-div-${i}`"></div>
                                 </div>
-                                <div class="">
-                                    <div v-for="(feat, j) in featureLists.dynamics" class="flex flex-col gap-2">
+                                <!-- <div class="">
+                                    <div v-for="feat in selectedFeatureLists.dynamicsTime" class="flex flex-col gap-2">
                                         <LineChart
                                             :data="featureData.dynamics[feat.id][i].featData"
                                             :start="startTimes[i]"
@@ -448,31 +546,49 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                             :color="matplotlibColors[i]"
                                             class="h-[10rem]" />
                                     </div>
-                                </div>
+                                    <div v-for="feat in selectedFeatureLists.rhythmTime" class="flex flex-col gap-2">
+                                        <LineChart
+                                            :data="featureData.rhythm[feat.id][i].featData"
+                                            :start="startTimes[i]"
+                                            :end="endTimes[i]"
+                                            :y-min="feat.yMin"
+                                            :y-max="feat.yMax"
+                                            :length-sec="obj.length_sec"
+                                            :color="matplotlibColors[i]"
+                                            class="h-[10rem]" />
+                                    </div>
+                                </div> -->
                                 <div
                                     class="absolute top-0 h-full w-[1px] bg-[red]"
                                     :style="{ marginLeft: cursorPositions[i] }"></div>
                             </div>
                         </div>
-                        <div v-for="(feat, j) in featureLists.rhythm">
+                        <div v-for="feat in selectedFeatureLists.dynamicsMeasure">
                             <LineChartMeasure
-                                :data="featureData.rhythm[feat.id]"
-                                :colors="matplotlibColors"
-                                :visible="tracksVisible"
-                                :fpm="feat.fpm"
-                                class="h-[10rem]" />
-                        </div>
-                        <div v-for="(feat, j) in featureLists.dynamics">
-                            <LineChartMeasure
+                                :feature-name="feat.name"
                                 :data="featureData.dynamics[feat.id]"
                                 :colors="matplotlibColors"
                                 :visible="tracksVisible"
+                                :start-measure-idx="startMeasure"
+                                :end-measure-idx="endMeasure"
                                 :y-min="feat.yMin"
                                 :y-max="feat.yMax"
                                 :fpm="feat.fpm"
-                                class="h-[10rem]" />
+                                class="h-[16rem]" />
                         </div>
-
+                        <div v-for="feat in selectedFeatureLists.rhythmMeasure">
+                            <LineChartMeasure
+                                :feature-name="feat.name"
+                                :data="featureData.rhythm[feat.id]"
+                                :colors="matplotlibColors"
+                                :visible="tracksVisible"
+                                :start-measure-idx="startMeasure"
+                                :end-measure-idx="endMeasure"
+                                :y-min="feat.yMin"
+                                :y-max="feat.yMax"
+                                :fpm="feat.fpm"
+                                class="h-[16rem]" />
+                        </div>
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>
                 </div>

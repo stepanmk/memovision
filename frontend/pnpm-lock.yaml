@@ -34,6 +34,12 @@ dependencies:
   pinia:
     specifier: ^2.0.13
     version: 2.0.13(typescript@5.2.2)(vue@3.2.31)
+  uplot:
+    specifier: ^1.6.26
+    version: 1.6.26
+  uplot-vue:
+    specifier: ^1.1.5
+    version: 1.1.5(uplot@1.6.26)
   vue:
     specifier: ^3.2.25
     version: 3.2.31
@@ -1998,6 +2004,19 @@ packages:
       escalade: 3.1.1
       picocolors: 1.0.0
     dev: true
+
+  /uplot-vue@1.1.5(uplot@1.6.26):
+    resolution: {integrity: sha512-9XmFKFgYqRksbKYIUKXKAhpC1cEQ2leMHSGxkJZotYBXb70qb2oKJMUA9Su/0pWGolip+6KEHKs2N8/41l4qdQ==}
+    engines: {node: '>=8.10'}
+    peerDependencies:
+      uplot: ^1.6.7
+    dependencies:
+      uplot: 1.6.26
+    dev: false
+
+  /uplot@1.6.26:
+    resolution: {integrity: sha512-qN0mveL6UsP40TnHzHAJkUQvpfA3y8zSLXtXKVlJo/sLfj2+vjan/Z3g81MCZjy/hEDUFNtnLftPmETDA4s7Rg==}
+    dev: false
 
   /uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}

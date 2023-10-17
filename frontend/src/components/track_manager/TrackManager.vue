@@ -205,14 +205,14 @@ async function closeLabelAssignment() {
                     <div
                         class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b py-3 px-5 dark:border-gray-700">
                         <div
-                            v-for="obj in featureLists.rhythm"
+                            v-for="obj in featureLists.metadataRhythm"
                             class="flex h-7 w-full items-center justify-between rounded-md bg-indigo-200 px-2 text-sm font-normal">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
                             <Icon v-else icon="material-symbols:check" :inline="true" width="18" />
                         </div>
                         <div
-                            v-for="obj in featureLists.dynamics"
+                            v-for="obj in featureLists.metadataDynamics"
                             class="flex h-7 w-full items-center justify-between rounded-md bg-orange-200 px-2 text-sm font-normal">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
@@ -461,7 +461,7 @@ async function closeLabelAssignment() {
                         v-for="(obj, i) in uploadList"
                         :id="`file-${i}`"
                         :key="obj.filename"
-                        class="flex h-7 w-full rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400">
+                        class="flex h-7 w-full shrink-0 rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400">
                         <div class="flex w-[17rem] items-center px-1 text-xs">
                             <Popper :content="obj.filename" hover placement="right" :arrow="true" class="select-none">
                                 {{ truncateFilename(obj.filename, 14) }}

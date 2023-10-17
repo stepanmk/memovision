@@ -1,7 +1,7 @@
 <script setup>
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { PieChart, LineChart } from 'echarts/charts';
+import { LineChart } from 'echarts/charts';
 import {
     TitleComponent,
     TooltipComponent,
@@ -9,24 +9,13 @@ import {
     GridComponent,
     MarkLineComponent,
 } from 'echarts/components';
-import VChart, { THEME_KEY } from 'vue-echarts';
-import { ref, provide, computed, watch } from 'vue';
+import VChart from 'vue-echarts';
+import { ref, computed } from 'vue';
 
-use([
-    CanvasRenderer,
-    PieChart,
-    LineChart,
-    TitleComponent,
-    TooltipComponent,
-    LegendComponent,
-    GridComponent,
-    MarkLineComponent,
-]);
-
-// provide(THEME_KEY, 'dark');
+use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, MarkLineComponent]);
 
 const props = defineProps({
-    showAxis: Boolean,
+    featureName: String,
     startMeasureIdx: Number,
     endMeasureIdx: Number,
     yMin: Number,
@@ -38,45 +27,44 @@ const props = defineProps({
 });
 
 let data = [];
+for (let i = 0; i < props.data[0].featDataMeasure.length; i++) {
+    data.push('');
+}
 let count = 1;
-for (let i = 0; i < props.data.length; i++) {
-    if (i % 10 === 0) {
-        data.push(count);
-        count += 1;
-    } else {
-        data.push('');
-    }
+for (let i = 0; i < props.data[0].featDataMeasure.length; i += props.fpm) {
+    data[i] = count;
+    count++;
 }
 
 const compAxis = computed(() => {
     const axis = {
-        min: Math.round((props.start / props.lengthSec) * props.data.length),
-        max: Math.round((props.end / props.lengthSec) * props.data.length),
+        min: props.startMeasureIdx * props.fpm,
+        max: props.endMeasureIdx * props.fpm,
         data: data,
-        show: false,
+        alignTicks: true,
+        // show: false,
         type: 'category',
         axisLine: {
             onZero: false,
         },
-        axisTick: {
-            alignWithLabel: true,
-            lineStyle: {
-                color: 'black',
-            },
+        splitLine: {
+            show: true,
+            interval: props.fpm - 1,
         },
-        // axisLabel: {
-        //     interval: 10,
-        // },
+        axisTick: {
+            interval: props.fpm - 1,
+        },
+        axisLabel: {
+            show: true,
+            color: 'black',
+            interval: 0,
+        },
     };
     return axis;
 });
 
 const compSeries = computed(() => {
     let series = [];
-    let featString = 'featData';
-    if (props.fpm > 1) {
-        featString = 'featDataResampled';
-    }
     props.data.forEach((featObject, i) => {
         if (props.visible[i]) {
             series.push({
@@ -86,7 +74,7 @@ const compSeries = computed(() => {
                     width: 1.5,
                     color: props.colors[i],
                 },
-                data: featObject[featString],
+                data: featObject.featDataMeasure,
             });
         }
     });
@@ -105,6 +93,14 @@ const option = ref({
     // textStyle: {
     //     fontFamily: 'Inter',
     // },
+    title: {
+        text: props.featureName + ' (measure)',
+        left: 'center',
+        textStyle: {
+            fontSize: 13,
+            color: 'black',
+        },
+    },
     animation: false,
     xAxis: compAxis,
     yAxis: {
@@ -130,7 +126,6 @@ const option = ref({
 
 <template>
     <v-chart class="chart" :option="option" :autoresize="true" :update-options="{ notMerge: true }" />
-    <!-- <div>{{ position }}</div> -->
 </template>
 
 <style scoped></style>
