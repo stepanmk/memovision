@@ -37,9 +37,12 @@ for (let i = 0; i < props.data[0].featDataMeasure.length; i += props.fpm) {
 }
 
 const compAxis = computed(() => {
+    let end = props.endMeasureIdx * props.fpm;
+    //
+    if (props.fpm > 1) end = (props.endMeasureIdx + 1) * props.fpm;
     const axis = {
         min: props.startMeasureIdx * props.fpm,
-        max: props.endMeasureIdx * props.fpm,
+        max: end,
         data: data,
         alignTicks: true,
         // show: false,
