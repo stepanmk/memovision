@@ -1,64 +1,60 @@
 <script setup>
-import Popper from 'vue3-popper';
-import ModuleTemplate from '../ModuleTemplate.vue';
-import LoadingWindow from '../LoadingWindow.vue';
-import DialogWindow from '../DialogWindow.vue';
-import ProgressBar from './ProgressBar.vue';
-import LabelAssignment from './LabelAssignment.vue';
-
-import { pinia } from '../../piniaInstance';
-import { onMounted, ref } from 'vue';
-import { useDropZone } from '@vueuse/core';
 import { Icon } from '@iconify/vue';
-
-import { truncateFilename, getTimeString, resetAllStores } from '../../sharedFunctions';
-
+import { useDropZone } from '@vueuse/core';
+import { onMounted, ref } from 'vue';
+import Popper from 'vue3-popper';
 import { useFeatureLists, useModulesVisible, useTracksFromDb, useUserInfo } from '../../globalStores';
+import { pinia } from '../../piniaInstance';
+import { getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
+import DialogWindow from '../DialogWindow.vue';
+import LoadingWindow from '../LoadingWindow.vue';
+import ModuleTemplate from '../ModuleTemplate.vue';
+import LabelAssignment from './LabelAssignment.vue';
+import ProgressBar from './ProgressBar.vue';
 
 import {
-    trackManagerOpened,
-    uploadList,
-    somethingToUpload,
-    numComputed,
-    numThingsToCompute,
-    progressBarPerc,
-    isDisabled,
-    isLoading,
-    loadingMessage,
-    duplicates,
-    duplicatesMessage,
-    duplicatesWindow,
     diffRegions,
     diffRegionsMessage,
     diffRegionsWindow,
+    duplicates,
+    duplicatesMessage,
+    duplicatesWindow,
     featureExtractionWindow,
+    isDisabled,
+    isLoading,
     labelAssignmentVisible,
+    loadingMessage,
+    numComputed,
+    numThingsToCompute,
     preciseSync,
+    progressBarPerc,
+    somethingToUpload,
+    trackManagerOpened,
+    uploadList,
 } from './_module_variables';
 
 import {
     addFilesToUploadList,
-    removeFileFromUploadList,
     clearUploadList,
+    removeFileFromUploadList,
     uploadAllFiles,
     uploadMeasures,
 } from './_upload_functions';
 
-import { getTrackData, getAudioData, getMetronomeClick, getMeasureData, downloadMeasures } from './_fetch_functions';
+import { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData } from './_fetch_functions';
 
-import { updateAllMetadata, setReference, deleteFileFromDb, deleteAllFilesFromDb } from './_track_functions';
+import { deleteAllFilesFromDb, deleteFileFromDb, setReference, updateAllMetadata } from './_track_functions';
 
 import {
+    deleteDiffStructureTracks,
+    deleteDuplicates,
+    getAllFeatures,
+    getFeatureNames,
+    keepDiffStructureTracks,
+    keepDuplicates,
     processAllTracks,
     resetProgress,
-    synchronizeTracks,
-    keepDuplicates,
-    deleteDuplicates,
-    keepDiffStructureTracks,
-    deleteDiffStructureTracks,
     setPreciseSync,
-    getFeatureNames,
-    getAllFeatures,
 } from './_process_functions';
 
 /* pinia stores */

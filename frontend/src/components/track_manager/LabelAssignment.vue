@@ -1,15 +1,14 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import { useVuelidate } from '@vuelidate/core';
-import { required, minLength, maxLength, alphaNum } from '@vuelidate/validators';
-
-import { useTracksFromDb, useMeasureData } from '../../globalStores';
-import { getSecureConfig } from '../../sharedFunctions';
-import { ref, onMounted } from 'vue';
+import { alphaNum, maxLength, minLength, required } from '@vuelidate/validators';
+import { onMounted, ref } from 'vue';
 import { api } from '../../axiosInstance';
+import { useMeasureData, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
+import { getSecureConfig } from '../../sharedFunctions';
 
-const props = defineProps({
+defineProps({
     visible: Boolean,
 });
 
@@ -50,7 +49,7 @@ const oldLabelName = ref('');
 
 function addNewLabel() {
     labelBeingAdded.value = true;
-    tracksFromDb.trackObjects.forEach((track) => {
+    tracksFromDb.trackObjects.forEach(() => {
         labelObjects.value.push(false);
     });
 }
@@ -128,8 +127,8 @@ async function deleteLabel(label) {
                     {{ label }}
                 </p>
                 <div
-                    class="flex h-full w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
-                    :id="`remove-button-${i}`">
+                    :id="`remove-button-${i}`"
+                    class="flex h-full w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600">
                     <Icon icon="fluent:delete-48-regular" :inline="true" width="18" @click="deleteLabel(label)" />
                 </div>
             </div>
@@ -178,11 +177,11 @@ async function deleteLabel(label) {
 
                 <button
                     v-if="!labelBeingAdded"
-                    @click="v$.labelName0.$invalid || v$.labelName1.$invalid ? null : addNewLabel()"
                     class="btn btn-blue"
                     :class="{
                         'btn-disabled': v$.labelName0.$invalid || v$.labelName1.$invalid,
-                    }">
+                    }"
+                    @click="v$.labelName0.$invalid || v$.labelName1.$invalid ? null : addNewLabel()">
                     Add new labels
                 </button>
             </div>
