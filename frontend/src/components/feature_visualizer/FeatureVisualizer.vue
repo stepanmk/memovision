@@ -431,7 +431,7 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                 @zoom-on="zoomOnMeasureSelection"
                 ref="measureSelector" />
 
-            <div class="h-[3rem] w-full border-b bg-yellow-100"></div>
+            <div class="h-[3rem] w-full border-b"></div>
             <div class="flex h-[calc(100%-10rem)] w-full flex-row border-b">
                 <div
                     id="tracklist"
