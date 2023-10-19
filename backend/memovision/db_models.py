@@ -95,6 +95,7 @@ class TrackRegion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
     region_name = db.Column(db.String(512), unique=False, nullable=False)
+    beats_per_measure = db.Column(db.Integer, unique=False, nullable=False)
     start_time = db.Column(db.Float(), unique=False, nullable=True)
     end_time = db.Column(db.Float(), unique=False, nullable=True)
     length_sec = db.Column(db.Float(), unique=False, nullable=True)
