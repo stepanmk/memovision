@@ -9,8 +9,10 @@ import { getTimeString, resetAllStores, truncateFilename } from '../../sharedFun
 import DialogWindow from '../DialogWindow.vue';
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
-import LabelAssignment from './LabelAssignment.vue';
-import ProgressBar from './ProgressBar.vue';
+import BottomLegend from './subcomponents/BottomLegend.vue';
+import LabelAssignment from './subcomponents/LabelAssignment.vue';
+import ProgressBar from './subcomponents/ProgressBar.vue';
+import TopLegend from './subcomponents/TopLegend.vue';
 
 import {
     diffRegions,
@@ -31,7 +33,7 @@ import {
     somethingToUpload,
     trackManagerOpened,
     uploadList,
-} from './_module_variables';
+} from './javascript/variables';
 
 import {
     addFilesToUploadList,
@@ -39,11 +41,11 @@ import {
     removeFileFromUploadList,
     uploadAllFiles,
     uploadMeasures,
-} from './_upload_functions';
+} from './javascript/upload';
 
-import { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData } from './_fetch_functions';
+import { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData } from './javascript/fetch';
 
-import { deleteAllFilesFromDb, deleteFileFromDb, setReference, updateAllMetadata } from './_track_functions';
+import { deleteAllFilesFromDb, deleteFileFromDb, setReference, updateAllMetadata } from './javascript/track';
 
 import {
     deleteDiffStructureTracks,
@@ -55,7 +57,7 @@ import {
     processAllTracks,
     resetProgress,
     setPreciseSync,
-} from './_process_functions';
+} from './javascript/process';
 
 /* pinia stores */
 const userInfo = useUserInfo(pinia);
@@ -65,7 +67,7 @@ const tracksFromDb = useTracksFromDb(pinia);
 
 /* dropzone variables */
 const dropzone = ref();
-const { isOverDropZone } = useDropZone(dropzone, onDrop);
+const { isOverDropzone } = useDropZone(dropzone, onDrop);
 
 onMounted(() => {
     resetAllStores();
@@ -235,27 +237,7 @@ async function closeLabelAssignment() {
 
         <template v-slot:module-content>
             <!-- uploaded files -->
-            <div
-                class="items-left flex h-[1.75rem] w-full flex-row overflow-y-scroll border-b px-5 dark:border-gray-700">
-                <div class="flex h-full w-full justify-between pl-2 pr-2">
-                    <div class="flex h-full w-[calc(100%-30rem)] flex-row items-center justify-between">
-                        <p class="pr1 flex w-32 items-center pl-1 text-sm">Track name</p>
-                        <div class="flex h-full items-center justify-between gap-2">
-                            <p class="flex h-5 w-16 flex-row items-center justify-center text-sm">Tuning</p>
-                            <p class="flex h-5 w-16 flex-row items-center justify-center text-sm">Duration</p>
-                            <p class="flex h-5 w-16 flex-row items-center justify-center text-sm">Sync</p>
-                        </div>
-                    </div>
-                    <div class="flex flex-row items-center gap-2 text-sm">
-                        <p class="flex w-12 justify-center">Year</p>
-                        <p class="flex w-32 justify-center">Peformer</p>
-                        <p class="flex w-32 justify-center">Origin</p>
-                        <p class="flex w-28 justify-center"></p>
-                        <p class="flex w-[1.5rem] justify-center"></p>
-                    </div>
-                </div>
-            </div>
-
+            <TopLegend />
             <div
                 class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900">
                 <TransitionGroup name="list">
@@ -265,7 +247,7 @@ async function closeLabelAssignment() {
                         :key="obj.filename"
                         class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400">
                         <div
-                            class="flex h-7 w-[calc(100%-30rem)] cursor-pointer flex-row items-center justify-between"
+                            class="flex h-7 w-[calc(100%-21.5rem)] cursor-pointer flex-row items-center justify-between"
                             @click="setReference(obj.filename)">
                             <div
                                 class="w-30 flex items-center justify-start px-1 text-xs"
@@ -321,12 +303,6 @@ async function closeLabelAssignment() {
                                     v-model="obj.performer"
                                     :name="`performer-${i}`"
                                     @input="updateAllMetadata()" />
-                                <input
-                                    type="text"
-                                    class="w-32 rounded-md px-1 text-black"
-                                    v-model="obj.origin"
-                                    :name="`origin-${i}`"
-                                    @input="updateAllMetadata()" />
                             </div>
 
                             <input
@@ -364,33 +340,7 @@ async function closeLabelAssignment() {
             <!-- uploaded files end -->
 
             <!-- legend -->
-            <div
-                class="flex h-[1.75rem] w-full select-none items-center justify-between gap-3 border-b px-7 text-sm dark:border-gray-700">
-                <div class="flex items-center justify-start gap-3">
-                    <div class="flex flex-row items-center justify-center gap-1">
-                        <div class="h-2 w-2 rounded-full bg-violet-800"></div>
-                        <p>Reference track</p>
-                    </div>
-                    <div class="flex flex-row items-center justify-center gap-1">
-                        <div class="h-2 w-2 rounded-full bg-green-600"></div>
-                        <p>Annotated measures</p>
-                    </div>
-                    <div class="flex flex-row items-center justify-center gap-1">
-                        <div class="h-2 w-2 rounded-full bg-orange-400"></div>
-                        <p>Transferred measures</p>
-                    </div>
-                    <div class="flex flex-row items-center justify-center gap-1">
-                        <div class="h-2 w-2 rounded-full bg-red-600"></div>
-                        <p>Structural differences</p>
-                    </div>
-                </div>
-                <div class="flex flex-row items-center justify-center gap-1">
-                    <p>Track count:</p>
-                    <p class="font-semibold">
-                        {{ tracksFromDb.trackObjects.length }}
-                    </p>
-                </div>
-            </div>
+            <BottomLegend :track-count="tracksFromDb.trackObjects.length" />
             <!-- legend end -->
 
             <!-- buttons top -->
@@ -445,7 +395,7 @@ async function closeLabelAssignment() {
             <div
                 class="relative flex h-[calc(40%-4.75rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900"
                 ref="dropzone"
-                :class="{ 'bg-neutral-100 dark:bg-gray-700': isOverDropZone }">
+                :class="{ 'bg-neutral-100 dark:bg-gray-700': isOverDropzone }">
                 <a
                     v-if="!somethingToUpload"
                     class="absolute top-0 left-0 flex h-full w-full items-center justify-center dark:text-gray-300">

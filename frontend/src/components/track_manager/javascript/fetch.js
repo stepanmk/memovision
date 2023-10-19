@@ -1,7 +1,7 @@
-import { api } from '../../axiosInstance';
-import { useAudioStore, useMeasureData, useTracksFromDb, useUserInfo } from '../../globalStores';
-import { pinia } from '../../piniaInstance';
-import { getSecureConfig } from '../../sharedFunctions';
+import { api } from '../../../axiosInstance';
+import { useAudioStore, useMeasureData, useTracksFromDb, useUserInfo } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
+import { getSecureConfig } from '../../../sharedFunctions';
 
 /* pinia stores */
 

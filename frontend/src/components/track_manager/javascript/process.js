@@ -1,10 +1,10 @@
-import { showAlert } from '../../alerts';
-import { api } from '../../axiosInstance';
-import { useFeatureData, useFeatureLists, useTracksFromDb, useUserInfo } from '../../globalStores';
-import { pinia } from '../../piniaInstance';
-import { getSecureConfig } from '../../sharedFunctions';
-import { getMeasureData } from './_fetch_functions';
-import { deleteFileFromDb } from './_track_functions';
+import { showAlert } from '../../../alerts';
+import { api } from '../../../axiosInstance';
+import { useFeatureData, useFeatureLists, useTracksFromDb, useUserInfo } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
+import { getSecureConfig } from '../../../sharedFunctions';
+import { getMeasureData } from './fetch';
+import { deleteFileFromDb } from './track';
 
 import {
     diffRegions,
@@ -20,10 +20,10 @@ import {
     numComputed,
     numThingsToCompute,
     preciseSync,
-} from './_module_variables';
+} from './variables';
 
-import { computeDynamics, getDynamics } from '../../features/dynamics';
-import { computeRhythm, getRhythm } from '../../features/rhythm';
+import { computeDynamics, getDynamics } from '../../../features/dynamics';
+import { computeRhythm, getRhythm } from '../../../features/rhythm';
 
 /* pinia stores */
 

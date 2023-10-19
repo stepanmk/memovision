@@ -1,11 +1,11 @@
-import { showAlert } from '../../alerts';
-import { api } from '../../axiosInstance';
-import { useTracksFromDb } from '../../globalStores';
-import { pinia } from '../../piniaInstance';
-import { getCookie, getSecureConfig } from '../../sharedFunctions';
-import { getAudioData, getMeasureData } from './_fetch_functions';
-import { somethingToUpload, uploadList } from './_module_variables';
-import { transferAllMeasures } from './_process_functions';
+import { showAlert } from '../../../alerts';
+import { api } from '../../../axiosInstance';
+import { useTracksFromDb } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
+import { getCookie, getSecureConfig } from '../../../sharedFunctions';
+import { getAudioData, getMeasureData } from './fetch';
+import { transferAllMeasures } from './process';
+import { somethingToUpload, uploadList } from './variables';
 
 /* pinia stores */
 

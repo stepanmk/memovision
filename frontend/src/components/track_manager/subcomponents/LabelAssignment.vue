@@ -3,10 +3,10 @@ import { Icon } from '@iconify/vue';
 import { useVuelidate } from '@vuelidate/core';
 import { alphaNum, maxLength, minLength, required } from '@vuelidate/validators';
 import { onMounted, ref } from 'vue';
-import { api } from '../../axiosInstance';
-import { useMeasureData, useTracksFromDb } from '../../globalStores';
-import { pinia } from '../../piniaInstance';
-import { getSecureConfig } from '../../sharedFunctions';
+import { api } from '../../../axiosInstance';
+import { useMeasureData, useTracksFromDb } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
+import { getSecureConfig } from '../../../sharedFunctions';
 
 defineProps({
     visible: Boolean,

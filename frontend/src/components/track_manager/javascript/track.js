@@ -1,9 +1,9 @@
 import { useDebounceFn } from '@vueuse/core';
-import { showAlert } from '../../alerts';
-import { api } from '../../axiosInstance';
-import { useAudioStore, useTracksFromDb } from '../../globalStores';
-import { pinia } from '../../piniaInstance';
-import { getCookie, getSecureConfig } from '../../sharedFunctions';
+import { showAlert } from '../../../alerts';
+import { api } from '../../../axiosInstance';
+import { useAudioStore, useTracksFromDb } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
+import { getCookie, getSecureConfig } from '../../../sharedFunctions';
 
 /* pinia stores */
 

@@ -1,12 +1,12 @@
 <script setup>
-import { reactive, computed, ref, watch } from 'vue';
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
+import { reactive, ref, watch } from 'vue';
 
-import { useModulesVisible, useTracksFromDb, useMeasureData, useAudioStore } from '../../globalStores';
 import { showAlert } from '../../alerts';
-import { getCookie, createZoomLevels } from '../../sharedFunctions';
 import { api } from '../../axiosInstance';
+import { useAudioStore, useMeasureData, useModulesVisible, useTracksFromDb } from '../../globalStores';
+import { createZoomLevels, getCookie } from '../../sharedFunctions';
 import ModuleTemplate from '../ModuleTemplate.vue';
 
 // pinia stores
@@ -14,12 +14,6 @@ const modulesVisible = useModulesVisible();
 const tracksFromDb = useTracksFromDb();
 const audioStore = useAudioStore();
 const measureData = useMeasureData();
-
-// computed objects
-
-const referenceExists = computed(() => {
-    return tracksFromDb.trackObjects.filter((obj) => obj.reference).length > 0;
-});
 
 // variables
 let refPeaksInstance;
@@ -71,7 +65,7 @@ watch(timeZoom, () => {
 
 // subscribe to pinia modulesVisible state
 modulesVisible.$subscribe((mutation, state) => {
-    if (state.regionSelector && !prevVisible && referenceExists.value) {
+    if (state.regionSelector && !prevVisible) {
         refName.value = tracksFromDb.refTrack.filename;
         setTimeout(getReferenceAudio, 20);
         prevVisible = true;
@@ -358,13 +352,9 @@ function toggleMeasures() {
             measuresVisible.value = false;
         } else {
             for (let i = 1; i < measureData.refTrack.gt_measures.length - 1; i++) {
-                let labelText = `${i}`;
-                if (i === measureData.refTrack.gt_measures.length - 2) {
-                    labelText = 'END';
-                }
                 refPeaksInstance.points.add({
                     time: measureData.refTrack.gt_measures[i],
-                    labelText: labelText,
+                    labelText: `${i}`,
                     editable: false,
                     color: 'rgb(0, 0, 200)',
                 });
