@@ -59,7 +59,7 @@ class Track(db.Model):
     gt_measures = db.Column(db.Boolean, unique=False, default=False)
     tf_measures = db.Column(db.Boolean, unique=False, default=False)
     regions = db.relationship('TrackRegion', backref='track', passive_deletes=True)
-    # beat_regions = db.relationship('BeatRegion', backref='track', passive_deletes=True)
+    beat_regions = db.relationship('BeatRegion', backref='track', passive_deletes=True)
     diff_regions = db.relationship('DiffRegion', backref='track', passive_deletes=True)
     labels = db.relationship('TrackLabel', backref='track', passive_deletes=True, order_by='TrackLabel.label_name')
 
@@ -82,6 +82,7 @@ class Track(db.Model):
             'num_bad_regions': self.num_bad_regions}
         return data
 
+
 class TrackLabel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
@@ -95,21 +96,23 @@ class TrackRegion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
     region_name = db.Column(db.String(512), unique=False, nullable=False)
-    beats_per_measure = db.Column(db.Integer, unique=False, nullable=False)
     start_time = db.Column(db.Float(), unique=False, nullable=True)
     end_time = db.Column(db.Float(), unique=False, nullable=True)
+    start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
+    end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
     length_sec = db.Column(db.Float(), unique=False, nullable=True)
 
 
-# class BeatRegion(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
-#     region_name = db.Column(db.String(512), unique=False, nullable=False)
-#     start_time = db.Column(db.Float(), unique=False, nullable=False)
-#     end_time = db.Column(db.Float(), unique=False, nullable=False)
-#     start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
-#     end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
-#     length_sec = db.Column(db.Float(), unique=False, nullable=True)
+class BeatRegion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
+    signature = db.Column(db.String(10), unique=False, nullable=False)
+    start_time = db.Column(db.Float(), unique=False, nullable=False)
+    end_time = db.Column(db.Float(), unique=False, nullable=False)
+    start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
+    end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True)
+    beats_per_measure = db.Column(db.Integer(), unique=False, nullable=False) 
+    length_sec = db.Column(db.Float(), unique=False, nullable=True)
 
 
 class DiffRegion(db.Model):

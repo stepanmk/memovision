@@ -26,6 +26,7 @@ def get_feature_data(tracks, username, session_name, feature_name, time_axis=Fal
                 feat_measure = np.load(f'./user_uploads/{username}/{session_name}/{track.filename}/features/{feature_name}_measure.npy')
             except FileNotFoundError:
                 feat_measure = np.zeros(0)
+                continue
             feat_dict['featDataMeasure'] = list(feat_measure.astype(dtype))
         feat_list.append(feat_dict)
     return feat_list

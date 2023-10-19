@@ -1,24 +1,22 @@
 <script setup>
-import ModuleTemplate from '../ModuleTemplate.vue';
+import { Icon } from '@iconify/vue';
+import Peaks from 'peaks.js';
+import { reactive, ref, watch } from 'vue';
+import Popper from 'vue3-popper';
 import { api } from '../../axiosInstance';
 import {
-    useModulesVisible,
-    useTracksFromDb,
     useAudioStore,
     useFeatureData,
     useFeatureLists,
     useMeasureData,
+    useModulesVisible,
+    useTracksFromDb,
 } from '../../globalStores';
-import { truncateFilename, getSecureConfig } from '../../sharedFunctions';
-import { Icon } from '@iconify/vue';
-import Peaks from 'peaks.js';
-import { ref, reactive, watch } from 'vue';
 import { pinia } from '../../piniaInstance';
-import Popper from 'vue3-popper';
+import { createZoomLevels, getSecureConfig, truncateFilename } from '../../sharedFunctions';
+import ModuleTemplate from '../ModuleTemplate.vue';
 
-import LineChart from './LineChart.vue';
 import LineChartMeasure from './LineChartMeasure.vue';
-import LineChartUplot from './LineChartUplot.vue';
 import MeasureSelector from './MeasureSelector.vue';
 
 const modulesVisible = useModulesVisible(pinia);
@@ -230,6 +228,8 @@ function addTrack(filename, idx) {
     const waveformData = audioStore.getWaveformData(filename);
     const waveformContainer = document.getElementById(`track-div-${idx}`);
     waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
+    const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
+    const zoomLevels = createZoomLevels(waveformContainer.offsetWidth, trackLengthSec);
     // peaks.js options
     const options = {
         zoomview: {
@@ -253,7 +253,7 @@ function addTrack(filename, idx) {
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
-        zoomLevels: [1024, 2048, 4096, 'auto'],
+        zoomLevels: zoomLevels,
     };
     Peaks.init(options, (err, peaks) => {
         if (err) console.log(err);

@@ -1,18 +1,18 @@
 <script setup>
-import { useModulesVisible, useTracksFromDb, useAudioStore, useMeasureData } from '../../globalStores';
-import { showAlert } from '../../alerts';
-import { getSecureConfig, truncateFilename, createZoomLevels } from '../../sharedFunctions';
-import { reactive, computed, ref, watch } from 'vue';
-import { api } from '../../axiosInstance';
-import { pinia } from '../../piniaInstance';
 import { Icon } from '@iconify/vue';
 import { onKeyStroke } from '@vueuse/core';
-import Peaks from 'peaks.js';
-import Popper from 'vue3-popper';
 import colormap from 'colormap';
+import Peaks from 'peaks.js';
+import { computed, reactive, ref, watch } from 'vue';
+import Popper from 'vue3-popper';
+import { showAlert } from '../../alerts';
+import { api } from '../../axiosInstance';
+import { useAudioStore, useMeasureData, useModulesVisible, useTracksFromDb } from '../../globalStores';
+import { pinia } from '../../piniaInstance';
+import { createZoomLevels, getSecureConfig, truncateFilename } from '../../sharedFunctions';
 
-import ModuleTemplate from '../ModuleTemplate.vue';
 import LoadingWindow from '../LoadingWindow.vue';
+import ModuleTemplate from '../ModuleTemplate.vue';
 import TextBtnGray from './subcomponents/TextBtnGray.vue';
 
 // pinia stores
