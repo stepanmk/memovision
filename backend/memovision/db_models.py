@@ -100,6 +100,7 @@ class TrackRegion(db.Model):
     end_time = db.Column(db.Float(), unique=False, nullable=True)
     start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
     end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
+    beats_per_measure = db.Column(db.Integer(), unique=False, nullable=False) 
     length_sec = db.Column(db.Float(), unique=False, nullable=True)
 
 
