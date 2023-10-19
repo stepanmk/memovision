@@ -203,14 +203,14 @@ async function closeLabelAssignment() {
                     <div
                         class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b py-3 px-5 dark:border-gray-700">
                         <div
-                            v-for="obj in featureLists.metadataRhythm"
+                            v-for="obj in featureLists.rhythmMetadata"
                             class="flex h-7 w-full items-center justify-between rounded-md bg-indigo-200 px-2 text-sm font-normal">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
                             <Icon v-else icon="material-symbols:check" :inline="true" width="18" />
                         </div>
                         <div
-                            v-for="obj in featureLists.metadataDynamics"
+                            v-for="obj in featureLists.dynamicsMetadata"
                             class="flex h-7 w-full items-center justify-between rounded-md bg-orange-200 px-2 text-sm font-normal">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
