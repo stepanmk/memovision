@@ -3,7 +3,7 @@ import { api } from '../../../axiosInstance';
 import { useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getCookie, getSecureConfig } from '../../../sharedFunctions';
-import { getAudioData, getMeasureData } from './fetch';
+import { getAudioData, getMeasureData, getTrackData } from './fetch';
 import { transferAllMeasures } from './process';
 import { somethingToUpload, uploadList } from './variables';
 
@@ -135,6 +135,7 @@ async function uploadMetadata() {
         },
     };
     await api.post('/upload-metadata', formData, axiosConfig);
+    await getTrackData();
     showAlert('Successfully uploaded metadata.', 1500);
 }
 
