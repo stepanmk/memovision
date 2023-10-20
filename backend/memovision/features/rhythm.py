@@ -1,11 +1,10 @@
-from memovision.db_models import Session, Track
-from memovision.features.extractors import compute_duration, compute_tempo
-from memovision.features.utils import load_measures, get_feature_data
-from memovision.features.relevance import compute_relevance
+import numpy as np
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
-import numpy as np
-
+from memovision.db_models import Session, Track
+from memovision.features.extractors import compute_duration, compute_tempo
+from memovision.features.relevance import compute_relevance
+from memovision.features.utils import get_feature_data, load_measures
 
 rhythm = Blueprint('rhythm', __name__)
 
@@ -32,11 +31,21 @@ metadata = [
         'timeAxis': False,
         'relevance': False,
         'computed': False
+    },
+    {
+        'id': 'beatfun', 
+        'name': 'Beat tracking act. fun.', 
+        'units': '[–]', 
+        'fpm': 50,  
+        'measureAxis': False,
+        'timeAxis': True,
+        'relevance': False,
+        'computed': True
     }
 ]
 
 time = [
-
+    'beatfun'
 ]
 
 measure = [
@@ -80,3 +89,11 @@ def tempo(filename):
     else:
         feature_list = get_feature_data(session.tracks, current_user.username, session.name, 'tempo', time_axis=False, measure_axis=True)
         return jsonify({'message': 'success', 'featureList': feature_list})
+
+
+@rhythm.route('/beatfun/<filename>', methods=['GET'])
+@jwt_required()
+def beatfun(filename):
+    session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
+    feature_list = get_feature_data(session.tracks, current_user.username, session.name, 'beatfun', time_axis=True, measure_axis=False)
+    return jsonify({'message': 'success', 'featureList': feature_list})

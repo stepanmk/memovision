@@ -12,10 +12,12 @@ async function computeRhythm() {
     const featureList = featureLists.rhythmMetadata;
     for (let i = 0; i < featureList.length; i++) {
         let features = [];
-        tracksFromDb.trackObjects.forEach((track) => {
-            features.push(api.put(`/${featureList[i].id}/${track.filename}`, {}, getSecureConfig()));
-        });
-        await Promise.all(features);
+        if (!featureList[i].computed) {
+            tracksFromDb.trackObjects.forEach((track) => {
+                features.push(api.put(`/${featureList[i].id}/${track.filename}`, {}, getSecureConfig()));
+            });
+            await Promise.all(features);
+        }
     }
 }
 

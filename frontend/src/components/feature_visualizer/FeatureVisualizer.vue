@@ -238,7 +238,6 @@ function makeVisible(idx) {
 function waveformListener(idx, event) {
     if (idx !== activePeaksIdx) {
         selectPeaks(idx);
-        console.log('selected peaks!');
     }
 }
 
@@ -298,7 +297,6 @@ function addTrack(filename, idx) {
                 // add 1 ms to the time to indicate the proper measure
                 const measureIdx = getStartMeasure(time + 0.001);
                 currentMeasure.value = measureIdx - 2;
-                console.log(currentMeasure.value);
             });
         }
     });
@@ -306,7 +304,7 @@ function addTrack(filename, idx) {
 
 function setCursorPos(idx, time) {
     cursorPositions.value[idx] = `calc(${99.9 * ((time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))}% + ${
-        30 * (1 - (time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))
+        45 * (1 - (time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))
     }px)`;
 }
 
@@ -467,7 +465,6 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
             id: 'selectedRegion',
         });
     }
-    console.log(startMeasureIdx, endMeasureIdx);
     measureSelector.value.setRegionOverlay(startMeasureIdx, endMeasureIdx);
 }
 </script>
@@ -606,7 +603,7 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                 hidden: !tracksVisible[i],
                             }">
                             <div class="relative" :class="{ 'bg-blue-50 ': playing[i] }">
-                                <div class="z-50 pl-[30px]">
+                                <div class="z-50 pl-[45px]">
                                     <div
                                         class="z-50 h-16 w-full shrink-0 dark:border-gray-500 dark:bg-gray-400"
                                         :id="`track-div-${i}`"></div>

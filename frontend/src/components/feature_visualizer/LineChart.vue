@@ -103,7 +103,7 @@ const option = ref({
     ],
 
     grid: {
-        left: 30,
+        left: 45,
         right: 0,
         top: 20,
         bottom: 20,

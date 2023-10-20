@@ -1,20 +1,25 @@
-from memovision import db
-from memovision.db_models import Session, Track, DiffRegion
-from memovision.helpers.functions import compute_chroma_from_audio, compute_dtw_path, transfer_step_annotations, PreProcessor
-from memovision.duplicate_finder.functions import run_duplicate_finder, run_structure_checker, save_chromaImage
-
-from flask import request, jsonify, Blueprint
-from flask_jwt_extended import jwt_required, current_user
-from madmom.audio import Signal
-from madmom.features.chords import DeepChromaChordRecognitionProcessor
-from madmom.audio.chroma import DeepChromaProcessor
-from madmom.features.beats import DBNBeatTrackingProcessor
-from tensorflow import keras
-from librosa import load
+import os
 
 import numpy as np
 import scipy
-import os 
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import current_user, jwt_required
+from librosa import load
+from madmom.audio import Signal
+from madmom.audio.chroma import DeepChromaProcessor
+from madmom.features.beats import DBNBeatTrackingProcessor
+from madmom.features.chords import DeepChromaChordRecognitionProcessor
+from memovision.db_models import DiffRegion, Session, Track
+from memovision.duplicate_finder.functions import (run_duplicate_finder,
+                                                   run_structure_checker,
+                                                   save_chromaImage)
+from memovision.helpers.functions import (PreProcessor,
+                                          compute_chroma_from_audio,
+                                          compute_dtw_path,
+                                          transfer_step_annotations)
+from tensorflow import keras
+
+from memovision import db
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 beat_tracking_model = keras.models.load_model('./models/simple_tcn_dp_skip_dilations_22_fps50.h5')
@@ -48,8 +53,8 @@ def sync_track(audio_name):
     ref_chroma = np.load(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{ref.filename}/features/chroma.npy')
     # compute warping path
     if req['precise']:
-        ref_act_func = np.load(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{ref.filename}/features/act_func.npy')
-        target_act_func = np.load(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{target.filename}/features/act_func.npy')
+        ref_act_func = np.load(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{ref.filename}/features/beatfun.npy')
+        target_act_func = np.load(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{target.filename}/features/beatfun.npy')
         wp = compute_dtw_path(ref_chroma=ref_chroma, target_chroma=target_chroma, ref_onset=ref_act_func, target_onset=target_act_func, with_onsets=True)
     else:
         wp = compute_dtw_path(ref_chroma=ref_chroma, target_chroma=target_chroma)
@@ -160,7 +165,7 @@ def compute_act_func(audio_name):
     session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
     track = Track.query.filter_by(filename=audio_name, session=session).first()
     if not track.act_func:
-        act_func_path = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/act_func.npy'
+        act_func_path = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/beatfun.npy'
         audio_data, sr = load(track.path_22, mono=True)
         audio_signal = Signal(audio_data, sr)
         preprocessed = PreProcessor()(audio_signal)
