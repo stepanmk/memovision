@@ -41,6 +41,7 @@ import {
     removeFileFromUploadList,
     uploadAllFiles,
     uploadMeasures,
+    uploadMetadata,
 } from './javascript/upload';
 
 import { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData } from './javascript/fetch';
@@ -103,6 +104,7 @@ async function getAllData() {
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
+    console.log(tracksFromDb.trackObjects);
 }
 
 function onDrop(files) {
@@ -247,7 +249,7 @@ async function closeLabelAssignment() {
                         :key="obj.filename"
                         class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400">
                         <div
-                            class="flex h-7 w-[calc(100%-21.5rem)] cursor-pointer flex-row items-center justify-between"
+                            class="flex h-7 w-[calc(100%-22.5rem)] cursor-pointer flex-row items-center justify-between"
                             @click="setReference(obj.filename)">
                             <div
                                 class="w-30 flex items-center justify-start px-1 text-xs"
@@ -291,9 +293,9 @@ async function closeLabelAssignment() {
                         <div class="flex flex-row items-center gap-2">
                             <div class="flex flex-row gap-2">
                                 <input
-                                    type="text"
+                                    type="number"
                                     maxlength="4"
-                                    class="w-12 rounded-md px-1 text-black"
+                                    class="w-16 rounded-md px-1 text-black"
                                     v-model="obj.year"
                                     :name="`year-${i}`"
                                     @input="updateAllMetadata()" />
@@ -358,6 +360,20 @@ async function closeLabelAssignment() {
                 <button class="btn btn-blue bg-indigo-700 hover:bg-indigo-500" @click="processAllTracks()">
                     Process all tracks
                 </button>
+
+                <input
+                    id="upload-metadata"
+                    type="file"
+                    class="hidden"
+                    accept=".txt, .csv, .xlsx"
+                    @change="uploadMetadata()"
+                    @click="$event.target.value = ''" />
+
+                <label for="upload-metadata" class="flex h-full items-center justify-center hover:cursor-pointer">
+                    <div id="upload-metadata-btn" class="btn btn-blue">
+                        <p>Upload metadata</p>
+                    </div>
+                </label>
 
                 <button
                     id="upload-btn"

@@ -1,13 +1,13 @@
-from sklearn.preprocessing import StandardScaler
-from memovision.features.mrmr_funcs import f_classif
-from memovision._modules.track_manager.label_routes import get_label_data
-from flask import jsonify
+import functools
+import os
+import pickle
+
 import numpy as np
 import pandas as pd
-import functools
-import pickle
-import os
-
+from flask import jsonify
+from memovision._modules.track_manager.label_routes import get_label_data
+from memovision.features.mrmr_funcs import f_classif
+from sklearn.preprocessing import StandardScaler
 
 
 def get_per_measure_feature(feature, fpm, method=None):
@@ -57,10 +57,13 @@ def compute_relevance(username, session, feature_name, fpm=None, downsample_meth
     filenames = []
     for track in session.tracks:
         feature_path = f'./user_uploads/{username}/{session.name}/{track.filename}/features/{feature_name}_measure.npy'
-        feature = np.load(feature_path)
-        if (fpm > 1): feature = get_per_measure_feature(feature, fpm=fpm, method=downsample_method)
-        feature_list.append(np.round(feature, 4))
-        filenames.append(track.filename)
+        try:
+            feature = np.load(feature_path)
+            if (fpm > 1): feature = get_per_measure_feature(feature, fpm=fpm, method=downsample_method)
+            feature_list.append(np.round(feature, 4))
+            filenames.append(track.filename)
+        except FileNotFoundError:
+            continue
     X = np.array(feature_list)
     if scale:
         scaler = StandardScaler(with_mean=True, with_std=True)

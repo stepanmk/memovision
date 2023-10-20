@@ -152,7 +152,7 @@ async function deleteLabel(label) {
         </div>
 
         <div class="flex h-[3rem] w-full items-center justify-between gap-5 rounded-b-md px-5 text-sm">
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-2">
                 <input
                     v-model="v$.labelName0.$model"
                     type="text"

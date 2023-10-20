@@ -123,4 +123,26 @@ async function uploadMeasures(filename, id) {
     }
 }
 
-export { addFilesToUploadList, clearUploadList, removeFileFromUploadList, uploadAllFiles, uploadMeasures };
+async function uploadMetadata() {
+    const metadata = document.getElementById('upload-metadata').files[0];
+    let formData = new FormData();
+    formData.append('file', metadata);
+    // axios request config
+    const axiosConfig = {
+        headers: {
+            'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+            'Content-Type': 'multipart/form-data',
+        },
+    };
+    await api.post('/upload-metadata', formData, axiosConfig);
+    showAlert('Successfully uploaded metadata.', 1500);
+}
+
+export {
+    addFilesToUploadList,
+    clearUploadList,
+    removeFileFromUploadList,
+    uploadAllFiles,
+    uploadMeasures,
+    uploadMetadata,
+};

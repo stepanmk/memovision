@@ -1,16 +1,17 @@
-from memovision import db
-from memovision.db_models import Session, Track
-
 import os
 import subprocess
-from flask import request, jsonify, Blueprint
-from flask_jwt_extended import jwt_required, current_user
-from werkzeug.utils import secure_filename
-
-from memovision.helpers.functions import convert_audio, strip_extension, estimate_tuning
-from librosa import load
 
 import numpy as np
+import pandas as pd
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import current_user, jwt_required
+from librosa import load
+from memovision.db_models import Session, Track
+from memovision.helpers.functions import (convert_audio, estimate_tuning,
+                                          strip_extension)
+from werkzeug.utils import secure_filename
+
+from memovision import db
 
 upload_routes = Blueprint('upload_routes', __name__)
 
@@ -88,3 +89,19 @@ def upload_measures():
     np.save(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{filename}/annotations/gt_measures.npy', np.array(measures))
     db.session.commit()
     return jsonify({'message': 'measure annotations uploaded'})
+
+
+@upload_routes.route('/upload-metadata', methods=['POST'])
+@jwt_required()
+def upload_metadata():
+    file = request.files['file']
+    df = pd.read_excel(file, header=None)
+    session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
+    for _, row in df.iterrows():
+        row_dict = row.to_dict()
+        track = Track.query.filter_by(filename=secure_filename(row_dict[0]), session_id=session.id).first()
+        if track:
+            track.performer = row_dict[1]
+            track.year = row_dict[2]
+    db.session.commit()
+    return jsonify({'message': 'metadata uploaded'})
