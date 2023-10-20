@@ -13,11 +13,22 @@ import {
     useTracksFromDb,
 } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
-import { createZoomLevels, getSecureConfig, truncateFilename } from '../../sharedFunctions';
-import ModuleTemplate from '../ModuleTemplate.vue';
+import {
+    createZoomLevels,
+    getEndMeasure,
+    getSecureConfig,
+    getStartMeasure,
+    getTimeString,
+    truncateFilename,
+} from '../../sharedFunctions';
 
+import ModuleTemplate from '../ModuleTemplate.vue';
+import SelectedRegion from '../shared_components/SelectedRegion.vue';
+import SubMenu from '../shared_components/SubMenu.vue';
+import LineChart from './LineChart.vue';
 import LineChartMeasure from './LineChartMeasure.vue';
 import MeasureSelector from './MeasureSelector.vue';
+import FeatureName from './subcomponents/FeatureName.vue';
 
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
@@ -98,10 +109,22 @@ let endTimes = [];
 
 const cursorPositions = ref([]);
 const measureSelector = ref(null);
+const currentMeasure = ref(-1);
+
+const selectedRegions = ref([]);
+const selectedRegionsBool = ref([]);
+async function getAllRegions() {
+    const selRegionsRes = await api.get('/get-all-regions', getSecureConfig());
+    selectedRegions.value = selRegionsRes.data;
+    selectedRegions.value.forEach(() => {
+        selectedRegionsBool.push(false);
+    });
+}
 
 function initFeatVisualizer() {
     getSyncPoints();
     getMeasureData();
+    getAllRegions();
 
     tracksFromDb.syncTracks.forEach((track, idx) => {
         tracksVisible.value.push(true);
@@ -134,11 +157,7 @@ function destroyFeatVisualizer() {
     peaksInstances = [];
     idxArray = [];
     cursorPositions.value = [];
-    regionOverlay.value = [];
     selectedMeasureData = [];
-
-    // startTimes = [];
-    // endTimes = [];
     tracksFromDb.syncTracks.forEach((track, idx) => {
         startTimes[idx] = 0;
         endTimes[idx] = track.length_sec;
@@ -152,12 +171,9 @@ modulesVisible.$subscribe((mutation, state) => {
     if (state.featureVisualizer && !featVisualizerOpened) {
         featVisualizerOpened = true;
         initFeatVisualizer();
-        console.log('Feat Visualizer opened!');
     } else if (!state.featureVisualizer && featVisualizerOpened) {
         featVisualizerOpened = false;
         destroyFeatVisualizer();
-
-        console.log('Feat Visualizer closed!');
     }
 });
 
@@ -168,23 +184,31 @@ async function getSyncPoints() {
 
 function getFeatureLists() {
     selectedFeatureLists['dynamicsTime'] = [];
+    selectedFeatureLists['dynamicsTimeVisible'] = [];
     selectedFeatureLists['dynamicsMeasure'] = [];
+    selectedFeatureLists['dynamicsMeasureVisible'] = [];
     selectedFeatureLists['rhythmTime'] = [];
+    selectedFeatureLists['rhythmTimeVisible'] = [];
     selectedFeatureLists['rhythmMeasure'] = [];
+    selectedFeatureLists['rhythmMeasureVisible'] = [];
     featureLists.dynamicsMetadata.forEach((feat) => {
         if (featureLists.dynamicsTime.includes(feat.id)) {
             selectedFeatureLists['dynamicsTime'].push(feat);
+            selectedFeatureLists['dynamicsTimeVisible'].push(false);
         }
         if (featureLists.dynamicsMeasure.includes(feat.id)) {
             selectedFeatureLists['dynamicsMeasure'].push(feat);
+            selectedFeatureLists['dynamicsTimeVisible'].push(false);
         }
     });
     featureLists.rhythmMetadata.forEach((feat) => {
         if (featureLists.rhythmTime.includes(feat.id)) {
             selectedFeatureLists['rhythmTime'].push(feat);
+            selectedFeatureLists['rhythmTimeVisible'].push(false);
         }
         if (featureLists.rhythmMeasure.includes(feat.id)) {
             selectedFeatureLists['rhythmMeasure'].push(feat);
+            selectedFeatureLists['rhythmMeasureVisible'].push(false);
         }
     });
 }
@@ -269,6 +293,14 @@ function addTrack(filename, idx) {
         peaksInstances[idx].on('player.timeupdate', (time) => {
             setCursorPos(idx, time);
         });
+        if (filename === tracksFromDb.refTrack.filename) {
+            peaksInstances[idx].on('player.timeupdate', (time) => {
+                // add 1 ms to the time to indicate the proper measure
+                const measureIdx = getStartMeasure(time + 0.001);
+                currentMeasure.value = measureIdx - 2;
+                console.log(currentMeasure.value);
+            });
+        }
     });
 }
 
@@ -407,7 +439,8 @@ function zoomOut() {
     endMeasure.value = selectedMeasureData[0].length - 3;
 }
 
-function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
+async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
+    if (isPlaying.value) await playPause();
     hideAllRegions();
     startMeasure.value = startMeasureIdx;
     endMeasure.value = endMeasureIdx;
@@ -434,6 +467,8 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
             id: 'selectedRegion',
         });
     }
+    console.log(startMeasureIdx, endMeasureIdx);
+    measureSelector.value.setRegionOverlay(startMeasureIdx, endMeasureIdx);
 }
 </script>
 
@@ -448,44 +483,76 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                 :all-measure-data="selectedMeasureData"
                 :measure-data="selectedMeasureData[0]"
                 :peaks-instances="peaksInstances"
+                :current-measure="currentMeasure"
                 @zoom-on="zoomOnMeasureSelection"
                 ref="measureSelector" />
 
-            <div class="h-[3rem] w-full border-b"></div>
+            <div class="flex h-[3rem] w-full items-center gap-2 border-b px-5">
+                <SubMenu :name="'Features'">
+                    <FeatureName
+                        :class="{ 'bg-neutral-200': selectedFeatureLists.dynamicsTimeVisible[i] }"
+                        v-for="(obj, i) in selectedFeatureLists.dynamicsTime"
+                        :feat-name="obj.name"
+                        :idx="i"
+                        @click="
+                            selectedFeatureLists.dynamicsTimeVisible[i] = !selectedFeatureLists.dynamicsTimeVisible[i]
+                        " />
+                    <FeatureName
+                        :class="{ 'bg-neutral-200': selectedFeatureLists.rhythmTimeVisible[i] }"
+                        v-for="(obj, i) in selectedFeatureLists.rhythmTime"
+                        :feat-name="obj.name"
+                        :idx="i"
+                        @click="
+                            selectedFeatureLists.rhythmTimeVisible[i] = !selectedFeatureLists.rhythmTimeVisible[i]
+                        " />
+                </SubMenu>
+                <SubMenu :name="'Measure features'">
+                    <FeatureName
+                        :class="{ 'bg-neutral-200': selectedFeatureLists.dynamicsMeasureVisible[i] }"
+                        v-for="(obj, i) in selectedFeatureLists.dynamicsMeasure"
+                        :feat-name="obj.name"
+                        :idx="i"
+                        @click="
+                            selectedFeatureLists.dynamicsMeasureVisible[i] =
+                                !selectedFeatureLists.dynamicsMeasureVisible[i]
+                        " />
+                    <FeatureName
+                        :class="{ 'bg-neutral-200': selectedFeatureLists.rhythmMeasureVisible[i] }"
+                        v-for="(obj, i) in selectedFeatureLists.rhythmMeasure"
+                        :feat-name="obj.name"
+                        :idx="i"
+                        @click="
+                            selectedFeatureLists.rhythmMeasureVisible[i] = !selectedFeatureLists.rhythmMeasureVisible[i]
+                        " />
+                </SubMenu>
+                <SubMenu :name="'Selected regions'">
+                    <SelectedRegion
+                        :class="{ 'bg-neutral-200': selectedRegionsBool[i] }"
+                        v-for="(obj, i) in selectedRegions"
+                        :region-name="obj.regionName"
+                        :idx="i"
+                        :start-time="getTimeString(obj.startTime, 14, 22)"
+                        :end-time="getTimeString(obj.endTime, 14, 22)"
+                        :start-measure="getStartMeasure(obj.startTime)"
+                        :end-measure="getEndMeasure(obj.endTime)"
+                        :beats-per-measure="obj.beatsPerMeasure"
+                        @click="
+                            zoomOnMeasureSelection(getStartMeasure(obj.startTime) - 1, getEndMeasure(obj.endTime) - 1)
+                        ">
+                    </SelectedRegion>
+                </SubMenu>
+            </div>
             <div class="flex h-[calc(100%-10rem)] w-full flex-row border-b">
                 <div
                     id="tracklist"
                     class="flex h-full w-[12rem] flex-col items-center justify-start gap-1 overflow-y-scroll border-r p-2">
-                    <!-- <div
-                        v-for="(obj, i) in tracksFromDb.syncTracks"
-                        class="flex h-7 w-full shrink-0 cursor-pointer select-none rounded-md bg-neutral-200 text-xs">
-                        <p
-                            class="flex h-full w-[calc(100%-2rem)] items-center justify-center rounded-l-md hover:bg-cyan-600 hover:text-white"
-                            :class="{
-                                'bg-cyan-700 text-white': tracksVisible[i],
-                            }"
-                            @click="makeVisible(i)">
-                            {{ truncateFilename(obj.filename, 11) }}
-                        </p>
-                        <div
-                            class="flex h-full w-[2rem] items-center justify-center rounded-r-md hover:bg-cyan-600 hover:text-white"
-                            :class="{ 'bg-cyan-700 text-white': playing[i] }"
-                            @click="selectPeaks(i)">
-                            <Icon icon="material-symbols:volume-up-outline" width="20" />
-                        </div>
-                    </div> -->
                     <div
                         v-for="(obj, i) in tracksFromDb.syncTracks"
                         :id="`audio-controls-${i}`"
                         :key="obj.filename"
                         class="dark: flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200 dark:bg-gray-400 dark:text-black">
                         <div
-                            class="h-full w-[0.5rem] rounded-l-md"
-                            :style="{
-                                backgroundColor: matplotlibColors[i],
-                            }"></div>
-                        <div
-                            class="flex h-full w-[calc(100%-1rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
+                            class="flex h-full w-[calc(100%-0.5rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
                             <div
                                 class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs"
                                 :class="{
@@ -497,7 +564,7 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                     hover
                                     placement="right"
                                     :arrow="true"
-                                    class="select-none text-sm">
+                                    class="select-none text-xs">
                                     <p class="text-xs">
                                         {{ truncateFilename(obj.filename, 11) }}
                                     </p>
@@ -521,23 +588,13 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                     @click="makeVisible(i)">
                                     <Icon icon="material-symbols:visibility" width="20" />
                                 </div>
-                                <!-- <div
-                                    class="flex h-[1.5rem] cursor-pointer select-none items-center justify-center rounded-md p-2 hover:bg-cyan-600 hover:text-white"
-                                    :class="{
-                                        'bg-cyan-700 text-white': oneVsRestRelevance[i],
-                                    }"
-                                    @click="selectRelevanceLabel(i, 'oneVsRest')">
-                                    <p class="text-xs">Relevance</p>
-                                </div> -->
                             </div>
                         </div>
-
-                        <!-- <div
+                        <div
                             class="h-full w-[0.5rem] rounded-r-md"
-                            :class="{
-                                'bg-red-600': !trackLabels[i],
-                                'bg-blue-600': trackLabels[i],
-                            }"></div> -->
+                            :style="{
+                                backgroundColor: matplotlibColors[i],
+                            }"></div>
                     </div>
                 </div>
                 <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-y-scroll">
@@ -554,9 +611,13 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                         class="z-50 h-16 w-full shrink-0 dark:border-gray-500 dark:bg-gray-400"
                                         :id="`track-div-${i}`"></div>
                                 </div>
-                                <!-- <div class="">
-                                    <div v-for="feat in selectedFeatureLists.dynamicsTime" class="flex flex-col gap-2">
+                                <div class="">
+                                    <div
+                                        v-for="(feat, j) in selectedFeatureLists.dynamicsTime"
+                                        class="flex flex-col gap-2">
                                         <LineChart
+                                            v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
+                                            :feature-name="feat.name"
                                             :data="featureData.dynamics[feat.id][i].featData"
                                             :start="startTimes[i]"
                                             :end="endTimes[i]"
@@ -566,8 +627,12 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                             :color="matplotlibColors[i]"
                                             class="h-[10rem]" />
                                     </div>
-                                    <div v-for="feat in selectedFeatureLists.rhythmTime" class="flex flex-col gap-2">
+                                    <div
+                                        v-for="(feat, j) in selectedFeatureLists.rhythmTime"
+                                        class="flex flex-col gap-2">
                                         <LineChart
+                                            v-if="selectedFeatureLists.rhythmTimeVisible[j]"
+                                            :feature-name="feat.name"
                                             :data="featureData.rhythm[feat.id][i].featData"
                                             :start="startTimes[i]"
                                             :end="endTimes[i]"
@@ -577,14 +642,15 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                             :color="matplotlibColors[i]"
                                             class="h-[10rem]" />
                                     </div>
-                                </div> -->
+                                </div>
                                 <div
                                     class="absolute top-0 h-full w-[1px] bg-[red]"
                                     :style="{ marginLeft: cursorPositions[i] }"></div>
                             </div>
                         </div>
-                        <div v-for="feat in selectedFeatureLists.dynamicsMeasure">
+                        <div v-for="(feat, j) in selectedFeatureLists.dynamicsMeasure">
                             <LineChartMeasure
+                                v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
                                 :feature-name="feat.name"
                                 :data="featureData.dynamics[feat.id]"
                                 :colors="matplotlibColors"
@@ -596,8 +662,9 @@ function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                 :fpm="feat.fpm"
                                 class="h-[16rem]" />
                         </div>
-                        <div v-for="feat in selectedFeatureLists.rhythmMeasure">
+                        <div v-for="(feat, j) in selectedFeatureLists.rhythmMeasure">
                             <LineChartMeasure
+                                v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
                                 :feature-name="feat.name"
                                 :data="featureData.rhythm[feat.id]"
                                 :colors="matplotlibColors"

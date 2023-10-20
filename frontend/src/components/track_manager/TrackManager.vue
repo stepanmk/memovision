@@ -276,7 +276,7 @@ async function closeLabelAssignment() {
 
                                 <p
                                     class="flex h-5 w-16 items-center justify-center rounded-md bg-neutral-800 text-xs text-white">
-                                    {{ getTimeString(obj.length_sec) }}
+                                    {{ getTimeString(obj.length_sec, 14, 19) }}
                                 </p>
 
                                 <div

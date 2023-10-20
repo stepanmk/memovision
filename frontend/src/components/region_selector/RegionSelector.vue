@@ -2,45 +2,55 @@
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
 import { reactive, ref, watch } from 'vue';
-
 import { showAlert } from '../../alerts';
 import { api } from '../../axiosInstance';
 import { useAudioStore, useMeasureData, useModulesVisible, useTracksFromDb } from '../../globalStores';
+import { pinia } from '../../piniaInstance';
 import { createZoomLevels, getCookie } from '../../sharedFunctions';
 import ModuleTemplate from '../ModuleTemplate.vue';
 
+import {
+    beatsPerMeasure,
+    currentTime,
+    endMeasure,
+    endTime,
+    endTimeString,
+    loopingActive,
+    measuresVisible,
+    metronomeActive,
+    refName,
+    refPeaksReady,
+    refPlaying,
+    regionBeingNamed,
+    regionName,
+    regionSelectorOpened,
+    startMeasure,
+    startTime,
+    startTimeString,
+} from './variables';
+
 // pinia stores
-const modulesVisible = useModulesVisible();
-const tracksFromDb = useTracksFromDb();
-const audioStore = useAudioStore();
-const measureData = useMeasureData();
+const modulesVisible = useModulesVisible(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
+const audioStore = useAudioStore(pinia);
+const measureData = useMeasureData(pinia);
 
-// variables
-let refPeaksInstance;
-let refPeaksReady = ref(false);
-let prevVisible = false;
-let measuresVisible = ref(false);
-let loopingActive = ref(false);
-let metronomeActive = ref(false);
-
-let refName = ref('none');
-let refPlaying = ref(false);
-
-let currentTime = ref('00:00');
-
-let regionName = ref('');
-let regionBeingNamed = ref(false);
-
-let startTime = ref(0.5);
-let endTime = ref(1.5);
-let startTimeString = ref('');
-let endTimeString = ref('');
+let refPeaksInstance = null;
 let regionBeingAdded = false;
+const amplitudeZoom = ref(1.0);
+const measureCount = ref(0);
+const measureSelector = ref(null);
 
-let startMeasure = ref(0);
-let endMeasure = ref(1);
-
-let beatsPerMeasure = ref(1);
+const audioCtx = new AudioContext();
+const gainNode = audioCtx.createGain();
+const metronomeGainNode = audioCtx.createGain();
+const osc = audioCtx.createOscillator();
+osc.frequency.value = 1000;
+gainNode.connect(audioCtx.destination);
+metronomeGainNode.connect(gainNode);
+metronomeGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+osc.connect(metronomeGainNode);
+osc.start();
 
 watch(startMeasure, () => {
     setMeasureRegion(startMeasure.value, endMeasure.value + 1);
@@ -50,51 +60,38 @@ watch(endMeasure, () => {
     setMeasureRegion(startMeasure.value, endMeasure.value + 1);
 });
 
-const timeZoom = ref(120);
-let amplitudeZoom = ref(1.0);
-
 watch(amplitudeZoom, () => {
     const view = refPeaksInstance.views.getView('zoomview');
     view.setAmplitudeScale(Number(amplitudeZoom.value));
 });
 
-watch(timeZoom, () => {
-    const view = refPeaksInstance.views.getView('zoomview');
-    view.setZoom({ seconds: Number(timeZoom.value) });
-});
-
 // subscribe to pinia modulesVisible state
 modulesVisible.$subscribe((mutation, state) => {
-    if (state.regionSelector && !prevVisible) {
+    if (state.regionSelector && !regionSelectorOpened.value) {
         refName.value = tracksFromDb.refTrack.filename;
-        setTimeout(getReferenceAudio, 20);
-        prevVisible = true;
+        setTimeout(createRefPeaks, 20);
+        regionSelectorOpened.value = true;
         audioCtx.resume();
+        // setTimeout(() => {
+        //     measureSelector.value.init();
+        // }, 50);
     }
-    if (!state.regionSelector && prevVisible) {
+    if (!state.regionSelector && regionSelectorOpened.value) {
         refName.value = 'none';
-        if (refPeaksInstance !== undefined) {
+        if (refPeaksInstance !== null) {
             refPeaksInstance.player.pause();
             refPeaksInstance.destroy();
             refPlaying.value = false;
             loopingActive.value = false;
-            // document.getElementById('timeline').style.opacity = '0';
             const regionIdx = regionRef.selected.indexOf(true);
             if (regionIdx !== -1) {
                 updateRegion(regionIdx);
             }
             regionRef.regions = [];
         }
-        prevVisible = false;
+        regionSelectorOpened.value = false;
     }
 });
-
-function getReferenceAudio() {
-    const audioElement = document.getElementById('audio-element');
-    const audio = audioStore.getAudio(tracksFromDb.refTrack.filename);
-    audioElement.src = URL.createObjectURL(audio);
-    createRefPeaks();
-}
 
 function saveRegion() {
     if (regionName.value !== '') {
@@ -163,18 +160,6 @@ function updateRegion(regionIdx) {
     api.put('/update-region', regionRef.regions[regionIdx], axiosConfig).then((response) => {});
 }
 
-const audioCtx = new AudioContext();
-const gainNode = audioCtx.createGain();
-const metronomeGainNode = audioCtx.createGain();
-
-const osc = audioCtx.createOscillator();
-osc.frequency.value = 1000;
-gainNode.connect(audioCtx.destination);
-metronomeGainNode.connect(gainNode);
-metronomeGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-osc.connect(metronomeGainNode);
-osc.start();
-
 function createRefPeaks() {
     const waveformData = audioStore.getWaveformData(tracksFromDb.refTrack.filename);
     const audioElement = document.getElementById('audio-element');
@@ -191,7 +176,6 @@ function createRefPeaks() {
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
             playheadColor: 'red',
-            // playheadClickTolerance: 10,
         },
         overview: {
             container: document.getElementById('overview-container'),
@@ -215,7 +199,6 @@ function createRefPeaks() {
         fontSize: 12,
         zoomLevels: zoomLevels,
     };
-
     const container = document.getElementById('zoomview-container');
     container.addEventListener('mousewheel', (event) => {
         if (event.deltaY < 0) {
@@ -224,26 +207,21 @@ function createRefPeaks() {
             refPeaksInstance.zoom.zoomOut();
         }
     });
-
     Peaks.init(options, (err, peaks) => {
         refPeaksInstance = peaks;
         refPeaksReady.value = true;
-        const view = peaks.views.getView('zoomview');
         metronomeVolume.value = 0.25;
         getAllRegions();
         peaks.on('player.timeupdate', (time) => {
             let timeString = new Date(time * 1000).toISOString().slice(14, 19);
             currentTime.value = timeString;
         });
-
         peaks.on('player.playing', (time) => {
             refPlaying.value = true;
         });
-
         peaks.on('player.pause', (time) => {
             refPlaying.value = false;
         });
-
         peaks.on('segments.dragged', (event) => {
             if (regionBeingAdded) {
                 startTime.value = event.segment.startTime;
@@ -256,25 +234,18 @@ function createRefPeaks() {
                 regionRef.regions[regionIdx].endTime = event.segment.endTime;
             }
         });
-
-        peaks.on('points.enter', (point) => {
+        peaks.on('points.enter', () => {
             if (metronomeActive.value) {
-                metronomeGainNode.gain.exponentialRampToValueAtTime(metronomeVolume.value, audioCtx.currentTime, 0.001);
+                metronomeGainNode.gain.setTargetAtTime(metronomeVolume.value, audioCtx.currentTime, 0.001);
                 metronomeGainNode.gain.setTargetAtTime(0, audioCtx.currentTime + 0.05, 0.001);
             }
         });
-
-        if (err) {
-            console.error('Error: ' + err.message);
-            return;
-        }
-
         if (tracksFromDb.refTrack.gt_measures) {
             measuresVisible.value = false;
             metronomeActive.value = true;
+            measureCount.value = measureData.refTrack.gt_measures.length - 3;
             toggleMeasures();
         }
-
         refPeaksInstance.zoom.setZoom(zoomLevels.length - 1);
     });
 }
@@ -595,6 +566,8 @@ watch(refVolume, () => {
                     </div>
                 </div>
             </div>
+
+            <!-- <MeasureSelector :measure-count="measureCount" ref="measureSelector" /> -->
 
             <div
                 class="flex h-[1.75rem] w-full items-center justify-between border-b pl-5 pr-5 dark:border-gray-700 dark:text-gray-300">

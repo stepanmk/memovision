@@ -2,15 +2,7 @@
 import { ref } from 'vue';
 
 const props = defineProps({
-    measureData: Array,
-    peaksInstances: Array,
-    currentMeasure: Number,
-});
-
-defineExpose({
-    init,
-    destroy,
-    setRegionOverlay,
+    measureCount: Number,
 });
 
 const regionOverlay = ref([]);
@@ -21,13 +13,19 @@ let regionSelected = false;
 let isHoldingMouseButton = false;
 let dragged = false;
 
+defineExpose({
+    init,
+    destroy,
+});
+
 const emit = defineEmits(['zoomOn']);
 
 function init() {
-    measureCount = props.measureData.length - 3;
+    measureCount = props.measureCount;
     for (let i = 0; i < measureCount; i++) {
         regionOverlay.value.push(false);
     }
+    beatRegions.value.push({ startIdx: 0, endIdx: measureCount });
     addListeners();
 }
 
@@ -35,13 +33,6 @@ function destroy() {
     measureCount = 0;
     regionOverlay.value = [];
     removeListeners();
-}
-
-function setRegionOverlay(startIdx, endIdx) {
-    regionOverlay.value.fill(false);
-    for (let i = startIdx; i < endIdx + 1; ++i) {
-        regionOverlay.value[i] = true;
-    }
 }
 
 function logMeasure(i) {
@@ -86,6 +77,7 @@ function relevanceBarMouseUp() {
     const endMeasureIdx = regionOverlay.value.lastIndexOf(true);
     if (dragged) {
         emit('zoomOn', startMeasureIdx, endMeasureIdx);
+        beatRegions.value.push({ startIdx: startMeasureIdx, endIdx: endMeasureIdx });
     }
     dragged = false;
 }
@@ -99,7 +91,7 @@ function relevanceBarMouseMove(event) {
         regionOverlay.value.fill(false);
         const x = event.clientX - bounds.left;
         let dragOverMeasureIdx = Math.floor((x / barWidth) * measureCount);
-        if (dragOverMeasureIdx > measureCount) dragOverMeasureIdx = measureCount - 1;
+        if (dragOverMeasureIdx > measureCount - 1) dragOverMeasureIdx = measureCount - 1;
         for (let i = firstMeasure; i < dragOverMeasureIdx + 1; i++) {
             regionOverlay.value[i] = true;
         }
@@ -116,11 +108,22 @@ function relevanceBarMouseDown(event) {
     const dragOverMeasureIdx = Math.round((x / barWidth) * measureCount);
     firstMeasure = dragOverMeasureIdx;
 }
+
+const beatRegions = ref([]);
 </script>
 
 <template>
-    <div class="flex h-[4rem] w-full justify-center border-b dark:border-gray-700">
+    <div class="flex h-[5rem] w-full justify-center border-b dark:border-gray-700">
         <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll" id="top-bar">
+            <div id="overview-sig" class="flex h-[1rem] flex-row rounded-md">
+                <div
+                    v-for="(obj, i) in beatRegions"
+                    :id="`meas-${i}`"
+                    class="h-full shrink-0"
+                    :style="{ width: `${(obj.endIdx - obj.startIdx) * 16}px` }">
+                    <div class="h-full w-full bg-red-300"></div>
+                </div>
+            </div>
             <div id="overview-3" class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
                 <div
                     class="absolute z-50 flex w-24 justify-center rounded-md bg-cyan-700 text-xs font-semibold text-white"
@@ -143,13 +146,7 @@ function relevanceBarMouseDown(event) {
                             :class="{
                                 'border-t border-b border-cyan-600 bg-neutral-900 bg-opacity-50 dark:border-gray-400':
                                     regionOverlay[i],
-                            }">
-                            <div
-                                class="h-full w-full"
-                                :class="{
-                                    'bg-red-600 bg-opacity-100': i === props.currentMeasure,
-                                }"></div>
-                        </div>
+                            }"></div>
                     </div>
                 </div>
             </div>

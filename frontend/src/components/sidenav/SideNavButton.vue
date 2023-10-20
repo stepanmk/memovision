@@ -34,10 +34,7 @@ function mouseLeave() {
     <div
         class="button-container z-50 flex h-12 cursor-pointer select-none flex-row items-start rounded-md bg-neutral-200 transition duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:text-gray-900 dark:hover:bg-cyan-600 dark:hover:text-white"
         :class="{
-            'bg-cyan-700 text-white dark:bg-cyan-700 dark:text-white':
-                props.active,
-            'w-12': !mouseIsOver,
-            'w-52': mouseIsOver,
+            'bg-cyan-700 text-white dark:bg-cyan-700 dark:text-white': props.active,
         }"
         v-on:mouseover="mouseOver()"
         v-on:mouseleave="mouseLeave()">
@@ -45,13 +42,13 @@ function mouseLeave() {
             <Icon :icon="props.iconType" :width="props.width" :inline="true" />
         </div>
 
-        <Transition>
+        <!-- <Transition>
             <p
                 v-if="nameIsVisible"
                 class="flex h-full w-[calc(100%-3rem)] items-center justify-center whitespace-nowrap rounded-r-md pr-4 text-sm font-semibold">
                 {{ props.name }}
             </p>
-        </Transition>
+        </Transition> -->
     </div>
 </template>
 

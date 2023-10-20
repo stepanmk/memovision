@@ -9,11 +9,20 @@ import { showAlert } from '../../alerts';
 import { api } from '../../axiosInstance';
 import { useAudioStore, useMeasureData, useModulesVisible, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
-import { createZoomLevels, getSecureConfig, truncateFilename } from '../../sharedFunctions';
+import {
+    createZoomLevels,
+    getEndMeasure,
+    getSecureConfig,
+    getStartMeasure,
+    truncateFilename,
+} from '../../sharedFunctions';
 
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
-import TextBtnGray from './subcomponents/TextBtnGray.vue';
+import SelectedRegion from '../shared_components/SelectedRegion.vue';
+import SubMenu from '../shared_components/SubMenu.vue';
+import DifferenceRegion from './subcomponents/DifferenceRegion.vue';
+import RelevantMeasure from './subcomponents/RelevantMeasure.vue';
 
 // pinia stores
 const modulesVisible = useModulesVisible(pinia);
@@ -35,19 +44,6 @@ const numPeaksLoaded = ref(0);
 const percLoaded = ref(0);
 watch(numPeaksLoaded, () => {
     percLoaded.value = Math.round((numPeaksLoaded.value / (tracksFromDb.syncTracks.length - 1)) * 100);
-});
-
-let regionObjects = reactive({
-    regions: [],
-    selected: [],
-    measures: [],
-    measuresSelected: [],
-});
-
-let regionsType = reactive({
-    selectedRegions: true,
-    diffRegions: false,
-    relevantMeasures: false,
 });
 
 let peaksInstances = [];
@@ -74,10 +70,6 @@ const oneVsRestRelevance = ref([]);
 const trackLabels = ref([]);
 const trackTimes = ref([]);
 const regionLengths = ref([]);
-
-const relevanceMenu = ref(false);
-const labelMenu = ref(false);
-const regionMenu = ref(false);
 const selectedRelevanceFeature = ref('');
 const regionToSave = ref(false);
 
@@ -227,9 +219,9 @@ onKeyStroke('m', (e) => {
 
 onKeyStroke('Escape', (e) => {
     if (modulesVisible.interpretationPlayer) {
-        if (regionSelected) {
-            regionObjects.selected.fill(false);
-        }
+        // if (regionSelected) {
+        //     regionObjects.selected.fill(false);
+        // }
         regionOverlay.value.fill(false);
         if (isPlaying.value) playPause();
         peaksInstances.forEach((peaksInstance, i) => {
@@ -257,15 +249,15 @@ function getMeasureData() {
     }
 }
 
-let selectedRegions;
-let differenceRegions;
+const selectedRegions = ref([]);
+const differenceRegions = ref([]);
+const relevantMeasures = ref([]);
+
 async function getAllRegions() {
     const selRegionsRes = await api.get('/get-all-regions', getSecureConfig());
-    selectedRegions = selRegionsRes.data;
+    selectedRegions.value = selRegionsRes.data;
     const diffRegionsRes = await api.get('/get-diff-regions', getSecureConfig());
-    differenceRegions = diffRegionsRes.data.diff_regions;
-    regionObjects.regions = selectedRegions;
-    regionObjects.selected = new Array(selectedRegions.length).fill(false);
+    differenceRegions.value = diffRegionsRes.data.diff_regions;
 }
 
 async function getSyncPoints() {
@@ -352,10 +344,10 @@ function addTrack(filename, idx) {
 async function selectRegion(regionIdx, obj) {
     hideAllRegions();
     regionToSave.value = false;
-    regionObjects.selected[regionIdx] = !regionObjects.selected[regionIdx];
-    regionObjects.selected.forEach((arrayValue, i) => {
-        if (i !== regionIdx) regionObjects.selected[i] = false;
-    });
+    // regionObjects.selected[regionIdx] = !regionObjects.selected[regionIdx];
+    // regionObjects.selected.forEach((arrayValue, i) => {
+    //     if (i !== regionIdx) regionObjects.selected[i] = false;
+    // });
     const referenceName = tracksFromDb.refTrack.filename;
     const refIdx = tracksFromDb.getIdx(referenceName);
     fadeOut();
@@ -363,25 +355,25 @@ async function selectRegion(regionIdx, obj) {
     peaksInstances[activePeaksIdx].player.pause();
     isPlaying.value = false;
     regionOverlay.value.fill(false);
-    if (regionObjects.selected[regionIdx]) {
-        const startIdx = findClosestTimeIdx(refIdx, regionObjects.regions[regionIdx].startTime);
-        const endIdx = findClosestTimeIdx(refIdx, regionObjects.regions[regionIdx].endTime);
-        switch (obj.type) {
-            case 'selectedRegion':
-                addSelectedRegion(startIdx, endIdx, obj);
-                break;
-            case 'differenceRegion':
-                const targetIdx = tracksFromDb.getIdx(obj.regionName);
-                addDifferenceRegion(refIdx, targetIdx, obj);
-                break;
-            case 'relevantMeasure':
-                addRelevantMeasure(obj);
-                break;
-        }
-    } else {
-        hideAllRegions();
-        isPlaying.value = false;
+    // if (regionObjects.selected[regionIdx]) {
+    const startIdx = findClosestTimeIdx(refIdx, obj.startTime);
+    const endIdx = findClosestTimeIdx(refIdx, obj.endTime);
+    switch (obj.type) {
+        case 'selectedRegion':
+            addSelectedRegion(startIdx, endIdx, obj);
+            break;
+        case 'differenceRegion':
+            const targetIdx = tracksFromDb.getIdx(obj.regionName);
+            addDifferenceRegion(refIdx, targetIdx, obj);
+            break;
+        case 'relevantMeasure':
+            addRelevantMeasure(obj);
+            break;
     }
+    // } else {
+    //     hideAllRegions();
+    //     isPlaying.value = false;
+    // }
 }
 
 function addSelectedRegion(startIdx, endIdx, obj) {
@@ -542,16 +534,25 @@ function zoomAlign() {
     }
 }
 
+function getLongestRegion() {
+    let secs = -1;
+    for (let i = 0; i < peaksInstances.length; i++) {
+        const segment = peaksInstances[i].segments.getSegment('selectedRegion');
+        const seglen = segment.endTime - segment.startTime;
+        if (seglen > secs) secs = seglen + 1;
+    }
+    return secs;
+}
+
 function zoomOnSelectedRegion() {
     const segment = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+    const secs = getLongestRegion();
     peaksInstances[activePeaksIdx].player.seek(segment.startTime);
     for (let i = 0; i < peaksInstances.length; i++) {
-        if (peaksInstances[i].segments.getSegment('selectedRegion') === null) {
-            continue;
-        }
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
         regionLengths.value[i] = segment.endTime - segment.startTime;
+        view.setZoom({ seconds: secs });
         view.setStartTime(segment.startTime);
     }
 }
@@ -563,7 +564,6 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
         view.enableAutoScroll(false, {});
         peaksInstances[i].segments.add({
             color: 'blue',
@@ -575,61 +575,22 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
         regionLengths.value[i] =
             selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1];
     }
-}
-
-function getStartMeasure(start) {
-    const closestStart = measureData.refTrack.gt_measures.reduce((prev, curr) =>
-        Math.abs(curr - start) < Math.abs(prev - start) ? curr : prev
-    );
-    let closestStartIdx = measureData.refTrack.gt_measures.indexOf(closestStart);
-    if (measureData.refTrack.gt_measures[closestStartIdx] < start) {
-        closestStartIdx = closestStartIdx + 1;
+    const secs = getLongestRegion();
+    for (let i = 0; i < peaksInstances.length; i++) {
+        const view = peaksInstances[i].views.getView('zoomview');
+        view.setZoom({ seconds: secs });
+        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
     }
-    return closestStartIdx;
-}
-
-function getEndMeasure(end) {
-    const closestEnd = measureData.refTrack.gt_measures.reduce((prev, curr) =>
-        Math.abs(curr - end) < Math.abs(prev - end) ? curr : prev
-    );
-    let closestEndIdx = measureData.refTrack.gt_measures.indexOf(closestEnd);
-    if (measureData.refTrack.gt_measures[closestEndIdx] > end) {
-        closestEndIdx = closestEndIdx - 1;
-    }
-    return closestEndIdx;
 }
 
 function getTimeString(seconds, start, end) {
     return new Date(seconds * 1000).toISOString().slice(start, end);
 }
 
-function selectRegionType(selectedType) {
-    labelMenu.value = false;
-    relevanceMenu.value = false;
-    regionMenu.value = false;
-    for (const type in regionsType) {
-        regionsType[type] = false;
-    }
-    regionsType[selectedType] = true;
-    switch (selectedType) {
-        case 'selectedRegions':
-            regionObjects.regions = selectedRegions;
-            if (regionObjects.regions.length > 0) regionMenu.value = true;
-            regionObjects.selected = new Array(selectedRegions.length).fill(false);
-            break;
-        case 'differenceRegions':
-            regionObjects.regions = differenceRegions;
-            if (regionObjects.regions.length > 0) regionMenu.value = true;
-            regionObjects.selected = new Array(differenceRegions.length).fill(false);
-            break;
-        case 'relevantMeasures':
-            regionMenu.value = true;
-            let sortedRelevance = selectedRelevanceData.value.slice(0);
-            sortedRelevance.sort((a, b) => a.relevance - b.relevance).reverse();
-            regionObjects.regions = sortedRelevance.slice(0, 10);
-            regionObjects.selected = new Array(differenceRegions.length).fill(false);
-            break;
-    }
+function selectRelevantMeasures() {
+    let sortedRelevance = selectedRelevanceData.value.slice(0);
+    sortedRelevance.sort((a, b) => a.relevance - b.relevance).reverse();
+    relevantMeasures.value = sortedRelevance.slice(0, 10);
 }
 
 const measuresVisible = ref(false);
@@ -790,8 +751,6 @@ function selectRelevanceFeature(id, name) {
         selectedLabel.value =
             measureData.relevance[selectedRelevanceFeature.value][selectedType.value][selectedIdx.value].labelName;
     }
-    labelMenu.value = false;
-    relevanceMenu.value = false;
 }
 
 function selectRelevanceLabel(idx, type) {
@@ -808,14 +767,6 @@ function selectRelevanceLabel(idx, type) {
     selectedRelevanceData.value =
         measureData.relevance[selectedRelevanceFeature.value][type][idx].measureRelevance.slice();
     selectedLabel.value = measureData.relevance[selectedRelevanceFeature.value][type][idx].labelName;
-    labelMenu.value = false;
-    relevanceMenu.value = false;
-}
-
-function menuOnMouseLeave() {
-    relevanceMenu.value = false;
-    labelMenu.value = false;
-    regionMenu.value = false;
 }
 
 const regionName = ref('');
@@ -917,23 +868,57 @@ function saveRegion() {
                 id="settings-bar"
                 class="flex h-[3rem] w-full flex-row items-center justify-between border-b px-5 dark:border-gray-700">
                 <div class="relative flex h-full flex-row items-center gap-2">
-                    <TextBtnGray
-                        btn-text="Feature"
-                        @click="
-                            relevanceMenu = true;
-                            labelMenu = false;
-                            regionMenu = false;
-                        " />
-                    <TextBtnGray
-                        btn-text="Label"
-                        @click="
-                            labelMenu = true;
-                            relevanceMenu = false;
-                            regionMenu = false;
-                        " />
-                    <TextBtnGray btn-text="Selected regions" @click="selectRegionType('selectedRegions')" />
-                    <TextBtnGray btn-text="Difference regions" @click="selectRegionType('differenceRegions')" />
-                    <TextBtnGray btn-text="Relevant measures" @click="selectRegionType('relevantMeasures')" />
+                    <SubMenu :name="'Feature'">
+                        <p
+                            v-for="(obj, i) in measureData.relevanceFeatures"
+                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
+                            @click="selectRelevanceFeature(obj.id, obj.name)">
+                            {{ obj.name }}
+                        </p>
+                    </SubMenu>
+                    <SubMenu :name="'Label'">
+                        <p
+                            v-for="(obj, i) in measureData.labels"
+                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
+                            @click="selectRelevanceLabel(i, 'custom')">
+                            {{ obj }}
+                        </p>
+                    </SubMenu>
+                    <SubMenu :name="'Selected regions'">
+                        <SelectedRegion
+                            v-for="(obj, i) in selectedRegions"
+                            :region-name="obj.regionName"
+                            :idx="i"
+                            :start-time="getTimeString(obj.startTime, 14, 22)"
+                            :end-time="getTimeString(obj.endTime, 14, 22)"
+                            :start-measure="getStartMeasure(obj.startTime)"
+                            :end-measure="getEndMeasure(obj.endTime)"
+                            :beats-per-measure="obj.beatsPerMeasure"
+                            @click="selectRegion(i, obj)">
+                        </SelectedRegion>
+                    </SubMenu>
+                    <SubMenu :name="'Difference regions'">
+                        <DifferenceRegion
+                            v-for="(obj, i) in differenceRegions"
+                            :region-name="obj.regionName"
+                            :idx="i"
+                            :start-time="getTimeString(obj.startTime, 14, 22)"
+                            :end-time="getTimeString(obj.endTime, 14, 22)"
+                            :start-time-target="getTimeString(obj.startTimeTarget, 14, 22)"
+                            :end-time-target="getTimeString(obj.endTimeTarget, 14, 22)"
+                            @click="selectRegion(i, obj)">
+                        </DifferenceRegion>
+                    </SubMenu>
+                    <SubMenu :name="'Relevant measures'" @mouseover="selectRelevantMeasures()">
+                        <RelevantMeasure
+                            v-for="(obj, i) in relevantMeasures"
+                            :idx="i"
+                            :region-name="obj.regionName"
+                            :relevance="obj.relevance"
+                            :absolute-relevance="obj.absoluteRelevance"
+                            @click="selectRegion(i, obj)">
+                        </RelevantMeasure>
+                    </SubMenu>
                 </div>
                 <div
                     v-show="regionToSave"
@@ -965,7 +950,9 @@ function saveRegion() {
                 </div>
             </div>
 
-            <div id="container" class="relative flex h-[calc(100%-10rem)] w-full flex-row items-end transition">
+            <div
+                id="container"
+                class="relative flex h-[calc(100%-10rem)] w-full flex-row items-end border-b transition">
                 <div
                     id="label-feature"
                     class="-100 absolute top-0 z-10 flex w-full justify-center gap-2 border-b bg-white py-1 text-sm font-semibold">
@@ -981,109 +968,6 @@ function saveRegion() {
                         <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
                             {{ selectedLabel }}
                         </p>
-                    </div>
-                </div>
-
-                <div id="menu-container" class="absolute top-0 z-30 flex w-full px-5 text-sm">
-                    <div>
-                        <div
-                            v-if="relevanceMenu"
-                            class="z-50 mt-1 flex flex-col gap-1 rounded-md border bg-white p-1"
-                            @mouseleave="menuOnMouseLeave()">
-                            <p
-                                v-for="(obj, i) in measureData.relevanceFeatures"
-                                class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
-                                @click="selectRelevanceFeature(obj.id, obj.name)">
-                                {{ obj.name }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div
-                            v-if="labelMenu"
-                            class="z-50 mt-1 flex flex-col gap-1 rounded-md border bg-white p-1"
-                            @mouseleave="menuOnMouseLeave()">
-                            <p
-                                v-for="(obj, i) in measureData.labels"
-                                class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
-                                @click="selectRelevanceLabel(i, 'custom')">
-                                {{ obj }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div
-                            v-if="regionMenu"
-                            class="z-50 mt-1 flex flex-col gap-1 rounded-md border bg-white p-1"
-                            @mouseleave="menuOnMouseLeave()">
-                            <div
-                                v-for="(obj, i) in regionObjects.regions"
-                                :id="`region-${i}`"
-                                :key="i"
-                                class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md px-2 text-sm hover:bg-neutral-200"
-                                :class="{
-                                    'bg-neutral-200 dark:bg-gray-600': regionObjects.selected[i],
-                                }"
-                                @click="selectRegion(i, obj)">
-                                <p class="mr-5 flex h-full w-full items-center">
-                                    {{ obj.regionName }}
-                                </p>
-
-                                <div class="flex h-full gap-2 rounded-md py-1 dark:bg-gray-400 dark:hover:bg-gray-700">
-                                    <div
-                                        v-if="regionsType.selectedRegions || regionsType.differenceRegions"
-                                        class="flex flex-row gap-2">
-                                        <p class="flex h-full items-center">Reference:</p>
-                                        <p
-                                            class="flex w-20 select-none items-center justify-center rounded-md bg-green-500 text-xs text-white">
-                                            {{ getTimeString(obj.startTime, 14, 22) }}
-                                        </p>
-                                        <p
-                                            class="flex w-20 select-none items-center justify-center rounded-md bg-red-500 text-xs text-white">
-                                            {{ getTimeString(obj.endTime, 14, 22) }}
-                                        </p>
-                                    </div>
-                                    <div v-if="regionsType.differenceRegions" class="flex flex-row gap-2">
-                                        <p>Target:</p>
-                                        <p
-                                            class="flex w-20 select-none items-center justify-center rounded-md bg-green-500 text-xs text-white">
-                                            {{ getTimeString(obj.startTimeTarget, 14, 22) }}
-                                        </p>
-                                        <p
-                                            class="flex w-20 select-none items-center justify-center rounded-md bg-red-500 text-xs text-white">
-                                            {{ getTimeString(obj.endTimeTarget, 14, 22) }}
-                                        </p>
-                                    </div>
-
-                                    <p
-                                        v-if="regionsType.selectedRegions"
-                                        class="flex w-28 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
-                                        Measures:
-                                        {{ getStartMeasure(obj.startTime) }}–{{ getEndMeasure(obj.endTime) }}
-                                    </p>
-                                    <p
-                                        v-if="regionsType.selectedRegions"
-                                        class="flex w-36 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
-                                        Beats per measure:
-                                        {{ obj.beatsPerMeasure }}
-                                    </p>
-                                    <p
-                                        v-if="regionsType.relevantMeasures"
-                                        class="flex w-28 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
-                                        Relevance:
-                                        {{ obj.relevance.toFixed(2) }}
-                                    </p>
-                                    <p
-                                        v-if="regionsType.relevantMeasures"
-                                        class="flex w-40 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
-                                        Absolute relevance:
-                                        {{ Number(obj.absoluteRelevance).toFixed(2) }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -1107,7 +991,7 @@ function saveRegion() {
                                         hover
                                         placement="right"
                                         :arrow="true"
-                                        class="select-none text-sm">
+                                        class="select-none text-xs">
                                         <p class="text-xs">
                                             {{ truncateFilename(obj.filename, 11) }}
                                         </p>
@@ -1179,7 +1063,7 @@ function saveRegion() {
 
             <div
                 id="interp-player-controls"
-                class="absolute bottom-0 flex h-[3rem] w-full flex-row items-center justify-between border-t pl-5 pr-5 dark:border-gray-700">
+                class="absolute bottom-0 flex h-[3rem] w-full flex-row items-center justify-between pl-5 pr-5 dark:border-gray-700">
                 <div class="flex gap-1">
                     <button
                         id="pause-button"

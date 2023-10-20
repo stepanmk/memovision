@@ -9,6 +9,8 @@ import {
 } from './globalStores';
 import { pinia } from './piniaInstance';
 
+const measureData = useMeasureData(pinia);
+
 async function getSessions() {
     const res = await api.get('/get-sessions', getSecureConfig());
     return res.data.sessions;
@@ -73,13 +75,13 @@ function truncateFilename(filename, numChars) {
     return shortFilename;
 }
 
-function getTimeString(seconds) {
-    if (seconds < 3600) {
-        return new Date(seconds * 1000).toISOString().slice(14, 19);
-    } else {
-        return new Date(seconds * 1000).toISOString().slice(11, 19);
-    }
-}
+// function getTimeString(seconds) {
+//     if (seconds < 3600) {
+//         return new Date(seconds * 1000).toISOString().slice(14, 19);
+//     } else {
+//         return new Date(seconds * 1000).toISOString().slice(11, 19);
+//     }
+// }
 
 function createZoomLevels(zoomviewWidth, trackLengthSec) {
     const maxZoom = Math.pow(2, Math.floor(Math.log2((trackLengthSec * 44100) / zoomviewWidth)));
@@ -92,13 +94,41 @@ function createZoomLevels(zoomviewWidth, trackLengthSec) {
     return zoomLevels;
 }
 
+function getStartMeasure(start) {
+    const closestStart = measureData.refTrack.gt_measures.reduce((prev, curr) =>
+        Math.abs(curr - start) < Math.abs(prev - start) ? curr : prev
+    );
+    let closestStartIdx = measureData.refTrack.gt_measures.indexOf(closestStart);
+    if (measureData.refTrack.gt_measures[closestStartIdx] < start) {
+        closestStartIdx = closestStartIdx + 1;
+    }
+    return closestStartIdx;
+}
+
+function getEndMeasure(end) {
+    const closestEnd = measureData.refTrack.gt_measures.reduce((prev, curr) =>
+        Math.abs(curr - end) < Math.abs(prev - end) ? curr : prev
+    );
+    let closestEndIdx = measureData.refTrack.gt_measures.indexOf(closestEnd);
+    if (measureData.refTrack.gt_measures[closestEndIdx] > end) {
+        closestEndIdx = closestEndIdx - 1;
+    }
+    return closestEndIdx;
+}
+
+function getTimeString(seconds, start, end) {
+    return new Date(seconds * 1000).toISOString().slice(start, end);
+}
+
 export {
     createZoomLevels,
     darkMode,
     disableDarkMode,
     getCookie,
+    getEndMeasure,
     getSecureConfig,
     getSessions,
+    getStartMeasure,
     getTimeString,
     resetAllStores,
     truncateFilename,

@@ -1,16 +1,16 @@
 <script setup>
-import { use } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-import { PieChart, LineChart } from 'echarts/charts';
+import { LineChart, PieChart } from 'echarts/charts';
 import {
+    GridComponent,
+    LegendComponent,
+    MarkLineComponent,
     TitleComponent,
     TooltipComponent,
-    LegendComponent,
-    GridComponent,
-    MarkLineComponent,
 } from 'echarts/components';
-import VChart, { THEME_KEY } from 'vue-echarts';
-import { ref, provide, computed, watch } from 'vue';
+import { use } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
+import { computed, ref } from 'vue';
+import VChart from 'vue-echarts';
 
 use([
     CanvasRenderer,
@@ -32,6 +32,7 @@ const props = defineProps({
     yMax: Number,
     data: Array,
     color: String,
+    featureName: String,
 });
 
 let data = [];
@@ -70,6 +71,14 @@ const compAxis = computed(() => {
 
 const option = ref({
     animation: false,
+    title: {
+        text: props.featureName,
+        left: 'center',
+        textStyle: {
+            fontSize: 13,
+            color: 'black',
+        },
+    },
     xAxis: compAxis,
     yAxis: {
         min: props.yMin,
