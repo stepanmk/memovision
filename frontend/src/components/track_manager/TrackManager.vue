@@ -104,7 +104,7 @@ async function getAllData() {
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
-    console.log(tracksFromDb.trackObjects);
+    // console.log(tracksFromDb.trackObjects);
 }
 
 function onDrop(files) {

@@ -1,12 +1,12 @@
-from memovision.db_models import Session, Track
-from memovision.features.utils import get_resampled_feature, load_measures, get_feature_data
-from memovision.features.extractors import compute_rms, compute_loudness
-from memovision.features.relevance import compute_relevance
+import numpy as np
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
 from librosa import load
-import numpy as np
-
+from memovision.db_models import Session, Track
+from memovision.features.extractors import compute_loudness, compute_rms
+from memovision.features.relevance import compute_relevance
+from memovision.features.utils import (get_feature_data, get_resampled_feature,
+                                       load_measures)
 
 dynamics = Blueprint('dynamics', __name__)
 

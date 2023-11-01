@@ -9,13 +9,7 @@ import { showAlert } from '../../alerts';
 import { api } from '../../axiosInstance';
 import { useAudioStore, useMeasureData, useModulesVisible, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
-import {
-    createZoomLevels,
-    getEndMeasure,
-    getSecureConfig,
-    getStartMeasure,
-    truncateFilename,
-} from '../../sharedFunctions';
+import { getEndMeasure, getSecureConfig, getStartMeasure, truncateFilename } from '../../sharedFunctions';
 
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
@@ -72,6 +66,7 @@ const trackTimes = ref([]);
 const regionLengths = ref([]);
 const selectedRelevanceFeature = ref('');
 const regionToSave = ref(false);
+const zoomingEnabled = ref(false);
 
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
@@ -281,7 +276,7 @@ function addTrack(filename, idx) {
     audioSource.connect(gainNode);
     const waveformData = audioStore.getWaveformData(filename);
     const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
-    const zoomLevels = createZoomLevels(waveformContainer.offsetWidth, trackLengthSec);
+    // const zoomLevels = createZoomLevels(waveformContainer.offsetWidth, trackLengthSec);
     const options = {
         zoomview: {
             segmentOptions: {
@@ -304,7 +299,7 @@ function addTrack(filename, idx) {
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
-        zoomLevels: zoomLevels,
+        zoomLevels: [1024],
     };
     Peaks.init(options, (err, peaks) => {
         if (err) console.log(err);
@@ -336,8 +331,7 @@ function addTrack(filename, idx) {
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
-        view.enableAutoScroll(false, {});
-        peaksInstances[idx].zoom.setZoom(zoomLevels.length - 1);
+        view.setZoom({ seconds: trackLengthSec });
     });
 }
 
@@ -444,7 +438,7 @@ function findClosestTimeIdx(peaksIdx, time) {
 }
 
 function seekCallback(time) {
-    let closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
+    const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
     selectedIndices.forEach((idx) => {
         peaksInstances[idx].player.seek(syncPoints[idx][closestTimeIdx]);
     });
@@ -476,7 +470,9 @@ async function selectPeaks(idx) {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
         if (selectedRegion !== null) {
+            const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
+            peaksInstances[idx].player.seek(syncPoints[idx][closestTimeIdx]);
             await sleep(10);
             fadeIn();
         }
@@ -552,8 +548,10 @@ function zoomOnSelectedRegion() {
         const view = peaksInstances[i].views.getView('zoomview');
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
         regionLengths.value[i] = segment.endTime - segment.startTime;
-        view.setZoom({ seconds: secs });
-        view.setStartTime(segment.startTime);
+        if (zoomingEnabled.value) {
+            view.setZoom({ seconds: secs });
+            view.setStartTime(segment.startTime);
+        }
     }
 }
 
@@ -578,8 +576,10 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     const secs = getLongestRegion();
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        view.setZoom({ seconds: secs });
-        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
+        if (zoomingEnabled.value) {
+            view.setZoom({ seconds: secs });
+            view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
+        }
     }
 }
 
@@ -659,19 +659,27 @@ function addListeners() {
     const scrollContainer = document.getElementById('top-bar');
     scrollContainer.addEventListener('wheel', horizontalScroll);
     const container = document.getElementById('audio-container');
-    container.addEventListener('mousewheel', (event) => {
-        if (event.deltaY < 0) {
-            peaksInstances.forEach((peaksInstance) => {
-                peaksInstance.zoom.zoomIn();
-                zoomAlign();
-            });
-        } else {
-            peaksInstances.forEach((peaksInstance) => {
-                peaksInstance.zoom.zoomOut();
-                zoomAlign();
-            });
+    // container.addEventListener('wheel', (e) => {
+    //     e.preventDefault();
+    // });
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
         }
     });
+    // container.addEventListener('mousewheel', (event) => {
+    //     if (event.deltaY < 0) {
+    //         peaksInstances.forEach((peaksInstance) => {
+    //             peaksInstance.zoom.zoomIn();
+    //             zoomAlign();
+    //         });
+    //     } else {
+    //         peaksInstances.forEach((peaksInstance) => {
+    //             peaksInstance.zoom.zoomOut();
+    //             zoomAlign();
+    //         });
+    //     }
+    // });
 }
 
 function removeListeners() {
@@ -1092,6 +1100,15 @@ function saveRegion() {
                             icon="akar-icons:three-line-vertical"
                             width="20"
                             :class="{ 'text-white': measuresVisible }" />
+                    </button>
+                    <button
+                        id="zoom-button"
+                        @click="zoomingEnabled = !zoomingEnabled"
+                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600"
+                        :class="{
+                            'bg-cyan-700 dark:bg-cyan-700': zoomingEnabled,
+                        }">
+                        <Icon icon="fontisto:zoom" width="18" :class="{ 'text-white': zoomingEnabled }" />
                     </button>
                 </div>
 

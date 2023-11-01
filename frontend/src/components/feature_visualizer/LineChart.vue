@@ -28,8 +28,8 @@ const props = defineProps({
     start: Number,
     end: Number,
     lengthSec: Number,
-    yMin: Number,
-    yMax: Number,
+    yMin: [Number, String],
+    yMax: [Number, String],
     data: Array,
     color: String,
     featureName: String,
@@ -69,6 +69,20 @@ const compAxis = computed(() => {
     return axis;
 });
 
+const compYAxis = computed(() => {
+    const axis = {
+        min: props.yMin,
+        max: props.yMax,
+        axisLine: {
+            onZero: true,
+        },
+        axisLabel: {
+            color: 'black',
+        },
+    };
+    return axis;
+});
+
 const option = ref({
     animation: false,
     title: {
@@ -80,16 +94,7 @@ const option = ref({
         },
     },
     xAxis: compAxis,
-    yAxis: {
-        min: props.yMin,
-        max: props.yMax,
-        axisLine: {
-            onZero: true,
-        },
-        axisLabel: {
-            color: 'black',
-        },
-    },
+    yAxis: compYAxis,
     series: [
         {
             type: 'line',

@@ -193,24 +193,25 @@ function getFeatureLists() {
     selectedFeatureLists['rhythmMeasureVisible'] = [];
     featureLists.dynamicsMetadata.forEach((feat) => {
         if (featureLists.dynamicsTime.includes(feat.id)) {
-            selectedFeatureLists['dynamicsTime'].push(feat);
+            selectedFeatureLists['dynamicsTime'].push({ ...feat });
             selectedFeatureLists['dynamicsTimeVisible'].push(false);
         }
         if (featureLists.dynamicsMeasure.includes(feat.id)) {
-            selectedFeatureLists['dynamicsMeasure'].push(feat);
+            selectedFeatureLists['dynamicsMeasure'].push({ ...feat });
             selectedFeatureLists['dynamicsTimeVisible'].push(false);
         }
     });
     featureLists.rhythmMetadata.forEach((feat) => {
         if (featureLists.rhythmTime.includes(feat.id)) {
-            selectedFeatureLists['rhythmTime'].push(feat);
+            selectedFeatureLists['rhythmTime'].push({ ...feat });
             selectedFeatureLists['rhythmTimeVisible'].push(false);
         }
         if (featureLists.rhythmMeasure.includes(feat.id)) {
-            selectedFeatureLists['rhythmMeasure'].push(feat);
+            selectedFeatureLists['rhythmMeasure'].push({ ...feat });
             selectedFeatureLists['rhythmMeasureVisible'].push(false);
         }
     });
+    console.log(selectedFeatureLists);
 }
 
 const startMeasure = ref(0);
@@ -467,6 +468,8 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     }
     measureSelector.value.setRegionOverlay(startMeasureIdx, endMeasureIdx);
 }
+
+function setYAxisResolution() {}
 </script>
 
 <template>
@@ -611,7 +614,7 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                 <div class="">
                                     <div
                                         v-for="(feat, j) in selectedFeatureLists.dynamicsTime"
-                                        class="flex flex-col gap-2">
+                                        class="relative flex flex-col gap-2">
                                         <LineChart
                                             v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
                                             :feature-name="feat.name"
@@ -623,10 +626,26 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                             :length-sec="obj.length_sec"
                                             :color="matplotlibColors[i]"
                                             class="h-[10rem]" />
+                                        <div
+                                            v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
+                                            class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                            <input
+                                                :id="`${feat.name}-measure-ymin`"
+                                                type="number"
+                                                v-model="feat.yMin"
+                                                class="h-5 w-16 rounded-md"
+                                                step="0.1" />
+                                            <input
+                                                :id="`${feat.name}-measure-ymax`"
+                                                type="number"
+                                                v-model="feat.yMax"
+                                                class="h-5 w-16 rounded-md"
+                                                step="0.1" />
+                                        </div>
                                     </div>
                                     <div
                                         v-for="(feat, j) in selectedFeatureLists.rhythmTime"
-                                        class="flex flex-col gap-2">
+                                        class="relative flex flex-col gap-2">
                                         <LineChart
                                             v-if="selectedFeatureLists.rhythmTimeVisible[j]"
                                             :feature-name="feat.name"
@@ -638,6 +657,22 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                             :length-sec="obj.length_sec"
                                             :color="matplotlibColors[i]"
                                             class="h-[10rem]" />
+                                        <div
+                                            v-if="selectedFeatureLists.rhythmTimeVisible[j]"
+                                            class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                            <input
+                                                :id="`${feat.name}-time-ymin`"
+                                                type="number"
+                                                v-model="feat.yMin"
+                                                class="h-5 w-16 rounded-md"
+                                                step="0.1" />
+                                            <input
+                                                :id="`${feat.name}-time-ymax`"
+                                                type="number"
+                                                v-model="feat.yMax"
+                                                class="h-5 w-16 rounded-md"
+                                                step="0.1" />
+                                        </div>
                                     </div>
                                 </div>
                                 <div
@@ -645,7 +680,7 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                     :style="{ marginLeft: cursorPositions[i] }"></div>
                             </div>
                         </div>
-                        <div v-for="(feat, j) in selectedFeatureLists.dynamicsMeasure">
+                        <div v-for="(feat, j) in selectedFeatureLists.dynamicsMeasure" class="relative">
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
                                 :feature-name="feat.name"
@@ -658,8 +693,24 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                 :y-max="feat.yMax"
                                 :fpm="feat.fpm"
                                 class="h-[16rem]" />
+                            <div
+                                v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
+                                class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                <input
+                                    :id="`${feat.name}-measure-ymin`"
+                                    type="number"
+                                    v-model="feat.yMin"
+                                    class="h-5 w-16 rounded-md"
+                                    step="0.1" />
+                                <input
+                                    :id="`${feat.name}-measure-ymax`"
+                                    type="number"
+                                    v-model="feat.yMax"
+                                    class="h-5 w-16 rounded-md"
+                                    step="0.1" />
+                            </div>
                         </div>
-                        <div v-for="(feat, j) in selectedFeatureLists.rhythmMeasure">
+                        <div v-for="(feat, j) in selectedFeatureLists.rhythmMeasure" class="relative">
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
                                 :feature-name="feat.name"
@@ -672,6 +723,22 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
                                 :y-max="feat.yMax"
                                 :fpm="feat.fpm"
                                 class="h-[16rem]" />
+                            <div
+                                v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
+                                class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                <input
+                                    :id="`${feat.name}-measure-ymin`"
+                                    type="number"
+                                    v-model="feat.yMin"
+                                    class="h-5 w-16 rounded-md"
+                                    step="0.1" />
+                                <input
+                                    :id="`${feat.name}-measure-ymax`"
+                                    type="number"
+                                    v-model="feat.yMax"
+                                    class="h-5 w-16 rounded-md"
+                                    step="0.1" />
+                            </div>
                         </div>
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>

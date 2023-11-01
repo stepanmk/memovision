@@ -18,8 +18,8 @@ const props = defineProps({
     featureName: String,
     startMeasureIdx: Number,
     endMeasureIdx: Number,
-    yMin: Number,
-    yMax: Number,
+    yMin: [Number, String],
+    yMax: [Number, String],
     data: Object,
     colors: Array,
     visible: Array,
@@ -84,6 +84,20 @@ const compSeries = computed(() => {
     return series;
 });
 
+const compYAxis = computed(() => {
+    const axis = {
+        min: props.yMin,
+        max: props.yMax,
+        axisLine: {
+            onZero: true,
+        },
+        axisLabel: {
+            color: 'black',
+        },
+    };
+    return axis;
+});
+
 // const markLinePos = computed(() => {
 //     return [{ name: 'cursor', xAxis: Math.floor((props.data.length - 1) * props.position) }];
 // });
@@ -106,20 +120,11 @@ const option = ref({
     },
     animation: false,
     xAxis: compAxis,
-    yAxis: {
-        min: props.yMin,
-        max: props.yMax,
-        axisLine: {
-            onZero: true,
-        },
-        axisLabel: {
-            color: 'black',
-        },
-    },
+    yAxis: compYAxis,
     series: compSeries,
 
     grid: {
-        left: 30,
+        left: 45,
         right: 0,
         top: 20,
         bottom: 20,
