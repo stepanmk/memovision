@@ -25,6 +25,7 @@ use([
 
 const props = defineProps({
     showAxis: Boolean,
+    units: String,
     start: Number,
     end: Number,
     lengthSec: Number,
@@ -73,6 +74,9 @@ const compYAxis = computed(() => {
     const axis = {
         min: props.yMin,
         max: props.yMax,
+        name: props.units,
+        nameLocation: 'middle',
+        nameGap: 30,
         axisLine: {
             onZero: true,
         },
@@ -110,7 +114,7 @@ const option = ref({
     grid: {
         left: 45,
         right: 0,
-        top: 20,
+        top: 30,
         bottom: 20,
     },
 });

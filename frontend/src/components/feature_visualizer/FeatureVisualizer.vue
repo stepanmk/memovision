@@ -71,26 +71,6 @@ let matplotlibColors = [
     '#7f7f7f',
     '#bcbd22',
     '#17becf',
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
 ];
 
 const isPlaying = ref(false);
@@ -177,6 +157,15 @@ modulesVisible.$subscribe((mutation, state) => {
     }
 });
 
+function genColor(seed) {
+    color = Math.floor(Math.abs(Math.sin(seed) * 16777215));
+    color = color.toString(16);
+    while (color.length < 6) {
+        color = '0' + color;
+    }
+    return color;
+}
+
 async function getSyncPoints() {
     const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
     syncPoints = syncPointsRes.data;
@@ -211,7 +200,6 @@ function getFeatureLists() {
             selectedFeatureLists['rhythmMeasureVisible'].push(false);
         }
     });
-    console.log(selectedFeatureLists);
 }
 
 const startMeasure = ref(0);
@@ -593,7 +581,7 @@ function setYAxisResolution() {}
                         <div
                             class="h-full w-[0.5rem] rounded-r-md"
                             :style="{
-                                backgroundColor: matplotlibColors[i],
+                                backgroundColor: matplotlibColors[i % 10],
                             }"></div>
                     </div>
                 </div>
@@ -618,6 +606,7 @@ function setYAxisResolution() {}
                                         <LineChart
                                             v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
                                             :feature-name="feat.name"
+                                            :units="feat.units"
                                             :data="featureData.dynamics[feat.id][i].featData"
                                             :start="startTimes[i]"
                                             :end="endTimes[i]"
@@ -649,13 +638,14 @@ function setYAxisResolution() {}
                                         <LineChart
                                             v-if="selectedFeatureLists.rhythmTimeVisible[j]"
                                             :feature-name="feat.name"
+                                            :units="feat.units"
                                             :data="featureData.rhythm[feat.id][i].featData"
                                             :start="startTimes[i]"
                                             :end="endTimes[i]"
                                             :y-min="feat.yMin"
                                             :y-max="feat.yMax"
                                             :length-sec="obj.length_sec"
-                                            :color="matplotlibColors[i]"
+                                            :color="matplotlibColors[i % 10]"
                                             class="h-[10rem]" />
                                         <div
                                             v-if="selectedFeatureLists.rhythmTimeVisible[j]"
@@ -684,6 +674,7 @@ function setYAxisResolution() {}
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
                                 :feature-name="feat.name"
+                                :units="feat.units"
                                 :data="featureData.dynamics[feat.id]"
                                 :colors="matplotlibColors"
                                 :visible="tracksVisible"
@@ -714,6 +705,7 @@ function setYAxisResolution() {}
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
                                 :feature-name="feat.name"
+                                :units="feat.units"
                                 :data="featureData.rhythm[feat.id]"
                                 :colors="matplotlibColors"
                                 :visible="tracksVisible"

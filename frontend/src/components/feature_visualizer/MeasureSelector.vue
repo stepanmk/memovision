@@ -99,7 +99,7 @@ function relevanceBarMouseMove(event) {
         regionOverlay.value.fill(false);
         const x = event.clientX - bounds.left;
         let dragOverMeasureIdx = Math.floor((x / barWidth) * measureCount);
-        if (dragOverMeasureIdx > measureCount) dragOverMeasureIdx = measureCount - 1;
+        if (dragOverMeasureIdx > measureCount - 1) dragOverMeasureIdx = measureCount - 1;
         for (let i = firstMeasure; i < dragOverMeasureIdx + 1; i++) {
             regionOverlay.value[i] = true;
         }

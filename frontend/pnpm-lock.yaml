@@ -25,6 +25,9 @@ dependencies:
   echarts:
     specifier: ^5.4.0
     version: 5.4.0
+  echarts-stat:
+    specifier: ^1.2.0
+    version: 1.2.0
   konva:
     specifier: ^8.3.14
     version: 8.3.14
@@ -903,6 +906,10 @@ packages:
     dependencies:
       esutils: 2.0.3
     dev: true
+
+  /echarts-stat@1.2.0:
+    resolution: {integrity: sha512-zLd7Kgs+tuTSeaK0VQEMNmnMivEkhvHIk1gpBtLzpRerfcIQ+Bd5XudOMmtwpaTc1WDZbA7d1V//iiBccR46Qg==}
+    dev: false
 
   /echarts@5.4.0:
     resolution: {integrity: sha512-uPsO9VRUIKAdFOoH3B0aNg7NRVdN7aM39/OjovjO9MwmWsAkfGyeXJhK+dbRi51iDrQWliXV60/XwLA7kg3z0w==}

@@ -16,6 +16,7 @@
     "axios": "^0.27.2",
     "colormap": "^2.3.2",
     "echarts": "^5.4.0",
+    "echarts-stat": "^1.2.0",
     "konva": "^8.3.14",
     "peaks.js": "3.0.0-beta.0",
     "pinia": "^2.0.13",

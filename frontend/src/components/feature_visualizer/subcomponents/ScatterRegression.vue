@@ -1,14 +1,29 @@
 <script setup>
-// import ecStat from 'echarts-stat';
-import { LineChart } from 'echarts/charts';
-import { GridComponent, TitleComponent, TooltipComponent } from 'echarts/components';
-import { use } from 'echarts/core';
+import ecStat from 'echarts-stat';
+import { LineChart, ScatterChart } from 'echarts/charts';
+import {
+    GridComponent,
+    LegendComponent,
+    MarkLineComponent,
+    TitleComponent,
+    TooltipComponent,
+} from 'echarts/components';
+import { registerTransform, use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { computed, ref } from 'vue';
 import VChart from 'vue-echarts';
 
-use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, GridComponent]);
-// registerTransform([ecStat.regression]);
+use([
+    CanvasRenderer,
+    LineChart,
+    ScatterChart,
+    TitleComponent,
+    TooltipComponent,
+    LegendComponent,
+    GridComponent,
+    MarkLineComponent,
+]);
+registerTransform([ecStat.regression]);
 
 const props = defineProps({
     featureName: String,
