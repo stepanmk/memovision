@@ -291,6 +291,7 @@ function addTrack(filename, idx) {
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
+            fontFamily: 'Inter',
         },
         mediaElement: audioElement,
         dataUri: {
@@ -995,6 +996,18 @@ function saveRegion() {
                                     }">
                                     <p class="font-bold">{{ i + 1 }}</p>
                                     <Popper
+                                        v-if="obj.performer"
+                                        :content="obj.performer + '; ' + obj.year"
+                                        hover
+                                        placement="right"
+                                        :arrow="true"
+                                        class="select-none text-xs">
+                                        <p class="text-xs">
+                                            {{ truncateFilename(obj.performer, 11) }}
+                                        </p>
+                                    </Popper>
+                                    <Popper
+                                        v-else
                                         :content="obj.filename"
                                         hover
                                         placement="right"

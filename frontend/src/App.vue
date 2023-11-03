@@ -31,5 +31,6 @@ import AlertModal from './components/AlertModal.vue';
 html,
 body {
     overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
 }
 </style>

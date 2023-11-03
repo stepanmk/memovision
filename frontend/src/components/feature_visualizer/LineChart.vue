@@ -88,6 +88,9 @@ const compYAxis = computed(() => {
 });
 
 const option = ref({
+    textStyle: {
+        fontFamily: 'Inter',
+    },
     animation: false,
     title: {
         text: props.featureName,

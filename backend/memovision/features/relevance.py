@@ -89,8 +89,9 @@ def compute_relevance(username, session, feature_name, fpm=None, downsample_meth
     label_data = get_label_data(session)
     custom = []
     for label in label_data:
-        relevance = relevance_func(**{'X': pd.DataFrame(X), 'y': pd.Series(label['labels'])})
-        relevance_object = create_relevance_object(relevance, label['label_name'], 'custom')
-        relevance_object['labels'] = label['labels'].astype(bool).tolist()
-        custom.append(relevance_object)
+        if(X.shape[0] == len(label['labels'])):
+            relevance = relevance_func(**{'X': pd.DataFrame(X), 'y': pd.Series(label['labels'])})
+            relevance_object = create_relevance_object(relevance, label['label_name'], 'custom')
+            relevance_object['labels'] = label['labels'].astype(bool).tolist()
+            custom.append(relevance_object)
     return {'oneVsRest': one_vs_rest, 'custom': custom}

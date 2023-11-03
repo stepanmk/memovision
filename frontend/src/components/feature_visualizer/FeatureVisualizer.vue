@@ -1,7 +1,7 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
 import { api } from '../../axiosInstance';
 import {
@@ -22,6 +22,7 @@ import {
     truncateFilename,
 } from '../../sharedFunctions';
 
+import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
 import SelectedRegion from '../shared_components/SelectedRegion.vue';
 import SubMenu from '../shared_components/SubMenu.vue';
@@ -29,6 +30,7 @@ import LineChart from './LineChart.vue';
 import LineChartMeasure from './LineChartMeasure.vue';
 import MeasureSelector from './MeasureSelector.vue';
 import FeatureName from './subcomponents/FeatureName.vue';
+import ScatterRegression from './subcomponents/ScatterRegression.vue';
 
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
@@ -75,8 +77,15 @@ let matplotlibColors = [
 
 const isPlaying = ref(false);
 const tracksVisible = ref([]);
+const waveformsVisible = ref([]);
 const playing = ref([]);
 const regionOverlay = ref([]);
+const trackNames = ref([]);
+const timeSelections = ref([]);
+const trackLabels = ref([]);
+const selectedLabel = ref('');
+const labelSelectors = ref([]);
+const peaksInstancesReady = ref([]);
 
 let syncPoints = null;
 let activePeaksIdx = 0;
@@ -108,8 +117,17 @@ function initFeatVisualizer() {
 
     tracksFromDb.syncTracks.forEach((track, idx) => {
         tracksVisible.value.push(true);
+        waveformsVisible.value.push(true);
         playing.value.push(false);
+        peaksInstancesReady.value.push(false);
+        if (track.performer) {
+            trackNames.value.push(track.performer + '; ' + track.year);
+        } else {
+            trackNames.value.push(track.filename);
+        }
+        timeSelections.value.push(track.length_sec);
 
+        trackLabels.value.push(false);
         peaksInstances.push(null);
         idxArray.push(idx);
         cursorPositions.value.push(0);
@@ -119,6 +137,10 @@ function initFeatVisualizer() {
         audioCtx.resume();
         createFadeRamps();
         measuresVisible.value = true;
+    });
+
+    measureData.relevance['duration']['custom'].forEach(() => {
+        labelSelectors.value.push(false);
     });
 
     setTimeout(() => {
@@ -132,7 +154,13 @@ function initFeatVisualizer() {
 
 function destroyFeatVisualizer() {
     tracksVisible.value = [];
+    waveformsVisible.value = [];
     playing.value = [];
+    trackNames.value = [];
+    timeSelections.value = [];
+    trackLabels.value = [];
+    peaksInstancesReady.value = [];
+    labelSelectors.value = [];
 
     peaksInstances = [];
     idxArray = [];
@@ -157,14 +185,9 @@ modulesVisible.$subscribe((mutation, state) => {
     }
 });
 
-function genColor(seed) {
-    color = Math.floor(Math.abs(Math.sin(seed) * 16777215));
-    color = color.toString(16);
-    while (color.length < 6) {
-        color = '0' + color;
-    }
-    return color;
-}
+const allPeaksReady = computed(() => {
+    return peaksInstancesReady.value.includes(false);
+});
 
 async function getSyncPoints() {
     const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
@@ -220,7 +243,11 @@ function getMeasureData() {
     endMeasure.value = selectedMeasureData[0].length - 3;
 }
 
-function makeVisible(idx) {
+function showWaveform(idx) {
+    waveformsVisible.value[idx] = !waveformsVisible.value[idx];
+}
+
+function showInPlots(idx) {
     tracksVisible.value[idx] = !tracksVisible.value[idx];
 }
 
@@ -245,6 +272,7 @@ function addTrack(filename, idx) {
     // peaks.js options
     const options = {
         zoomview: {
+            fontFamily: 'Inter',
             segmentOptions: {
                 style: 'overlay',
                 overlayOffset: 0,
@@ -288,6 +316,7 @@ function addTrack(filename, idx) {
                 currentMeasure.value = measureIdx - 2;
             });
         }
+        peaksInstancesReady.value[idx] = true;
     });
 }
 
@@ -412,6 +441,7 @@ function hideAllRegions() {
     peaksInstances.forEach((peaksInstance, idx) => {
         startTimes[idx] = 0;
         endTimes[idx] = tracksFromDb.syncTracks[idx].length_sec;
+        timeSelections.value[idx] = tracksFromDb.syncTracks[idx].length_sec;
         peaksInstance.segments.removeAll();
     });
 }
@@ -440,6 +470,7 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
         const view = peaksInstances[i].views.getView('zoomview');
         startTimes[i] = selectedMeasureData[i][startMeasureIdx + 1];
         endTimes[i] = selectedMeasureData[i][endMeasureIdx + 2];
+        timeSelections.value[i] = endTimes[i] - startTimes[i];
         setCursorPos(i, selectedMeasureData[i][startMeasureIdx + 1]);
         view.setZoom({
             seconds: selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1],
@@ -457,7 +488,13 @@ async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
     measureSelector.value.setRegionOverlay(startMeasureIdx, endMeasureIdx);
 }
 
-function setYAxisResolution() {}
+function selectRelevanceLabel(idx) {
+    trackLabels.value.fill(false);
+    labelSelectors.value.fill(false);
+    labelSelectors.value[idx] = true;
+    trackLabels.value = measureData.relevance['duration']['custom'][idx].labels.slice();
+    selectedLabel.value = measureData.relevance['duration']['custom'][idx].labelName;
+}
 </script>
 
 <template>
@@ -465,7 +502,10 @@ function setYAxisResolution() {}
         :module-title="'Feature visualization'"
         :module-identifier="'feat-visualisation'"
         :visible="modulesVisible.featureVisualizer"
-        :is-disabled="false">
+        :is-disabled="allPeaksReady">
+        <template v-slot:window>
+            <LoadingWindow :visible="allPeaksReady" :loading-message="'Loading tracks...'" :progress-bar-perc="0" />
+        </template>
         <template v-slot:module-content>
             <MeasureSelector
                 :all-measure-data="selectedMeasureData"
@@ -493,6 +533,15 @@ function setYAxisResolution() {}
                         @click="
                             selectedFeatureLists.rhythmTimeVisible[i] = !selectedFeatureLists.rhythmTimeVisible[i]
                         " />
+                </SubMenu>
+                <SubMenu :name="'Label'">
+                    <p
+                        v-for="(obj, i) in measureData.labels"
+                        :class="{ 'bg-neutral-200': labelSelectors[i] }"
+                        class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
+                        @click="selectRelevanceLabel(i)">
+                        {{ obj }}
+                    </p>
                 </SubMenu>
                 <SubMenu :name="'Measure features'">
                     <FeatureName
@@ -548,13 +597,13 @@ function setYAxisResolution() {}
                                 }">
                                 <p class="font-bold">{{ i + 1 }}</p>
                                 <Popper
-                                    :content="obj.filename"
+                                    :content="trackNames[i]"
                                     hover
                                     placement="right"
                                     :arrow="true"
                                     class="select-none text-xs">
                                     <p class="text-xs">
-                                        {{ truncateFilename(obj.filename, 11) }}
+                                        {{ truncateFilename(trackNames[i], 11) }}
                                     </p>
                                 </Popper>
                             </div>
@@ -571,10 +620,20 @@ function setYAxisResolution() {}
                                 <div
                                     class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md hover:bg-cyan-600 hover:text-white"
                                     :class="{
+                                        'bg-cyan-700 text-white': waveformsVisible[i],
+                                    }"
+                                    @click="showWaveform(i)"
+                                    @dblclick="waveformsVisible.fill(false)">
+                                    <Icon icon="ph:waveform" width="20" />
+                                </div>
+                                <div
+                                    class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md hover:bg-cyan-600 hover:text-white"
+                                    :class="{
                                         'bg-cyan-700 text-white': tracksVisible[i],
                                     }"
-                                    @click="makeVisible(i)">
-                                    <Icon icon="material-symbols:visibility" width="20" />
+                                    @click="showInPlots(i)"
+                                    @dblclick="tracksVisible.fill(false)">
+                                    <Icon icon="icon-park-solid:analysis" width="20" />
                                 </div>
                             </div>
                         </div>
@@ -588,10 +647,10 @@ function setYAxisResolution() {}
                 <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-y-scroll">
                     <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
                         <div
-                            class=""
+                            class="border"
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :class="{
-                                hidden: !tracksVisible[i],
+                                hidden: !waveformsVisible[i],
                             }">
                             <div class="relative" :class="{ 'bg-blue-50 ': playing[i] }">
                                 <div class="z-50 pl-[45px]">
@@ -674,6 +733,7 @@ function setYAxisResolution() {}
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
                                 :feature-name="feat.name"
+                                :track-names="trackNames"
                                 :units="feat.units"
                                 :data="featureData.dynamics[feat.id]"
                                 :colors="matplotlibColors"
@@ -705,6 +765,7 @@ function setYAxisResolution() {}
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
                                 :feature-name="feat.name"
+                                :track-names="trackNames"
                                 :units="feat.units"
                                 :data="featureData.rhythm[feat.id]"
                                 :colors="matplotlibColors"
@@ -731,6 +792,15 @@ function setYAxisResolution() {}
                                     class="h-5 w-16 rounded-md"
                                     step="0.1" />
                             </div>
+                        </div>
+                        <div class="h-[30rem] w-full">
+                            <ScatterRegression
+                                :colors="matplotlibColors"
+                                :labels="trackLabels"
+                                :track-objects="tracksFromDb.syncTracks"
+                                :time-selections="timeSelections"
+                                :visible="tracksVisible"
+                                :label-names="selectedLabel" />
                         </div>
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>

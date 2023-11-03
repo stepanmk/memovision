@@ -12,6 +12,7 @@ use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, GridComponent]
 
 const props = defineProps({
     featureName: String,
+    trackNames: Array,
     units: String,
     startMeasureIdx: Number,
     endMeasureIdx: Number,
@@ -35,14 +36,12 @@ for (let i = 0; i < props.data[0].featDataMeasure.length; i += props.fpm) {
 
 const compAxis = computed(() => {
     let end = props.endMeasureIdx * props.fpm;
-    //
     if (props.fpm > 1) end = (props.endMeasureIdx + 1) * props.fpm;
     const axis = {
         min: props.startMeasureIdx * props.fpm,
         max: end,
         data: data,
         alignTicks: true,
-        // show: false,
         type: 'category',
         axisLine: {
             onZero: false,
@@ -68,11 +67,11 @@ const compSeries = computed(() => {
     props.data.forEach((featObject, i) => {
         if (props.visible[i]) {
             series.push({
+                name: props.trackNames[i],
                 type: 'line',
                 showSymbol: false,
                 lineStyle: {
-                    width: 1.5,
-                    // color: props.colors[i % 10],
+                    width: 2,
                 },
                 data: featObject.featDataMeasure,
             });
@@ -108,18 +107,10 @@ const compYAxis = computed(() => {
     return axis;
 });
 
-// const markLinePos = computed(() => {
-//     return [{ name: 'cursor', xAxis: Math.floor((props.data.length - 1) * props.position) }];
-// });
-
-// watch(props.position, () => {
-//     console.log(props.position);
-// });
-
 const option = ref({
-    // textStyle: {
-    //     fontFamily: 'Inter',
-    // },
+    textStyle: {
+        fontFamily: 'Inter',
+    },
     color: compColors,
     title: {
         text: props.featureName + ' (measure)',
@@ -133,7 +124,6 @@ const option = ref({
     xAxis: compAxis,
     yAxis: compYAxis,
     series: compSeries,
-
     grid: {
         left: 45,
         right: 0,
@@ -148,7 +138,6 @@ const option = ref({
             fontSize: 13,
             fontWeight: 'normal',
         },
-        extraCssText: 'box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);',
     },
 });
 </script>

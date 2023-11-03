@@ -15,7 +15,7 @@ const props = defineProps({
         <Transition>
             <div
                 v-if="isDisabled"
-                class="absolute z-20 flex h-full w-full flex-col items-center justify-center rounded-md bg-neutral-500 bg-opacity-70">
+                class="bg-white-500 absolute z-20 flex h-full w-full flex-col items-center justify-center rounded-md bg-white">
                 <slot name="window"></slot>
             </div>
         </Transition>

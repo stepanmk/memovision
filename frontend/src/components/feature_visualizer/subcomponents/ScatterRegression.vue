@@ -8,10 +8,11 @@ import {
     TitleComponent,
     TooltipComponent,
 } from 'echarts/components';
-import { registerTransform, use } from 'echarts/core';
+import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { computed, ref } from 'vue';
 import VChart from 'vue-echarts';
+import { getTimeString } from '../../../sharedFunctions';
 
 use([
     CanvasRenderer,
@@ -23,147 +24,142 @@ use([
     GridComponent,
     MarkLineComponent,
 ]);
-registerTransform([ecStat.regression]);
 
 const props = defineProps({
-    featureName: String,
-    units: String,
-    startMeasureIdx: Number,
-    endMeasureIdx: Number,
-    yMin: [Number, String],
-    yMax: [Number, String],
-    data: Object,
-    colors: Array,
+    trackObjects: Array,
+    timeSelections: Array,
     visible: Array,
-    fpm: Number,
-});
-
-let data = [];
-for (let i = 0; i < props.data[0].featDataMeasure.length; i++) {
-    data.push('');
-}
-let count = 1;
-for (let i = 0; i < props.data[0].featDataMeasure.length; i += props.fpm) {
-    data[i] = count;
-    count++;
-}
-
-const compAxis = computed(() => {
-    let end = props.endMeasureIdx * props.fpm;
-    //
-    if (props.fpm > 1) end = (props.endMeasureIdx + 1) * props.fpm;
-    const axis = {
-        min: props.startMeasureIdx * props.fpm,
-        max: end,
-        data: data,
-        alignTicks: true,
-        // show: false,
-        type: 'category',
-        axisLine: {
-            onZero: false,
-        },
-        splitLine: {
-            show: true,
-            interval: props.fpm - 1,
-        },
-        axisTick: {
-            interval: props.fpm - 1,
-        },
-        axisLabel: {
-            show: true,
-            color: 'black',
-            interval: 0,
-        },
-    };
-    return axis;
+    colors: Array,
+    labels: Array,
+    labelNames: String,
 });
 
 const compSeries = computed(() => {
     let series = [];
-    props.data.forEach((featObject, i) => {
-        if (props.visible[i]) {
+    let allData = [];
+    let dataClassOne = [];
+    let dataClassTwo = [];
+    props.trackObjects.forEach((track, i) => {
+        if (track.performer) {
             series.push({
-                type: 'line',
+                type: 'scatter',
+                name: track.performer + '; ' + track.year,
+                data: [[Number(track.year), props.timeSelections[i]]],
+                color: props.labels[i] === false ? 'red' : 'blue',
                 showSymbol: false,
-                lineStyle: {
-                    width: 1.5,
-                    // color: props.colors[i % 10],
-                },
-                data: featObject.featDataMeasure,
             });
+            allData.push([Number(track.year), props.timeSelections[i]]);
+            if (props.labels[i]) {
+                dataClassTwo.push([Number(track.year), props.timeSelections[i]]);
+            } else {
+                dataClassOne.push([Number(track.year), props.timeSelections[i]]);
+            }
         }
+    });
+    const regAll = ecStat.regression('linear', allData);
+    const regOne = ecStat.regression('linear', dataClassOne);
+    const regTwo = ecStat.regression('linear', dataClassTwo);
+    const labelNames = props.labelNames.split('_');
+    series.push({
+        data: regAll.points,
+        type: 'line',
+        color: 'gray',
+        symbol: 'none',
+        name: 'All recordings',
+    });
+    series.push({
+        data: regOne.points,
+        type: 'line',
+        color: 'red',
+        symbol: 'none',
+        name: labelNames[0],
+    });
+    series.push({
+        data: regTwo.points,
+        type: 'line',
+        color: 'blue',
+        symbol: 'none',
+        name: labelNames[1],
     });
     return series;
 });
 
-const compColors = computed(() => {
-    let colors = [];
-    props.data.forEach((featObject, i) => {
-        if (props.visible[i]) {
-            colors.push(props.colors[i % 10]);
-        }
-    });
-    return colors;
+const compLegendData = computed(() => {
+    let data = [];
+    data.push({ name: 'All recordings' });
+    const labelNames = props.labelNames.split('_');
+    data.push({ name: labelNames[0] });
+    data.push({ name: labelNames[1] });
+    return data;
 });
-
-const compYAxis = computed(() => {
-    const axis = {
-        min: props.yMin,
-        max: props.yMax,
-        name: props.units,
-        nameLocation: 'middle',
-        nameGap: 30,
-        axisLine: {
-            onZero: true,
-        },
-        axisLabel: {
-            color: 'black',
-        },
-    };
-    return axis;
-});
-
-// const markLinePos = computed(() => {
-//     return [{ name: 'cursor', xAxis: Math.floor((props.data.length - 1) * props.position) }];
-// });
-
-// watch(props.position, () => {
-//     console.log(props.position);
-// });
 
 const option = ref({
-    // textStyle: {
-    //     fontFamily: 'Inter',
-    // },
-    color: compColors,
-    title: {
-        text: props.featureName + ' (measure)',
-        left: 'center',
-        textStyle: {
-            fontSize: 13,
-            color: 'black',
-        },
+    textStyle: {
+        fontFamily: 'Inter',
+        fontSize: 13,
+        color: 'black',
     },
     animation: false,
-    xAxis: compAxis,
-    yAxis: compYAxis,
+    xAxis: {
+        axisLabel: {
+            formatter: (v) => v,
+        },
+        min: (value) => value.min - 2,
+        max: (value) => value.max + 2,
+        type: 'value',
+        name: 'Year',
+        nameTextStyle: {
+            verticalAlign: 'top',
+            padding: [15, 0, 0, 0],
+        },
+        nameLocation: 'center',
+    },
+    yAxis: {
+        min: (value) => value.min - 2,
+        max: (value) => value.max + 2,
+        axisLabel: {
+            formatter: (v) => getTimeString(v, 14, 19),
+        },
+        name: 'Duration',
+        nameTextStyle: {
+            verticalAlign: 'bottom',
+            padding: [15, 0, 0, 0],
+        },
+    },
     series: compSeries,
-
     grid: {
         left: 45,
-        right: 0,
+        right: 45,
         top: 30,
-        bottom: 20,
+        bottom: 45,
     },
     tooltip: {
         trigger: 'axis',
+        animation: false,
         transitionDuration: 0,
-        valueFormatter: (value) => value.toFixed(2) + ' ' + props.units,
+        formatter: (params) => {
+            let outString = '';
+            params.forEach((param) => {
+                if (param.componentSubType === 'scatter') {
+                    outString += `<b>${param.seriesName}</b><br/> Duration: ${getTimeString(
+                        param.value[1].toFixed(2),
+                        14,
+                        22
+                    )}<br/>`;
+                }
+            });
+            return outString;
+        },
         textStyle: {
             fontSize: 13,
             fontWeight: 'normal',
+            color: 'black',
         },
-        extraCssText: 'box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);',
+    },
+    legend: {
+        orient: 'horizontal',
+        top: 'top',
+        data: compLegendData,
     },
 });
 </script>

@@ -176,6 +176,7 @@ function createRefPeaks() {
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
             playheadColor: 'red',
+            fontFamily: 'Inter',
         },
         overview: {
             container: document.getElementById('overview-container'),
@@ -183,6 +184,7 @@ function createRefPeaks() {
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
             playheadColor: 'red',
+            fontFamily: 'Inter',
         },
         segmentOptions: {
             style: 'overlay',
@@ -463,10 +465,18 @@ watch(refVolume, () => {
         :module-title="'Region selection'"
         :module-identifier="'region-selector'">
         <template v-slot:module-content>
-            <span class="my-2 flex h-8 items-center rounded-md bg-neutral-200 py-1 px-3 text-sm text-black"
-                >Selected reference: {{ refName }}</span
-            >
-
+            <div class="flex h-12 w-full items-center justify-center gap-1 border-b text-sm">
+                <p>Selected reference:</p>
+                <p class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
+                    {{ tracksFromDb.refTrack.filename }}
+                </p>
+                <p v-if="tracksFromDb.refTrack.performer">Performer:</p>
+                <p
+                    v-if="tracksFromDb.refTrack.performer"
+                    class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
+                    {{ tracksFromDb.refTrack.performer }} {{ tracksFromDb.refTrack.year }}
+                </p>
+            </div>
             <div class="flex w-full flex-col items-center border-b px-5 dark:border-gray-700">
                 <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-400"></div>
             </div>
