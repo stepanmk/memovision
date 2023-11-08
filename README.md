@@ -22,7 +22,7 @@ Progress:
 - [x] Feature selection: Max-Relevance method on the duration of measures to rank each measure based on its relevance to given binary labels
 - [x] Playback of synchronized tracks, easy piece-wise orientation, colorbar of selected relevance
 - [x] Visualization: Plotting of performance parameters of any sections of interest (both individual plots and comparative plots with measures as x-axis)
-- [ ] Piano roll: automatic transcription to MIDI piano roll (bytedance-based), onset positions and distribution (available only for piano recordings)
+- [ ] Piano roll: automatic transcription to MIDI piano roll (bytedance-based), onset positions and their distribution (available only for piano recordings)
 
 ## License
 
@@ -43,11 +43,11 @@ For the development, we use the VSCode IDE and the instructions reflect it. If y
 
 * Navigate to the frontend folder: `cd frontend`
 * Run `pnpm i` to install Node.js modules
-* For the DB to run properly, you have to adjust the `backend/mos_backend/__init__.py` script for the correct DB URI (provide the password for PostgreSQL user)
+* For the DB to run properly, you have to adjust the `backend/mos_backend/__init__.py` script for the correct DB URI (provide the password for the PostgreSQL user)
+* You also need to adjust the `.vsode/tasks.json` file and provide a path to your Python virtual env and run.py in the project folder such as: `"command": "cd backend; & c:/python-venv/memovision/Scripts/python.exe C:/memovision/backend/run.py"`
 * Then, run the `create_tables.py` script that creates tables for the `memovision` database.
 * Furthermore, you need to download ffmpeg (https://ffmpeg.org/download.html) and waveform () and add them to your sys path.
-* Reset the VSCode session for changes to take place. In the `.vscode` folder, the `tasks.json` file automatically runs Flask and Vite dev servers after the start of VSCode.
-
+* Reset the VSCode session for changes to take place. The `.vscode/tasks.json` file automatically runs Flask and Vite dev servers after the start of VSCode if all paths are provided correctly.
  
 ### Acknowledgment
 
