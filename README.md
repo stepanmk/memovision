@@ -46,7 +46,7 @@ For the development, we use the VSCode IDE and the instructions reflect it. If y
 * For the DB to run properly, you have to adjust the `backend/mos_backend/__init__.py` script for the correct DB URI (provide the password for the PostgreSQL user)
 * You also need to adjust the `.vsode/tasks.json` file and provide a path to your Python virtual env and run.py in the project folder such as: `"command": "cd backend; & c:/python-venv/memovision/Scripts/python.exe C:/memovision/backend/run.py"`
 * Then, run the `create_tables.py` script that creates tables for the `memovision` database.
-* Furthermore, you need to download ffmpeg (https://ffmpeg.org/download.html) and waveform () and add them to your sys path.
+* Furthermore, you need to download ffmpeg (https://ffmpeg.org/download.html) and waveform (https://github.com/bbc/audiowaveform/releases) and add them to your sys path. FFmpeg loads the non-wav files and waveform renders the waveforms of audio recordings in the browser.
 * Reset the VSCode session for changes to take place. The `.vscode/tasks.json` file automatically runs Flask and Vite dev servers after the start of VSCode if all paths are provided correctly.
  
 ### Acknowledgment
