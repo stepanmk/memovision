@@ -1,7 +1,9 @@
-from memovision import db, create_app
-from memovision.db_models import User, Track
+import os
+import shutil
 
-import os, shutil
+from memovision.db_models import Track, User
+
+from memovision import create_app, db
 
 app = create_app
 with app.app_context():

@@ -1,5 +1,4 @@
-
-@import url('./assets/font/inter.css');
+/* @import url('./assets/font/inter.css'); */
 
 @tailwind base;
 @tailwind components;
@@ -7,34 +6,33 @@
 
 @layer components {
     .input-field {
-        @apply h-8 mb-5 p-2 rounded-md text-black text-sm;
+        @apply mb-5 h-8 rounded-md p-2 text-sm text-black;
     }
 
     .input-field-nomargin {
-        @apply h-8 p-2 rounded-md text-black text-sm;
+        @apply h-8 rounded-md p-2 text-sm text-black;
     }
 
     .btn {
-        @apply h-7 text-white py-1 px-2 text-sm rounded-md select-none;
+        @apply h-7 select-none rounded-md py-1 px-2 text-sm text-white;
     }
 
     .btn-blue {
-        @apply bg-cyan-700 hover:bg-cyan-600 duration-100 
+        @apply bg-cyan-700 duration-100 hover:bg-cyan-600;
     }
 
     .btn-gray {
-        @apply bg-neutral-200 py-1 px-2 text-sm rounded-md duration-100 text-black
+        @apply rounded-md bg-neutral-200 py-1 px-2 text-sm text-black duration-100
         hover:bg-cyan-600 hover:text-white 
-        dark:bg-gray-400 dark:hover:bg-cyan-600
+        dark:bg-gray-400 dark:hover:bg-cyan-600;
     }
 
     .btn-dark {
-        @apply bg-black hover:bg-neutral-600 duration-100 select-none;
+        @apply select-none bg-black duration-100 hover:bg-neutral-600;
     }
 
     .btn-disabled {
-        @apply bg-neutral-200 cursor-default text-neutral-400 hover:bg-neutral-200
+        @apply cursor-default bg-neutral-200 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-400
         dark:bg-gray-600 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-gray-400;
     }
 }
-

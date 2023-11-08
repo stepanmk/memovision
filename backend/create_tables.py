@@ -1,4 +1,4 @@
-from memovision import db, create_app
+from memovision import create_app, db
 
 app = create_app()
 

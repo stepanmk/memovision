@@ -1,10 +1,11 @@
-from memovision import db
-from memovision.db_models import Session, Track
-
 import os
 import shutil
-from flask import request, jsonify, Blueprint
-from flask_jwt_extended import jwt_required, current_user
+
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import current_user, jwt_required
+from memovision.db_models import Session, Track
+
+from memovision import db
 
 track_routes = Blueprint('track_routes', __name__)
 
@@ -46,4 +47,5 @@ def delete_all_from_db():
     db.session.commit()
     shutil.rmtree(f'./user_uploads/{current_user.username}/{current_user.selected_session}/')
     os.mkdir(f'./user_uploads/{current_user.username}/{current_user.selected_session}/')
+    os.mkdir(f'./user_uploads/{current_user.username}/{current_user.selected_session}/relevance')
     return jsonify({'message': 'success'})

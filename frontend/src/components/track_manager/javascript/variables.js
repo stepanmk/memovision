@@ -1,5 +1,4 @@
-import { ref, computed } from 'vue';
-
+import { computed, ref } from 'vue';
 
 /*  global variables and properties 
 
@@ -12,15 +11,15 @@ import { ref, computed } from 'vue';
 */
 
 const trackManagerOpened = ref(true);
-const uploadList = ref([]); 
+const uploadList = ref([]);
 const somethingToUpload = computed(() => {
     return uploadList.value.length > 0;
-})
+});
 const numComputed = ref(0);
 const numThingsToCompute = ref(0);
 const progressBarPerc = computed(() => {
     return Math.round((numComputed.value / numThingsToCompute.value) * 100);
-})
+});
 const isDisabled = ref(true);
 const isLoading = ref(true);
 const loadingMessage = ref('');
@@ -36,23 +35,23 @@ const featureExtractionWindow = ref(false);
 const labelAssignmentVisible = ref(false);
 const preciseSync = ref(false);
 
-export { 
-    trackManagerOpened,
-    uploadList, 
-    somethingToUpload,
-    numComputed,
-    numThingsToCompute,
-    progressBarPerc,
-    isDisabled,
-    isLoading,
-    loadingMessage,
-    duplicates,
-    duplicatesMessage,
-    duplicatesWindow,
+export {
     diffRegions,
     diffRegionsMessage,
     diffRegionsWindow,
+    duplicates,
+    duplicatesMessage,
+    duplicatesWindow,
     featureExtractionWindow,
+    isDisabled,
+    isLoading,
     labelAssignmentVisible,
-    preciseSync
-}
+    loadingMessage,
+    numComputed,
+    numThingsToCompute,
+    preciseSync,
+    progressBarPerc,
+    somethingToUpload,
+    trackManagerOpened,
+    uploadList,
+};

@@ -1,255 +1,215 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
 
-
-export const useUserInfo = defineStore('userInfo', 
-{
-    state: () => ({ 
+export const useUserInfo = defineStore('userInfo', {
+    state: () => ({
         username: '',
         sessions: [],
         preciseSync: null,
         selectedSession: null,
-        darkModeEnabled: false
+        darkModeEnabled: false,
     }),
-})
+});
 
-export const useAlertState = defineStore('alertState', 
-{
-    state: () => ({ 
+export const useAlertState = defineStore('alertState', {
+    state: () => ({
         show: false,
-        message: ''
+        message: '',
     }),
-})
+});
 
-export const useModulesVisible = defineStore('modulesVisible', 
-{
-    state: () => ({ 
+export const useModulesVisible = defineStore('modulesVisible', {
+    state: () => ({
         trackManager: true,
         regionSelector: false,
         interpretationPlayer: false,
-        featureVisualizer: false
+        featureVisualizer: false,
     }),
     actions: {
         hideAllModules() {
-          this.trackManager = false;
-          this.regionSelector = false;
-          this.interpretationPlayer = false,
-          this.featureVisualizer = false;
+            this.trackManager = false;
+            this.regionSelector = false;
+            (this.interpretationPlayer = false), (this.featureVisualizer = false);
         },
     },
-})
+});
 
-export const useComponentsVisible = defineStore('componentsVisible', 
-{
-    state: () => ({ 
+export const useComponentsVisible = defineStore('componentsVisible', {
+    state: () => ({
         sidenav: false,
-        tracklist: false
+        tracklist: false,
     }),
-})
+});
 
-export const useAnalysisState = defineStore('analysisState',
-{
-    state: () =>({
+export const useAnalysisState = defineStore('analysisState', {
+    state: () => ({
         individualAnalysis: true,
         batchAnalysis: false,
         multiSelectEnabled: false,
-        multiSelectActive: false
-    })
-})
+        multiSelectActive: false,
+    }),
+});
 
-export const useTracksFromDb = defineStore('tracksFromDb', 
-{
-    state: () => ({ 
+export const useTracksFromDb = defineStore('tracksFromDb', {
+    state: () => ({
         trackObjects: [],
-        selected: []
+        selected: [],
     }),
     getters: {
-        somethingUploaded: state => state.trackObjects.length > 0,
-        nonSyncTracks: state => state.trackObjects.filter(obj => !obj.sync),
-        syncTracks: state => state.trackObjects.filter(obj => obj.sync),
-        refTrackSelected: state => state.trackObjects.filter(obj => obj.reference).length > 0,
-        refTrack: state => state.trackObjects.find(obj => obj.reference),
-        restOfTracks: state => state.trackObjects.filter(obj => !obj.reference),
-        allTracksHaveMeasures: state => (state.trackObjects.filter(obj => obj.gt_measures || obj.tf_measures).length === state.trackObjects.length) &&
-        (state.trackObjects.length > 0),
-        somethingToSync() { return this.nonSyncTracks.length > 0 },
-        refTrackSync() { return this.syncTracks.filter(obj => obj.reference).length > 0},
+        somethingUploaded: (state) => state.trackObjects.length > 0,
+        nonSyncTracks: (state) => state.trackObjects.filter((obj) => !obj.sync),
+        syncTracks: (state) => state.trackObjects.filter((obj) => obj.sync),
+        refTrackSelected: (state) => state.trackObjects.filter((obj) => obj.reference).length > 0,
+        refTrack: (state) => state.trackObjects.find((obj) => obj.reference),
+        restOfTracks: (state) => state.trackObjects.filter((obj) => !obj.reference),
+        allTracksHaveMeasures: (state) =>
+            state.trackObjects.filter((obj) => obj.gt_measures || obj.tf_measures).length ===
+                state.trackObjects.length && state.trackObjects.length > 0,
+        somethingToSync() {
+            return this.nonSyncTracks.length > 0;
+        },
+        refTrackSync() {
+            return this.syncTracks.filter((obj) => obj.reference).length > 0;
+        },
     },
     actions: {
-        getIdx(filename)
-        {
-            return this.trackObjects.findIndex(obj => obj.filename === filename);
+        getIdx(filename) {
+            return this.trackObjects.findIndex((obj) => obj.filename === filename);
         },
-        getObject(filename)
-        {
-            return this.trackObjects.find(obj => obj.filename === filename);
+        getObject(filename) {
+            return this.trackObjects.find((obj) => obj.filename === filename);
         },
-        filenameExists(filename)
-        {
-            return this.trackObjects.some(obj => obj.filename === filename) ? true : false;
+        filenameExists(filename) {
+            return this.trackObjects.some((obj) => obj.filename === filename) ? true : false;
         },
-        sortByName() 
-        {
+        sortByName() {
             this.trackObjects.sort((a, b) => a.filename.localeCompare(b.filename));
         },
-        addTrackData(obj)
-        {
+        addTrackData(obj) {
             this.trackObjects.push(obj);
             this.sortByName();
             const idx = this.getIdx(obj.filename);
             this.selected.splice(idx, 0, false);
         },
-        setGtMeasures(filename, state)
-        {
+        setGtMeasures(filename, state) {
             const idx = this.getIdx(filename);
             this.trackObjects[idx].gt_measures = state;
         },
-        setTfMeasures(filename, state)
-        {
+        setTfMeasures(filename, state) {
             const idx = this.getIdx(filename);
             this.trackObjects[idx].tf_measures = state;
         },
-        setReference(filename)
-        {
+        setReference(filename) {
             const idx = this.getIdx(filename);
             this.trackObjects[idx].reference = !this.trackObjects[idx].reference;
             this.trackObjects[idx].label = !this.trackObjects[idx].label;
             this.trackObjects.forEach((obj) => {
-                if (obj.filename !== filename) 
-                {
+                if (obj.filename !== filename) {
                     obj.reference = false;
                     obj.label = false;
                 }
             });
         },
-        remove(filename)
-        {
+        remove(filename) {
             const idx = this.getIdx(filename);
             this.trackObjects.splice(idx, 1);
             this.selected.splice(idx, 1);
         },
-        removeAll()
-        {
+        removeAll() {
             this.trackObjects.splice(0);
             this.selected.splice(0);
         },
-    }
-})
+    },
+});
 
-export const useMeasureData = defineStore('measureData', 
-{
-    state: () => ({ 
+export const useMeasureData = defineStore('measureData', {
+    state: () => ({
         measureObjects: [],
         relevanceFeatures: [],
         relevance: {},
-        labels: []
+        labels: [],
     }),
     getters: {
-        refTrack: state => state.measureObjects.find(obj => obj.reference),
-        restOfTracks: state => state.measureObjects.filter(obj => !obj.reference),
+        refTrack: (state) => state.measureObjects.find((obj) => obj.reference),
+        restOfTracks: (state) => state.measureObjects.filter((obj) => !obj.reference),
     },
     actions: {
-        getIdx(filename)
-        {
-            return this.measureObjects.findIndex(obj => obj.filename === filename);
+        getIdx(filename) {
+            return this.measureObjects.findIndex((obj) => obj.filename === filename);
         },
-        getObject(filename)
-        {
-            return this.measureObjects.find(obj => obj.filename === filename);
+        getObject(filename) {
+            return this.measureObjects.find((obj) => obj.filename === filename);
         },
-        getReferenceObject()
-        {
-            return this.measureObjects.find(obj => obj.reference);
+        getReferenceObject() {
+            return this.measureObjects.find((obj) => obj.reference);
         },
-        sortByName()
-        {
+        sortByName() {
             this.measureObjects.sort((a, b) => a.filename.localeCompare(b.filename));
         },
-        // getRegionRelevance(startIdx, endIdx)
-        // {
-        //     let sortedRelevance = this.relevanceObjects.slice(startIdx, endIdx);
-        //     sortedRelevance.sort((a, b) => a.relevance - b.relevance).reverse();
-        //     return sortedRelevance;
-        // },
-        // getTopRelevance(n)
-        // {
-        //     let sortedRelevance = this.relevanceObjects.slice();
-        //     sortedRelevance.sort((a, b) => a.relevance - b.relevance).reverse();
-        //     return sortedRelevance.slice(0, n);
-        // },
-        addTrackData(obj)
-        {
+        addTrackData(obj) {
             this.measureObjects.push(obj);
             this.sortByName();
             const idx = this.getIdx(obj.filename);
             this.selected.splice(idx, 0, false);
         },
-        remove(filename)
-        {
+        remove(filename) {
             const idx = this.getIdx(filename);
             this.measureObjects.splice(idx, 1);
             this.selected.splice(idx, 1);
         },
-        removeAll()
-        {
+        removeAll() {
             this.measureObjects.splice(0);
             this.selected.splice(0);
         },
-        filenameExists(filename)
-        {
-            return this.measureObjects.some(obj => obj.filename === filename) ? true : false;
-        }
-    }
-})
+        filenameExists(filename) {
+            return this.measureObjects.some((obj) => obj.filename === filename) ? true : false;
+        },
+    },
+});
 
-export const useAudioStore = defineStore('audioStore', 
-{
-    state: () => ({ 
+export const useAudioStore = defineStore('audioStore', {
+    state: () => ({
         audioObjects: [],
         metronomeClick: null,
     }),
     actions: {
-        getIdx(filename)
-        {
-            return this.audioObjects.findIndex(x => x.filename === filename);
+        getIdx(filename) {
+            return this.audioObjects.findIndex((x) => x.filename === filename);
         },
-        sortByName() 
-        {
+        sortByName() {
             this.audioObjects.sort((a, b) => a.filename.localeCompare(b.filename));
         },
-        getAudio(filename)
-        {
+        getAudio(filename) {
             const idx = this.getIdx(filename);
             return this.audioObjects[idx].audio;
         },
-        getWaveformData(filename)
-        {   
+        getWaveformData(filename) {
             const idx = this.getIdx(filename);
             return this.audioObjects[idx].waveformData;
         },
-        remove(filename)
-        {
+        remove(filename) {
             const idx = this.getIdx(filename);
             this.audioObjects.splice(idx, 1);
         },
-        removeAll()
-        {
+        removeAll() {
             this.audioObjects.splice(0);
-        }
-    }
-})
+        },
+    },
+});
 
-export const useFeatureLists = defineStore('featureLists', 
-{
-    state: () => ({ 
-        dynamics: [],
-        rhythm: []
+export const useFeatureLists = defineStore('featureLists', {
+    state: () => ({
+        dynamicsMetadata: [],
+        rhythmMetadata: [],
+        dynamicsTime: [],
+        rhythmTime: [],
+        dynamicsMeasure: [],
+        rhythmMeasure: [],
     }),
-})
+});
 
-export const useFeatureData = defineStore('featureData', 
-{
+export const useFeatureData = defineStore('featureData', {
     state: () => ({
         dynamics: {},
-        rhythm: {}
-    })
-})
+        rhythm: {},
+    }),
+});

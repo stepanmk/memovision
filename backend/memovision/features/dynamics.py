@@ -1,23 +1,26 @@
-from memovision.db_models import Session, Track
-from memovision.features.utils import get_resampled_feature, load_measures, get_feature_data
-from memovision.features.extractors import compute_rms, compute_loudness
-from memovision.features.relevance import compute_relevance
+import numpy as np
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
 from librosa import load
-import numpy as np
-
+from memovision.db_models import Session, Track
+from memovision.features.extractors import compute_loudness, compute_rms
+from memovision.features.relevance import compute_relevance
+from memovision.features.utils import (get_feature_data, get_resampled_feature,
+                                       load_measures)
 
 dynamics = Blueprint('dynamics', __name__)
 
 
-feature_list = [
+metadata = [
     {
         'id': 'rms', 
-        'name': 'Root mean square', 
+        'name': 'RMS', 
         'units': '[–]',
-        'fpm': 10, 
-        'resampled': True,  
+        'fpm': 10,
+        'yMin': 0,
+        'yMax': 0.5, 
+        'timeAxis': True,
+        'measureAxis': True,  
         'relevance': False,
         'computed': False
     },
@@ -26,17 +29,28 @@ feature_list = [
         'name': 'Loudness', 
         'units': 'LUFS', 
         'fpm': 10,
-        'resampled': True,  
+        'yMin': -80,
+        'yMax': 0, 
+        'timeAxis': True,
+        'measureAxis': True,  
         'relevance': True,
         'computed': False
     }
+]
+
+time = [
+    'rms', 'loudness'
+]
+
+measure = [
+    'rms', 'loudness'
 ]
 
 
 @dynamics.route('/feat-names-dynamics', methods=['GET'])
 @jwt_required()
 def feat_names_dynamics():
-    return jsonify({'message': 'success', 'featureList': feature_list})
+    return jsonify({'message': 'success', 'metadata': metadata, 'time': time, 'measure': measure})
 
 
 @dynamics.route('/rms/<filename>', methods=['GET', 'PUT'])
@@ -49,11 +63,11 @@ def rms(filename):
         rms_array = compute_rms(y)
         np.save(f'./user_uploads/{current_user.username}/{session.name}/{filename}/features/rms.npy', rms_array)
         measures = load_measures(current_user.username, session.name, track.filename, track.gt_measures)
-        rms_resampled = get_resampled_feature(track.length_sec, rms_array, measures, fps=10)
-        np.save(f'./user_uploads/{current_user.username}/{session.name}/{filename}/features/rms_resampled.npy', rms_resampled)
+        rms_measure = get_resampled_feature(track.length_sec, rms_array, measures, fps=10)
+        np.save(f'./user_uploads/{current_user.username}/{session.name}/{filename}/features/rms_measure.npy', rms_measure)
         return jsonify({'message': 'success'})
     else:
-        feature_list = get_feature_data(session.tracks, current_user.username, session.name, 'rms', resampled=True)
+        feature_list = get_feature_data(session.tracks, current_user.username, session.name, 'rms', time_axis=True, measure_axis=True)
         return jsonify({'message': 'success', 'featureList': feature_list})
 
 
@@ -67,11 +81,11 @@ def loudness(filename):
         loudness_array = compute_loudness(y, sr=22050)
         np.save(f'./user_uploads/{current_user.username}/{session.name}/{filename}/features/loudness.npy', loudness_array)
         measures = load_measures(current_user.username, session.name, track.filename, track.gt_measures)
-        loudness_resampled = get_resampled_feature(track.length_sec, loudness_array, measures, fps=10)
-        np.save(f'./user_uploads/{current_user.username}/{session.name}/{filename}/features/loudness_resampled.npy', loudness_resampled)
+        loudness_measure = get_resampled_feature(track.length_sec, loudness_array, measures, fps=10)
+        np.save(f'./user_uploads/{current_user.username}/{session.name}/{filename}/features/loudness_measure.npy', loudness_measure)
         return jsonify({'message': 'success'})
     else:
-        feature_list = get_feature_data(session.tracks, current_user.username, session.name, 'loudness', resampled=True)
-        if feature_list: relevance = compute_relevance(current_user.username, session, 'loudness', 10, resampled=True, downsample_method='var')
+        feature_list = get_feature_data(session.tracks, current_user.username, session.name, 'loudness', time_axis=True, measure_axis=True)
+        if feature_list: relevance = compute_relevance(current_user.username, session, 'loudness', fpm=10, downsample_method='var')
         else: relevance = {}
         return jsonify({'message': 'success', 'featureList': feature_list, 'relevance': relevance})

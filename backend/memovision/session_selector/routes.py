@@ -30,6 +30,7 @@ def create_session():
     else:
         session = Session(name=session_name, user=user, created_at=datetime.now(), last_modified=datetime.now())
         os.mkdir(f'./user_uploads/{user.username}/{session_name}')
+        os.mkdir(f'./user_uploads/{user.username}/{session_name}/relevance')
         db.session.add(session)
         db.session.commit()
         return jsonify({'message': 'success'})
