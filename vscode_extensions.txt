@@ -1,0 +1,8 @@
+ESLint
+i18n Ally
+Iconify IntelliSense
+Vite
+Vue Language Features (Volar)
+Tailwind CSS IntelliSense
+Post CSS Language Support
+Python
