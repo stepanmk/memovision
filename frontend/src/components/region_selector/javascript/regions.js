@@ -102,11 +102,7 @@ function timeSignatureOverlap(currentTimeSignature) {
                 currentTimeSignature.endMeasureIdx >= timeSignature.startMeasureIdx
         );
     });
-    if (checks.includes(true)) {
-        return true;
-    } else {
-        return false;
-    }
+    return checks.includes(true);
 }
 
 function saveTimeSignature() {
