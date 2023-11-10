@@ -53,7 +53,6 @@ class Track(db.Model):
     # optional metadata
     year = db.Column(db.String(16), unique=False, nullable=True)
     performer = db.Column(db.String(512), unique=False, nullable=True)
-    origin = db.Column(db.String(512), unique=False, nullable=True)
     # sync
     reference = db.Column(db.Boolean, unique=False, default=False)
     chroma = db.Column(db.Boolean, unique=False, default=False)
@@ -66,9 +65,9 @@ class Track(db.Model):
     regions = db.relationship('TrackRegion',
                               backref='track',
                               passive_deletes=True)
-    beat_regions = db.relationship('BeatRegion',
-                                   backref='track',
-                                   passive_deletes=True)
+    time_signatures = db.relationship('TimeSignature',
+                                      backref='track',
+                                      passive_deletes=True)
     diff_regions = db.relationship('DiffRegion',
                                    backref='track',
                                    passive_deletes=True)
@@ -86,7 +85,6 @@ class Track(db.Model):
             #
             'year': self.year,
             'performer': self.performer,
-            'origin': self.origin,
             #
             'sync': self.sync,
             'reference': self.reference,
@@ -120,7 +118,7 @@ class TrackRegion(db.Model):
     length_sec = db.Column(db.Float(), unique=False, nullable=True)
 
 
-class BeatRegion(db.Model):
+class TimeSignature(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer,
                          db.ForeignKey('track.id', ondelete='CASCADE'))
@@ -128,8 +126,8 @@ class BeatRegion(db.Model):
     end_time = db.Column(db.Float(), unique=False, nullable=False)
     start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True)
     end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True)
-    note_value = db.Column(db.Integer(), unique=False, nullable=False)
     note_count = db.Column(db.Integer(), unique=False, nullable=False)
+    note_value = db.Column(db.Integer(), unique=False, nullable=False)
     length_sec = db.Column(db.Float(), unique=False, nullable=True)
 
 

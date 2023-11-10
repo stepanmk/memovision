@@ -23,6 +23,7 @@ const regionBeingAdded = ref(false);
 const regionBeingNamed = ref(false);
 const regionName = ref('');
 const regionRef = reactive({
+    timeSignatures: [],
     regions: [],
     selected: [],
 });

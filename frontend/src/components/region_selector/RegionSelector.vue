@@ -14,6 +14,8 @@ import {
     measureCount,
     measuresVisible,
     metronomeActive,
+    noteCount,
+    noteValue,
     playing,
     refName,
     regionBeingNamed,
@@ -31,7 +33,9 @@ import {
     cancelRegionAdding,
     deleteAllRegions,
     deleteRegion,
+    deleteTimeSignature,
     saveRegion,
+    saveTimeSignature,
     selectRegion,
     updateRegion,
 } from './javascript/regions';
@@ -123,7 +127,12 @@ function destroyRegionSelector() {
             </div>
             <audio id="audio-element" class="w-full"></audio>
 
-            <MeasureSelector :measure-count="measureCount" ref="measureSelector" @select-region="addRegion" />
+            <MeasureSelector
+                :measure-count="measureCount"
+                :time-signatures="regionRef.timeSignatures"
+                ref="measureSelector"
+                @select-region="addRegion"
+                @delete-time-signature="deleteTimeSignature" />
             <div
                 id="player-controls"
                 class="flex h-[3rem] w-full flex-row items-center justify-between gap-2 border-b pl-5 pr-5 dark:border-gray-700">
@@ -198,7 +207,7 @@ function destroyRegionSelector() {
                 <span class="select-none text-sm">Selected regions</span>
             </div>
             <div
-                class="items-left relative flex h-[calc(100%-30rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
+                class="items-left relative flex h-[calc(100%-31rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
                 <div
                     v-for="(obj, i) in regionRef.regions"
                     :id="`region-${i}`"
@@ -222,7 +231,7 @@ function destroyRegionSelector() {
                         <p
                             v-if="tracksFromDb.refTrack.gt_measures"
                             class="flex w-32 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
-                            Measures: {{ getStartMeasure(obj.startTime) }}–{{ getEndMeasure(obj.endTime) }}
+                            Measures: {{ getStartMeasure(obj.startTime) }}–{{ getEndMeasure(obj.endTime) - 1 }}
                         </p>
                         <div
                             class="flex w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
@@ -237,15 +246,20 @@ function destroyRegionSelector() {
                     class="absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-white">
                     <div class="flex flex-row gap-1">
                         <span
-                            class="flex h-5 w-24 select-none items-center justify-start rounded-md bg-green-500 pl-[19px] text-sm text-white"
+                            class="flex h-5 w-20 select-none items-center justify-center rounded-md bg-green-500 text-sm text-white"
                             >{{ startTimeString }}</span
                         >
                         <span
-                            class="flex h-5 w-24 select-none items-center justify-start rounded-md bg-red-500 pl-[19px] text-sm text-white"
+                            class="flex h-5 w-20 select-none items-center justify-center rounded-md bg-red-500 text-sm text-white"
                             >{{ endTimeString }}</span
+                        >
+                        <span
+                            class="flex h-5 w-36 select-none items-center justify-center rounded-md bg-neutral-700 text-sm text-white"
+                            >Measures: {{ startMeasureIdx + 1 }}–{{ endMeasureIdx + 1 }}</span
                         >
                     </div>
                     <input
+                        v-if="!timeSignatureEdit"
                         type="text"
                         id="name"
                         required
@@ -257,7 +271,7 @@ function destroyRegionSelector() {
                         placeholder="Region name"
                         v-model="regionName"
                         v-on:keyup.enter="saveRegion()" />
-                    <div id="measure-input" class="flex flex-row items-center gap-1">
+                    <div v-if="timeSignatureEdit" id="measure-input" class="flex flex-row items-center gap-1">
                         <div class="flex h-7 select-none items-center rounded-md bg-neutral-200 p-2 text-sm">
                             Time signature:
                         </div>
@@ -269,6 +283,7 @@ function destroyRegionSelector() {
                             autocomplete="off"
                             min="1"
                             placeholder="1"
+                            v-model="noteCount"
                             class="input-field-nomargin h-7 w-12 border" />
                         <p>/</p>
                         <input
@@ -279,10 +294,11 @@ function destroyRegionSelector() {
                             autocomplete="off"
                             min="1"
                             placeholder="1"
+                            v-model="noteValue"
                             class="input-field-nomargin h-7 w-12 border" />
                     </div>
                     <div id="region-adding-buttons" class="flex flex-row items-center justify-center gap-2">
-                        <button @click="saveRegion()" class="btn btn-blue">
+                        <button @click="timeSignatureEdit ? saveTimeSignature() : saveRegion()" class="btn btn-blue">
                             <span>Save</span>
                         </button>
                         <button @click="cancelRegionAdding()" class="btn btn-blue">

@@ -10,6 +10,8 @@ import {
     endTime,
     endTimeString,
     loopingActive,
+    noteCount,
+    noteValue,
     prevRegionIdx,
     regionBeingAdded,
     regionBeingNamed,
@@ -52,8 +54,9 @@ function deselectAllRegions() {
 
 function getAllRegions() {
     api.get('/get-all-regions', getSecureConfig).then((res) => {
-        regionRef.regions = res.data;
-        regionRef.selected = new Array(res.data.length).fill(false);
+        regionRef.regions = res.data.regions;
+        regionRef.selected = new Array(res.data.regions.length).fill(false);
+        regionRef.timeSignatures = res.data.timeSignatures;
     });
 }
 
@@ -74,7 +77,7 @@ function saveRegion() {
             startTime: startTime.value,
             endTime: endTime.value,
             startMeasureIdx: getStartMeasure(startTime.value) - 1,
-            endMeasureIdx: getEndMeasure(endTime.value) - 1,
+            endMeasureIdx: getEndMeasure(endTime.value) - 2,
             regionName: regionName.value,
             lengthSec: endTime.value - startTime.value,
         };
@@ -88,6 +91,44 @@ function saveRegion() {
         });
     } else {
         showAlert('Region must have a name!', 1500);
+    }
+}
+
+function timeSignatureOverlap(currentTimeSignature) {
+    let checks = [];
+    regionRef.timeSignatures.forEach((timeSignature) => {
+        checks.push(
+            currentTimeSignature.startMeasureIdx <= timeSignature.endMeasureIdx &&
+                currentTimeSignature.endMeasureIdx >= timeSignature.startMeasureIdx
+        );
+    });
+    if (checks.includes(true)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function saveTimeSignature() {
+    const data = {
+        startTime: startTime.value,
+        endTime: endTime.value,
+        startMeasureIdx: getStartMeasure(startTime.value) - 1,
+        endMeasureIdx: getEndMeasure(endTime.value) - 2,
+        noteCount: noteCount.value,
+        noteValue: noteValue.value,
+        lengthSec: endTime.value - startTime.value,
+    };
+    if (!timeSignatureOverlap(data)) {
+        api.post(`/save-time-signature`, data, getSecureConfig()).then(() => {
+            peaksInstance.segments.removeAll();
+            peaksInstance.player.pause();
+            loopingActive.value = false;
+            cancelRegionAdding();
+            getAllRegions();
+        });
+    } else {
+        showAlert('Time signatures must not overlap!', 1500);
     }
 }
 
@@ -105,7 +146,7 @@ function selectRegion(regionIdx) {
         loopingActive.value = true;
         peaksInstance.segments.removeAll();
         startMeasureIdx.value = getStartMeasure(regionRef.regions[regionIdx].startTime) - 1;
-        endMeasureIdx.value = getEndMeasure(regionRef.regions[regionIdx].endTime) - 1;
+        endMeasureIdx.value = getEndMeasure(regionRef.regions[regionIdx].endTime) - 2;
         peaksInstance.segments.add({
             startTime: regionRef.regions[regionIdx].startTime,
             endTime: regionRef.regions[regionIdx].endTime,
@@ -142,14 +183,22 @@ function deleteRegion(regionIdx) {
     });
 }
 
+function deleteTimeSignature(timeSignatureIdx) {
+    api.put('/delete-time-signature', regionRef.timeSignatures[timeSignatureIdx], getSecureConfig()).then((res) => {
+        getAllRegions();
+    });
+}
+
 export {
     addRegion,
     cancelRegionAdding,
     deleteAllRegions,
     deleteRegion,
+    deleteTimeSignature,
     deselectAllRegions,
     getAllRegions,
     saveRegion,
+    saveTimeSignature,
     selectRegion,
     updateRegion,
 };

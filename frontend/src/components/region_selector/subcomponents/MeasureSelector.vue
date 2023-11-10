@@ -3,9 +3,10 @@ import { ref } from 'vue';
 
 const props = defineProps({
     measureCount: Number,
+    timeSignatures: Array,
 });
 
-const emit = defineEmits(['selectRegion']);
+const emit = defineEmits(['selectRegion', 'deleteTimeSignature']);
 
 defineExpose({
     init,
@@ -122,22 +123,29 @@ function relevanceBarMouseDown(event) {
 </script>
 
 <template>
-    <div class="flex h-[5rem] w-full justify-center border-b dark:border-gray-700">
+    <div class="flex h-[6rem] w-full justify-center border-b dark:border-gray-700">
         <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll" id="top-bar">
-            <div id="overview-3" class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
+            <div id="overview-4" class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
                 <div
-                    class="absolute z-50 flex w-24 justify-center rounded-md bg-cyan-700 text-xs font-semibold text-white"
+                    class="absolute z-50 flex w-24 select-none justify-center rounded-md bg-cyan-700 text-xs font-semibold text-white"
                     id="measure-popup">
                     {{ measureMessage }}
                 </div>
-                <!-- <div
-                    class="absolute h-[1rem] w-12 rounded-md bg-red-100 text-xs ring-1"
-                    style="margin-left: 16px"></div>
-                <div class="absolute h-[1rem] w-12 rounded-md bg-red-100 text-xs ring-1" style="margin-left: 500px">
-                    Ahoj
-                </div> -->
             </div>
-            <div id="overview-2" class="flex h-[1rem] flex-row rounded-md">
+            <div id="overview-3" class="relative flex h-[1rem] flex-row">
+                <div
+                    v-for="(obj, i) in timeSignatures"
+                    :id="`ts-${i}`"
+                    class="absolute flex h-full select-none items-center justify-start rounded-full bg-indigo-500 pl-1 text-xs font-semibold text-white"
+                    :style="{
+                        width: (obj.endMeasureIdx - obj.startMeasureIdx + 1) * 16 + 'px',
+                        'margin-left': obj.startMeasureIdx * 16 + 'px',
+                    }"
+                    @dblclick="$emit('deleteTimeSignature', i)">
+                    <p>{{ obj.noteCount }}/{{ obj.noteValue }}</p>
+                </div>
+            </div>
+            <div id="overview-2" class="flex h-[1rem] flex-row">
                 <div v-for="(obj, i) in regionOverlay" :id="`meas-${i}`" class="h-full w-4 shrink-0">
                     <div
                         class="h-full w-full hover:cursor-pointer hover:bg-red-600"
@@ -150,7 +158,7 @@ function relevanceBarMouseDown(event) {
                         <div
                             class="z-50 h-full w-full"
                             :class="{
-                                'border-t border-b border-cyan-600 bg-neutral-900 bg-opacity-50 hover:bg-red-600  dark:border-gray-400':
+                                'border-t border-b border-cyan-600 bg-neutral-900 bg-opacity-70 hover:bg-red-600  dark:border-gray-400':
                                     regionOverlay[i],
                             }"></div>
                     </div>
@@ -164,7 +172,7 @@ function relevanceBarMouseDown(event) {
                     <div
                         v-if="(i + 1) % 20 === 0"
                         class="absolute h-[1.3rem] w-[1px] bg-black text-xs dark:bg-gray-400">
-                        <p class="mt-2">&nbsp{{ i + 1 }}</p>
+                        <p class="mt-2 select-none">&nbsp{{ i + 1 }}</p>
                     </div>
                     <div class="h-[0.5rem] w-[1px] bg-black dark:bg-gray-400"></div>
                 </div>

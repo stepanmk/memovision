@@ -23,8 +23,10 @@ def pre_upload_check():
     track_exists = False
     filename = secure_filename(req['filename'])
     filename = strip_extension(filename)
-    session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
-    track = Track.query.filter_by(filename=filename, session_id=session.id).first()
+    session = Session.query.filter_by(name=current_user.selected_session,
+                                      user=current_user).first()
+    track = Track.query.filter_by(filename=filename,
+                                  session_id=session.id).first()
     if track:
         track_exists = True
     return jsonify({'message': 'success', 'exists': track_exists})
@@ -37,14 +39,21 @@ def upload_audio_file():
     file = request.files['file']
     filename_with_ext = secure_filename(file.filename)
     filename = strip_extension(filename_with_ext)
-    session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
+    session = Session.query.filter_by(name=current_user.selected_session,
+                                      user=current_user).first()
     if file:
         # create separate folder for audio file that is being uplodaded
-        os.mkdir(f'./user_uploads/{user.username}/{user.selected_session}/{filename}')
+        os.mkdir(
+            f'./user_uploads/{user.username}/{user.selected_session}/{filename}'
+        )
         # create annotations folder
-        os.mkdir(f'./user_uploads/{user.username}/{user.selected_session}/{filename}/annotations')
+        os.mkdir(
+            f'./user_uploads/{user.username}/{user.selected_session}/{filename}/annotations'
+        )
         # create features folder
-        os.mkdir(f'./user_uploads/{user.username}/{user.selected_session}/{filename}/features')
+        os.mkdir(
+            f'./user_uploads/{user.username}/{user.selected_session}/{filename}/features'
+        )
         # create filepath
         filepath = f'./user_uploads/{user.username}/{user.selected_session}/{filename}/{filename_with_ext}'
         file.save(filepath)
@@ -63,11 +72,19 @@ def upload_audio_file():
         # remove original file
         os.remove(filepath)
         # add track to the database
-        track = Track(filename=filename, length_sec=length_sec, path_44=path_44, path_22=path_22,
-                      disk_space = disk_space, tuning_offset = tuning_offset_hz, session_id=session.id)
+        track = Track(filename=filename,
+                      length_sec=length_sec,
+                      path_44=path_44,
+                      path_22=path_22,
+                      disk_space=disk_space,
+                      tuning_offset=tuning_offset_hz,
+                      session_id=session.id)
         db.session.add(track)
         db.session.commit()
-        return jsonify({'message': 'file succesfully uploaded', 'obj': track.get_data()})
+        return jsonify({
+            'message': 'file succesfully uploaded',
+            'obj': track.get_data()
+        })
     else:
         return jsonify({'message': 'file could not be uploaded'})
 
@@ -78,15 +95,22 @@ def upload_measures():
     file = request.files['file']
     filename = request.form['filename']
     measures = []
-    session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
-    track = Track.query.filter_by(filename=filename, session_id=session.id).first()
+    session = Session.query.filter_by(name=current_user.selected_session,
+                                      user=current_user).first()
+    track = Track.query.filter_by(filename=filename,
+                                  session_id=session.id).first()
     track.gt_measures = True
     # only tested with .txt files
     for line in file:
         measures.append(float(line.rsplit()[0]))
-    np.savetxt(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{filename}/annotations/gt_measures.txt', measures, fmt='%.5f')
+    np.savetxt(
+        f'./user_uploads/{current_user.username}/{current_user.selected_session}/{filename}/annotations/gt_measures.txt',
+        measures,
+        fmt='%.5f')
     measures = [0] + measures + [track.length_sec]
-    np.save(f'./user_uploads/{current_user.username}/{current_user.selected_session}/{filename}/annotations/gt_measures.npy', np.array(measures))
+    np.save(
+        f'./user_uploads/{current_user.username}/{current_user.selected_session}/{filename}/annotations/gt_measures.npy',
+        np.array(measures))
     db.session.commit()
     return jsonify({'message': 'measure annotations uploaded'})
 
@@ -96,10 +120,12 @@ def upload_measures():
 def upload_metadata():
     file = request.files['file']
     df = pd.read_excel(file, header=None)
-    session = Session.query.filter_by(name=current_user.selected_session, user=current_user).first()
+    session = Session.query.filter_by(name=current_user.selected_session,
+                                      user=current_user).first()
     for _, row in df.iterrows():
         row_dict = row.to_dict()
-        track = Track.query.filter_by(filename=secure_filename(row_dict[0]), session_id=session.id).first()
+        track = Track.query.filter_by(filename=secure_filename(row_dict[0]),
+                                      session_id=session.id).first()
         if track:
             track.performer = row_dict[1]
             track.year = row_dict[2]
