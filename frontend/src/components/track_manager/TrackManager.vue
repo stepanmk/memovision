@@ -97,14 +97,11 @@ async function getAllData() {
     await getMetronomeClick();
     await getMeasureData();
     await getFeatureNames();
-
     loadingMessage.value = 'Retrieving audio features...';
     await getAllFeatures();
-
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
-    // console.log(tracksFromDb.trackObjects);
 }
 
 function onDrop(files) {

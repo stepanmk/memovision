@@ -1,13 +1,13 @@
 <script setup>
-import router from '../router.js';
+import { useVuelidate } from '@vuelidate/core';
+import { minLength, required } from '@vuelidate/validators';
 import { reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useVuelidate } from '@vuelidate/core';
-import { required, minLength } from '@vuelidate/validators';
-import { useUserInfo } from '../globalStores';
-import { getSessions } from '../sharedFunctions';
-import { api } from '../axiosInstance';
 import { showAlert } from '../alerts';
+import { api } from '../axiosInstance';
+import { useUserInfo } from '../globalStores';
+import router from '../router.js';
+import { getSessions } from '../sharedFunctions';
 
 // localization
 const { t, locale } = useI18n();

@@ -1,10 +1,9 @@
-from memovision import db
+import numpy as np
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import current_user, jwt_required
 from memovision.db_models import Session, TrackLabel
 
-from flask import request, jsonify, Blueprint
-from flask_jwt_extended import jwt_required, current_user
-
-import numpy as np
+from memovision import db
 
 label_routes = Blueprint('label_routes', __name__)
 

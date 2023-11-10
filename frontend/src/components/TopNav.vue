@@ -1,17 +1,14 @@
 <script setup>
-import router from '../router.js';
-
-import { ref } from 'vue';
 import { Icon } from '@iconify/vue';
-import { useI18n } from 'vue-i18n';
-import { storeToRefs } from 'pinia';
 import { onClickOutside } from '@vueuse/core';
-
-import { useUserInfo, useTracksFromDb, useComponentsVisible } from '../globalStores';
-
-import { darkMode, disableDarkMode } from '../sharedFunctions';
+import { storeToRefs } from 'pinia';
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { showAlert } from '../alerts';
 import { api } from '../axiosInstance';
+import { useComponentsVisible, useTracksFromDb, useUserInfo } from '../globalStores';
+import router from '../router.js';
+import { darkMode, disableDarkMode } from '../sharedFunctions';
 
 const userInfo = useUserInfo();
 const tracksFromDb = useTracksFromDb();

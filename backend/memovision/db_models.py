@@ -15,13 +15,17 @@ class User(db.Model):
 
 class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id',
+                                                  ondelete='CASCADE'))
     # information about the session
     name = db.Column(db.String(512), unique=True, nullable=True)
     created_at = db.Column(db.DateTime, unique=False, nullable=False)
     last_modified = db.Column(db.DateTime, unique=False, nullable=False)
     # one-to-many relationship with Tracks
-    tracks = db.relationship('Track', backref='session', passive_deletes=True, order_by='Track.filename')
+    tracks = db.relationship('Track',
+                             backref='session',
+                             passive_deletes=True,
+                             order_by='Track.filename')
 
     def get_sessions(user_id):
         sessions = Session.query.filter_by(user_id=user_id).all()
@@ -37,7 +41,8 @@ class Session(db.Model):
 
 class Track(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('session.id', ondelete='CASCADE'))
+    session_id = db.Column(db.Integer,
+                           db.ForeignKey('session.id', ondelete='CASCADE'))
     # information about the track
     filename = db.Column(db.String(512), unique=False, nullable=False)
     disk_space = db.Column(db.Float(), unique=False, nullable=False)
@@ -58,10 +63,19 @@ class Track(db.Model):
     num_bad_regions = db.Column(db.Integer, unique=False)
     gt_measures = db.Column(db.Boolean, unique=False, default=False)
     tf_measures = db.Column(db.Boolean, unique=False, default=False)
-    regions = db.relationship('TrackRegion', backref='track', passive_deletes=True)
-    beat_regions = db.relationship('BeatRegion', backref='track', passive_deletes=True)
-    diff_regions = db.relationship('DiffRegion', backref='track', passive_deletes=True)
-    labels = db.relationship('TrackLabel', backref='track', passive_deletes=True, order_by='TrackLabel.label_name')
+    regions = db.relationship('TrackRegion',
+                              backref='track',
+                              passive_deletes=True)
+    beat_regions = db.relationship('BeatRegion',
+                                   backref='track',
+                                   passive_deletes=True)
+    diff_regions = db.relationship('DiffRegion',
+                                   backref='track',
+                                   passive_deletes=True)
+    labels = db.relationship('TrackLabel',
+                             backref='track',
+                             passive_deletes=True,
+                             order_by='TrackLabel.label_name')
 
     def get_data(self):
         data = {
@@ -79,13 +93,15 @@ class Track(db.Model):
             'gt_measures': self.gt_measures,
             'tf_measures': self.tf_measures,
             'diff': self.diff,
-            'num_bad_regions': self.num_bad_regions}
+            'num_bad_regions': self.num_bad_regions
+        }
         return data
 
 
 class TrackLabel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
+    track_id = db.Column(db.Integer,
+                         db.ForeignKey('track.id', ondelete='CASCADE'))
     track_count = db.Column(db.Integer, unique=False, nullable=False)
     label_name = db.Column(db.String(512), unique=False, nullable=False)
     label_type = db.Column(db.String(512), unique=False, nullable=False)
@@ -94,31 +110,33 @@ class TrackLabel(db.Model):
 
 class TrackRegion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
+    track_id = db.Column(db.Integer,
+                         db.ForeignKey('track.id', ondelete='CASCADE'))
     region_name = db.Column(db.String(512), unique=False, nullable=False)
     start_time = db.Column(db.Float(), unique=False, nullable=True)
     end_time = db.Column(db.Float(), unique=False, nullable=True)
-    start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
-    end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
-    beats_per_measure = db.Column(db.Integer(), unique=False, nullable=False) 
+    start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True)
+    end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True)
     length_sec = db.Column(db.Float(), unique=False, nullable=True)
 
 
 class BeatRegion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
-    signature = db.Column(db.String(10), unique=False, nullable=False)
+    track_id = db.Column(db.Integer,
+                         db.ForeignKey('track.id', ondelete='CASCADE'))
     start_time = db.Column(db.Float(), unique=False, nullable=False)
     end_time = db.Column(db.Float(), unique=False, nullable=False)
-    start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True) 
+    start_measure_idx = db.Column(db.Integer(), unique=False, nullable=True)
     end_measure_idx = db.Column(db.Integer(), unique=False, nullable=True)
-    beats_per_measure = db.Column(db.Integer(), unique=False, nullable=False) 
+    note_value = db.Column(db.Integer(), unique=False, nullable=False)
+    note_count = db.Column(db.Integer(), unique=False, nullable=False)
     length_sec = db.Column(db.Float(), unique=False, nullable=True)
 
 
 class DiffRegion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    track_id = db.Column(db.Integer, db.ForeignKey('track.id', ondelete='CASCADE'))
+    track_id = db.Column(db.Integer,
+                         db.ForeignKey('track.id', ondelete='CASCADE'))
     start_time_ref = db.Column(db.Float(), unique=False, nullable=True)
     end_time_ref = db.Column(db.Float(), unique=False, nullable=True)
     start_time = db.Column(db.Float(), unique=False, nullable=True)

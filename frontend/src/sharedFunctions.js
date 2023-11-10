@@ -36,13 +36,14 @@ function getSecureConfig(responseType) {
 
 function resetAllStores() {
     const tracksFromDb = useTracksFromDb(pinia);
-    const userInfo = useUserInfo(pinia);
+    // const userInfo = useUserInfo(pinia);
     const audioStore = useAudioStore(pinia);
     const modulesVisible = useModulesVisible(pinia);
     const componentsVisible = useComponentsVisible(pinia);
     const measureData = useMeasureData(pinia);
 
     tracksFromDb.$reset();
+    // userInfo.$reset();
     audioStore.$reset();
     modulesVisible.$reset();
     componentsVisible.$reset();
@@ -75,17 +76,8 @@ function truncateFilename(filename, numChars) {
     return shortFilename;
 }
 
-// function getTimeString(seconds) {
-//     if (seconds < 3600) {
-//         return new Date(seconds * 1000).toISOString().slice(14, 19);
-//     } else {
-//         return new Date(seconds * 1000).toISOString().slice(11, 19);
-//     }
-// }
-
 function createZoomLevels(zoomviewWidth, trackLengthSec) {
     const maxZoom = Math.pow(2, Math.floor(Math.log2((trackLengthSec * 44100) / zoomviewWidth)));
-    const maxPower = Math.log2(maxZoom);
     let zoomLevels = [];
     for (let i = 64; i < maxZoom; i += 300) {
         zoomLevels.push(i);

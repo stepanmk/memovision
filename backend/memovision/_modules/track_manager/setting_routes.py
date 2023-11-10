@@ -1,6 +1,7 @@
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import current_user, jwt_required
+
 from memovision import db
-from flask import request, jsonify, Blueprint
-from flask_jwt_extended import jwt_required, current_user
 
 setting_routes = Blueprint('setting_routes', __name__)
 

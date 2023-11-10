@@ -5,6 +5,15 @@ const props = defineProps({
     measureCount: Number,
 });
 
+const emit = defineEmits(['selectRegion']);
+
+defineExpose({
+    init,
+    destroy,
+    setRegionOverlay,
+    resetRegionOverlay,
+});
+
 const regionOverlay = ref([]);
 const measureMessage = ref(null);
 let measureCount = 0;
@@ -13,19 +22,11 @@ let regionSelected = false;
 let isHoldingMouseButton = false;
 let dragged = false;
 
-defineExpose({
-    init,
-    destroy,
-});
-
-const emit = defineEmits(['zoomOn']);
-
 function init() {
     measureCount = props.measureCount;
     for (let i = 0; i < measureCount; i++) {
         regionOverlay.value.push(false);
     }
-    beatRegions.value.push({ startIdx: 0, endIdx: measureCount });
     addListeners();
 }
 
@@ -33,6 +34,17 @@ function destroy() {
     measureCount = 0;
     regionOverlay.value = [];
     removeListeners();
+}
+
+function setRegionOverlay(startIdx, endIdx) {
+    resetRegionOverlay();
+    for (let i = startIdx; i < endIdx + 1; ++i) {
+        regionOverlay.value[i] = true;
+    }
+}
+
+function resetRegionOverlay() {
+    regionOverlay.value.fill(false);
 }
 
 function logMeasure(i) {
@@ -76,8 +88,7 @@ function relevanceBarMouseUp() {
     const startMeasureIdx = regionOverlay.value.indexOf(true);
     const endMeasureIdx = regionOverlay.value.lastIndexOf(true);
     if (dragged) {
-        emit('zoomOn', startMeasureIdx, endMeasureIdx);
-        beatRegions.value.push({ startIdx: startMeasureIdx, endIdx: endMeasureIdx });
+        emit('selectRegion', startMeasureIdx, endMeasureIdx);
     }
     dragged = false;
 }
@@ -108,28 +119,23 @@ function relevanceBarMouseDown(event) {
     const dragOverMeasureIdx = Math.round((x / barWidth) * measureCount);
     firstMeasure = dragOverMeasureIdx;
 }
-
-const beatRegions = ref([]);
 </script>
 
 <template>
     <div class="flex h-[5rem] w-full justify-center border-b dark:border-gray-700">
         <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll" id="top-bar">
-            <div id="overview-sig" class="flex h-[1rem] flex-row rounded-md">
-                <div
-                    v-for="(obj, i) in beatRegions"
-                    :id="`meas-${i}`"
-                    class="h-full shrink-0"
-                    :style="{ width: `${(obj.endIdx - obj.startIdx) * 16}px` }">
-                    <div class="h-full w-full bg-red-300"></div>
-                </div>
-            </div>
             <div id="overview-3" class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
                 <div
                     class="absolute z-50 flex w-24 justify-center rounded-md bg-cyan-700 text-xs font-semibold text-white"
                     id="measure-popup">
                     {{ measureMessage }}
                 </div>
+                <!-- <div
+                    class="absolute h-[1rem] w-12 rounded-md bg-red-100 text-xs ring-1"
+                    style="margin-left: 16px"></div>
+                <div class="absolute h-[1rem] w-12 rounded-md bg-red-100 text-xs ring-1" style="margin-left: 500px">
+                    Ahoj
+                </div> -->
             </div>
             <div id="overview-2" class="flex h-[1rem] flex-row rounded-md">
                 <div v-for="(obj, i) in regionOverlay" :id="`meas-${i}`" class="h-full w-4 shrink-0">
@@ -144,7 +150,7 @@ const beatRegions = ref([]);
                         <div
                             class="z-50 h-full w-full"
                             :class="{
-                                'border-t border-b border-cyan-600 bg-neutral-900 bg-opacity-50 dark:border-gray-400':
+                                'border-t border-b border-cyan-600 bg-neutral-900 bg-opacity-50 hover:bg-red-600  dark:border-gray-400':
                                     regionOverlay[i],
                             }"></div>
                     </div>

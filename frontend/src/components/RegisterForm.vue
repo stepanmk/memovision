@@ -1,13 +1,11 @@
 <script setup>
-import router from '../router.js';
-
-import { reactive, computed } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
-import { required, email, minLength, sameAs } from '@vuelidate/validators';
+import { email, minLength, required, sameAs } from '@vuelidate/validators';
+import { computed, reactive } from 'vue';
 import { useI18n } from 'vue-i18n';
-
-import { api } from '../axiosInstance';
 import { showAlert } from '../alerts';
+import { api } from '../axiosInstance';
+import router from '../router.js';
 
 // localization
 const { t, locale } = useI18n();
@@ -44,7 +42,6 @@ function registerUser(data) {
     api.post('/register', data)
         .then(function (response) {
             if (response.data.message === 'registration successful') {
-                // if the register was successful, redirect user to login page
                 router.push('/signin');
                 showAlert(t('register.registersuccess'), 1500);
             }
@@ -56,7 +53,6 @@ function registerUser(data) {
             }
         })
         .catch(function (error) {
-            // handle register error
             showAlert(error.message + '.', 1500);
         });
 }
