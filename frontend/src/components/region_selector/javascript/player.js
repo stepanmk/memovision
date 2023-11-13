@@ -8,7 +8,6 @@ import {
     amplitudeZoom,
     currentTime,
     loopingActive,
-    measureCount,
     measuresVisible,
     metronomeActive,
     peaksReady,
@@ -94,11 +93,8 @@ function initPeaks() {
         peaks.on('player.pause', () => {
             playing.value = false;
         });
-        if (tracksFromDb.refTrack.gt_measures) {
-            measureCount.value = measureData.refTrack.gt_measures.length - 3;
-            measuresVisible.value = false;
-            toggleMeasures();
-        }
+        measuresVisible.value = false;
+        toggleMeasures();
         peaksInstance.zoom.setZoom(zoomLevels.length - 1);
     });
 }

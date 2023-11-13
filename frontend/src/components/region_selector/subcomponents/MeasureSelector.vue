@@ -49,12 +49,12 @@ function resetRegionOverlay() {
 }
 
 function logMeasure(i) {
-    measureMessage.value = 'Measure: ' + (i + 1);
+    measureMessage.value = 'Measure ' + (i + 1);
     const popup = document.getElementById('measure-popup');
     const width = measureCount * 16;
     const topBar = document.getElementById('top-bar');
     popup.style.left =
-        Math.round(((i + 1) / measureCount) * width) - topBar.scrollLeft - popup.offsetWidth / 2 + 18 + 'px';
+        Math.round(((i + 1) / measureCount) * width) - popup.offsetWidth / 2 - topBar.scrollLeft + 16 + 'px';
 }
 
 function clearMessage() {
@@ -66,6 +66,7 @@ function horizontalScroll(event) {
     const scrollContainer = document.getElementById('top-bar');
     scrollContainer.scrollLeft += event.deltaY;
 }
+
 function addListeners() {
     const relevanceBar = document.getElementById('overview-2');
     relevanceBar.addEventListener('mousedown', relevanceBarMouseDown);
@@ -123,25 +124,23 @@ function relevanceBarMouseDown(event) {
 </script>
 
 <template>
-    <div class="flex h-[6rem] w-full justify-center border-b dark:border-gray-700">
-        <div class="w-[calc(100%-3rem)] overflow-y-hidden overflow-x-scroll" id="top-bar">
-            <div id="overview-4" class="flex h-[1rem] w-full flex-row items-center justify-start overflow-hidden">
-                <div
-                    class="absolute z-50 flex w-24 select-none justify-center rounded-md bg-cyan-700 text-xs font-semibold text-white"
-                    id="measure-popup">
-                    {{ measureMessage }}
-                </div>
+    <div class="flex h-[5.5rem] w-full justify-center border-b dark:border-gray-700">
+        <div class="w-[calc(100%-3rem)] overflow-visible overflow-y-hidden" id="top-bar">
+            <div
+                class="absolute z-50 mt-[0.5rem] flex w-24 select-none items-center justify-center rounded-md bg-neutral-700 text-xs font-semibold text-white"
+                id="measure-popup">
+                {{ measureMessage }}
             </div>
-            <div id="overview-3" class="relative flex h-[1rem] flex-row">
+            <div id="overview-3" class="relative mt-[0.5rem] flex h-[1rem] flex-row">
                 <div
                     v-for="(obj, i) in timeSignatures"
                     :id="`ts-${i}`"
-                    class="absolute flex h-full select-none items-center justify-start rounded-full bg-indigo-500 pl-1 text-xs font-semibold text-white"
+                    class="absolute flex h-full cursor-pointer select-none items-center justify-start bg-teal-600 pl-1 text-xs font-semibold text-white hover:bg-teal-500"
                     :style="{
                         width: (obj.endMeasureIdx - obj.startMeasureIdx + 1) * 16 + 'px',
                         'margin-left': obj.startMeasureIdx * 16 + 'px',
                     }"
-                    @dblclick="$emit('deleteTimeSignature', i)">
+                    @click="$emit('deleteTimeSignature', i)">
                     <p>{{ obj.noteCount }}/{{ obj.noteValue }}</p>
                 </div>
             </div>

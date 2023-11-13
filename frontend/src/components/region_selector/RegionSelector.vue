@@ -1,7 +1,7 @@
 <script setup>
 import { Icon } from '@iconify/vue';
-import { ref, watch } from 'vue';
-import { useModulesVisible, useTracksFromDb } from '../../globalStores';
+import { onBeforeUnmount, ref, watch } from 'vue';
+import { useMeasureData, useModulesVisible, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getEndMeasure, getStartMeasure, getTimeString } from '../../sharedFunctions';
 
@@ -48,6 +48,7 @@ import MeasureSelector from './subcomponents/MeasureSelector.vue';
 // pinia stores
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
+const measureData = useMeasureData(pinia);
 const measureSelector = ref(null);
 
 watch(startMeasureIdx, () => {
@@ -67,8 +68,9 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 function initRegionSelector() {
-    setTimeout(initPeaks, 20);
+    measureCount.value = measureData.refTrack.gt_measures.length - 3;
     setTimeout(() => {
+        initPeaks();
         measureSelector.value.init();
     }, 100);
     regionSelectorOpened.value = true;
@@ -82,6 +84,10 @@ function destroyRegionSelector() {
     measureSelector.value.destroy();
     regionSelectorOpened.value = false;
 }
+
+onBeforeUnmount(() => {
+    if (measureSelector.value !== null) measureSelector.value.destroy();
+});
 </script>
 
 <template>
@@ -229,7 +235,6 @@ function destroyRegionSelector() {
                             {{ getTimeString(obj.endTime, 14, 22) }}
                         </p>
                         <p
-                            v-if="tracksFromDb.refTrack.gt_measures"
                             class="flex w-32 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
                             Measures: {{ getStartMeasure(obj.startTime) }}–{{ getEndMeasure(obj.endTime) - 1 }}
                         </p>
