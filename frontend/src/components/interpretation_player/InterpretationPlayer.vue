@@ -109,7 +109,6 @@ function destroyInterpretationPlayer() {
     selectedMeasureData.splice(0);
 
     resetPlayer();
-    selectDefaultRelevanceFeature();
     measuresVisible.value = false;
     interpretationPlayerOpened.value = false;
 }
