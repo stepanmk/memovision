@@ -22,7 +22,7 @@ onClickOutside(clickOutsideRef, () => {
         </button>
         <div
             v-if="entriesVisible"
-            class="absolute mt-1 flex flex-col whitespace-nowrap rounded-md border bg-white p-1"
+            class="absolute mt-1 flex flex-col whitespace-nowrap rounded-md border bg-white p-1 dark:border-gray-700 dark:bg-gray-400 dark:text-gray-900"
             @click="entriesVisible = false">
             <slot></slot>
         </div>
