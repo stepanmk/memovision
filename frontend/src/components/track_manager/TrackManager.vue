@@ -244,15 +244,15 @@ async function closeLabelAssignment() {
                         v-for="(obj, i) in tracksFromDb.trackObjects"
                         :id="`uploaded-file-${i}`"
                         :key="obj.filename"
-                        class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400">
+                        class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400 dark:hover:bg-gray-500"
+                        :class="{
+                            'bg-violet-300 hover:bg-violet-400 dark:bg-violet-300 dark:hover:bg-violet-400':
+                                obj.reference,
+                        }">
                         <div
                             class="flex h-7 w-[calc(100%-22.5rem)] cursor-pointer flex-row items-center justify-between"
                             @click="setReference(obj.filename)">
-                            <div
-                                class="w-30 flex items-center justify-start px-1 text-xs"
-                                :class="{
-                                    'rounded-md bg-violet-800 text-white': obj.reference,
-                                }">
+                            <div class="w-30 flex items-center justify-start px-1 text-sm">
                                 <Popper
                                     :content="obj.filename"
                                     hover
@@ -349,12 +349,12 @@ async function closeLabelAssignment() {
                     <input
                         type="checkbox"
                         id="precise-check"
-                        class="accent-indigo-700"
+                        class="accent-pink-700"
                         v-model="preciseSync"
                         @change="setPreciseSync()" />
                 </div>
 
-                <button class="btn btn-blue bg-indigo-700 hover:bg-indigo-500" @click="processAllTracks()">
+                <button class="btn btn-blue bg-pink-700 hover:bg-pink-500" @click="processAllTracks()">
                     Process all tracks
                 </button>
 
@@ -421,7 +421,7 @@ async function closeLabelAssignment() {
                         :id="`file-${i}`"
                         :key="obj.filename"
                         class="flex h-7 w-full shrink-0 rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400">
-                        <div class="flex w-[17rem] items-center px-1 text-xs">
+                        <div class="flex w-[17rem] items-center px-1 text-sm">
                             <Popper :content="obj.filename" hover placement="right" :arrow="true" class="select-none">
                                 {{ truncateFilename(obj.filename, 14) }}
                             </Popper>

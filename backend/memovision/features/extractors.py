@@ -5,7 +5,9 @@ from scipy.ndimage import gaussian_filter1d
 
 
 def compute_rms(y, frame_length=1024, hop_length=256):
-    rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)[0]
+    rms = librosa.feature.rms(y=y,
+                              frame_length=frame_length,
+                              hop_length=hop_length)[0]
     return rms
 
 
@@ -22,13 +24,12 @@ def compute_duration(measures):
     return duration
 
 
-def compute_tempo(measures, regions=None):
+def compute_tempo(measures, time_signatures=None):
     duration = compute_duration(measures)
     tempo = 4 * 60 / duration
-    if regions:
-        for region in regions:
-            beats_per_measure = region['beatsPerMeasure']
-            start = region['startIdx']
-            end = region['endIdx']
-            tempo[start: end] = beats_per_measure * 60 / duration[start: end]
+    if time_signatures:
+        for ts in time_signatures:
+            tempo[ts.start_measure_idx:ts.
+                  end_measure_idx] = ts.note_count * 60 / duration[
+                      ts.start_measure_idx:ts.end_measure_idx]
     return tempo

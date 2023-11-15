@@ -100,12 +100,15 @@ def duration(filename):
 def tempo(filename):
     session = Session.query.filter_by(name=current_user.selected_session,
                                       user=current_user).first()
+    ref_track = track = Track.query.filter_by(session_id=session.id,
+                                              reference=True).first()
+    time_signatures = ref_track.time_signatures
     if (request.method == 'PUT'):
         track = Track.query.filter_by(session_id=session.id,
                                       filename=filename).first()
         measures = load_measures(current_user.username, session.name,
                                  track.filename, track.gt_measures)
-        tempo_array = compute_tempo(measures)
+        tempo_array = compute_tempo(measures, time_signatures)
         np.save(
             f'./user_uploads/{current_user.username}/{session.name}/{filename}/features/tempo_measure.npy',
             tempo_array)

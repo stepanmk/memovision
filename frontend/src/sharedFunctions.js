@@ -112,6 +112,10 @@ function getTimeString(seconds, start, end) {
     return new Date(seconds * 1000).toISOString().slice(start, end);
 }
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export {
     createZoomLevels,
     darkMode,
@@ -123,5 +127,6 @@ export {
     getStartMeasure,
     getTimeString,
     resetAllStores,
+    sleep,
     truncateFilename,
 };
