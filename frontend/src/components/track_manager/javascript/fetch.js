@@ -1,5 +1,5 @@
 import { api } from '../../../axiosInstance';
-import { useAudioStore, useMeasureData, useTracksFromDb, useUserInfo } from '../../../globalStores';
+import { useAudioStore, useMeasureData, useRegionData, useTracksFromDb, useUserInfo } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getSecureConfig } from '../../../sharedFunctions';
 
@@ -9,6 +9,7 @@ const tracksFromDb = useTracksFromDb(pinia);
 const userInfo = useUserInfo(pinia);
 const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
 
 /*   actual fetch functions 
 
@@ -63,4 +64,15 @@ async function downloadMeasures() {
     URL.revokeObjectURL(url);
 }
 
-export { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData };
+async function getRegionData() {
+    const res = await api.get('/get-all-regions', getSecureConfig());
+    regionData.selectedRegions = res.data.regions;
+    regionData.selected = new Array(res.data.regions.length).fill(false);
+    regionData.timeSignatures = res.data.timeSignatures;
+    regionData.timeSignaturesSelected = new Array(res.data.timeSignatures.length).fill(false);
+    const diffRes = await api.get('/get-diff-regions', getSecureConfig());
+    regionData.diffRegions = diffRes.data.diffRegions;
+    regionData.diffRegionsSelected = new Array(diffRes.data.diffRegions.length).fill(false);
+}
+
+export { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getRegionData, getTrackData };

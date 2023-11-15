@@ -1,8 +1,9 @@
 import { showAlert } from '../../../alerts.js';
 import { api } from '../../../axiosInstance.js';
-import { useMeasureData } from '../../../globalStores';
+import { useMeasureData, useRegionData } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getEndMeasure, getSecureConfig, getStartMeasure, getTimeString } from '../../../sharedFunctions';
+import { getRegionData } from '../../track_manager/javascript/fetch';
 import { peaksInstance } from './player.js';
 
 import {
@@ -16,13 +17,13 @@ import {
     regionBeingAdded,
     regionBeingNamed,
     regionName,
-    regionRef,
     startMeasureIdx,
     startTime,
     startTimeString,
 } from './variables';
 
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
 
 function addRegion(startIdx, endIdx) {
     if (startIdx !== -1) {
@@ -49,15 +50,7 @@ function addRegion(startIdx, endIdx) {
 }
 
 function deselectAllRegions() {
-    regionRef.selected.fill(false);
-}
-
-function getAllRegions() {
-    api.get('/get-all-regions', getSecureConfig).then((res) => {
-        regionRef.regions = res.data.regions;
-        regionRef.selected = new Array(res.data.regions.length).fill(false);
-        regionRef.timeSignatures = res.data.timeSignatures;
-    });
+    regionData.selected.fill(false);
 }
 
 function cancelRegionAdding() {
@@ -87,7 +80,7 @@ function saveRegion() {
             loopingActive.value = false;
             showAlert(`Region ${data.regionName} successfully saved.`, 1500);
             cancelRegionAdding();
-            getAllRegions();
+            getRegionData();
         });
     } else {
         showAlert('Region must have a name!', 1500);
@@ -96,7 +89,7 @@ function saveRegion() {
 
 function timeSignatureOverlap(currentTimeSignature) {
     let checks = [];
-    regionRef.timeSignatures.forEach((timeSignature) => {
+    regionData.timeSignatures.forEach((timeSignature) => {
         checks.push(
             currentTimeSignature.startMeasureIdx <= timeSignature.endMeasureIdx &&
                 currentTimeSignature.endMeasureIdx >= timeSignature.startMeasureIdx
@@ -121,7 +114,7 @@ function saveTimeSignature() {
             peaksInstance.player.pause();
             loopingActive.value = false;
             cancelRegionAdding();
-            getAllRegions();
+            getRegionData();
         });
     } else {
         showAlert('Time signatures must not overlap!', 1500);
@@ -133,24 +126,24 @@ function selectRegion(regionIdx) {
         updateRegion(prevRegionIdx.value);
     }
     prevRegionIdx.value = regionIdx;
-    regionRef.selected[regionIdx] = !regionRef.selected[regionIdx];
-    regionRef.selected.forEach((value, i) => {
-        if (i !== regionIdx) regionRef.selected[i] = false;
+    regionData.selected[regionIdx] = !regionData.selected[regionIdx];
+    regionData.selected.forEach((value, i) => {
+        if (i !== regionIdx) regionData.selected[i] = false;
     });
-    if (regionRef.selected[regionIdx]) {
+    if (regionData.selected[regionIdx]) {
         peaksInstance.player.pause();
         loopingActive.value = true;
         peaksInstance.segments.removeAll();
-        startMeasureIdx.value = getStartMeasure(regionRef.regions[regionIdx].startTime) - 1;
-        endMeasureIdx.value = getEndMeasure(regionRef.regions[regionIdx].endTime) - 2;
+        startMeasureIdx.value = getStartMeasure(regionData.selectedRegions[regionIdx].startTime) - 1;
+        endMeasureIdx.value = getEndMeasure(regionData.selectedRegions[regionIdx].endTime) - 2;
         peaksInstance.segments.add({
-            startTime: regionRef.regions[regionIdx].startTime,
-            endTime: regionRef.regions[regionIdx].endTime,
+            startTime: regionData.selectedRegions[regionIdx].startTime,
+            endTime: regionData.selectedRegions[regionIdx].endTime,
             editable: true,
             color: 'blue',
             borderColor: 'blue',
         });
-        peaksInstance.player.seek(regionRef.regions[regionIdx].startTime);
+        peaksInstance.player.seek(regionData.selectedRegions[regionIdx].startTime);
     } else {
         peaksInstance.player.pause();
         loopingActive.value = false;
@@ -161,27 +154,27 @@ function selectRegion(regionIdx) {
 }
 
 function updateRegion(regionIdx) {
-    api.put('/update-region', regionRef.regions[regionIdx], getSecureConfig()).then((res) => {});
+    api.put('/update-region', regionData.selectedRegions[regionIdx], getSecureConfig()).then((res) => {});
 }
 
 function deleteAllRegions() {
     api.delete(`/delete-all-regions`, getSecureConfig()).then((res) => {
-        getAllRegions();
+        getRegionData();
         peaksInstance.segments.removeAll();
     });
 }
 
 function deleteRegion(regionIdx) {
-    api.put('/delete-region', regionRef.regions[regionIdx], getSecureConfig()).then((res) => {
-        getAllRegions();
+    api.put('/delete-region', regionData.selectedRegions[regionIdx], getSecureConfig()).then((res) => {
+        getRegionData();
         loopingActive.value = false;
         peaksInstance.segments.removeAll();
     });
 }
 
 function deleteTimeSignature(timeSignatureIdx) {
-    api.put('/delete-time-signature', regionRef.timeSignatures[timeSignatureIdx], getSecureConfig()).then((res) => {
-        getAllRegions();
+    api.put('/delete-time-signature', regionData.timeSignatures[timeSignatureIdx], getSecureConfig()).then((res) => {
+        getRegionData();
     });
 }
 
@@ -192,7 +185,6 @@ export {
     deleteRegion,
     deleteTimeSignature,
     deselectAllRegions,
-    getAllRegions,
     saveRegion,
     saveTimeSignature,
     selectRegion,

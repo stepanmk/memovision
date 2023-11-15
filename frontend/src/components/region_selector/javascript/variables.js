@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue';
+import { ref } from 'vue';
 /*  global variables and properties 
 
 */
@@ -22,11 +22,6 @@ const refName = ref('');
 const regionBeingAdded = ref(false);
 const regionBeingNamed = ref(false);
 const regionName = ref('');
-const regionRef = reactive({
-    timeSignatures: [],
-    regions: [],
-    selected: [],
-});
 const regionSelectorOpened = ref(false);
 const startMeasureIdx = ref(-1);
 const startTime = ref(0);
@@ -54,7 +49,6 @@ export {
     regionBeingAdded,
     regionBeingNamed,
     regionName,
-    regionRef,
     regionSelectorOpened,
     startMeasureIdx,
     startTime,

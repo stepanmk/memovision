@@ -4,20 +4,14 @@ import { api } from '../../../axiosInstance';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getSecureConfig, getStartMeasure, sleep } from '../../../sharedFunctions';
-import { selectRelevanceLabel } from './relevance';
 import {
     currentMeasure,
-    differenceRegions,
     isPlaying,
     measuresVisible,
     numPeaksLoaded,
-    oneVsRestRelevance,
     peaksInstancesReady,
     percLoaded,
     playing,
-    selectedRegions,
-    selectedRelevanceFeatureName,
-    trackLabels,
     trackTimes,
     volume,
 } from './variables';
@@ -28,7 +22,6 @@ const tracksFromDb = useTracksFromDb(pinia);
 
 let activePeaksIdx = 0;
 let canRewind = true;
-let measureCount = 0;
 let prevPeaksIdx = null;
 let selectedIndices = null;
 let syncPoints = null;
@@ -70,7 +63,6 @@ async function initPlayer() {
     createFadeRamps();
     getMeasureData();
     await getSyncPoints();
-    await getAllRegions();
     initPeaksInstances();
 }
 
@@ -133,11 +125,6 @@ function initPeaks(filename, idx) {
         peaksInstances[idx] = peaks;
         if (idx === 0) {
             selectPeaks(idx);
-            selectRelevanceLabel(idx, 'oneVsRest');
-            selectedRelevanceFeatureName.value = measureData.relevanceFeatures[0].name;
-            measureCount = measureData.relevance.duration.oneVsRest[idx].measureRelevance.length;
-            oneVsRestRelevance.value[0] = true;
-            trackLabels.value[0] = true;
         }
         if (filename === tracksFromDb.refTrack.filename) {
             peaksInstances[idx].on('player.timeupdate', (time) => {
@@ -288,13 +275,6 @@ async function rewind() {
     fadeIn();
 }
 
-async function getAllRegions() {
-    const selRegionsRes = await api.get('/get-all-regions', getSecureConfig());
-    selectedRegions.value = selRegionsRes.data.regions;
-    const diffRegionsRes = await api.get('/get-diff-regions', getSecureConfig());
-    differenceRegions.value = diffRegionsRes.data.diff_regions;
-}
-
 async function getSyncPoints() {
     const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
     syncPoints = syncPointsRes.data;
@@ -308,7 +288,6 @@ export {
     goToMeasure,
     idxArray,
     initPlayer,
-    measureCount,
     peaksInstances,
     playPause,
     resetPlayer,

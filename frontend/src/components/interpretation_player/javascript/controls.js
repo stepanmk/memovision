@@ -1,8 +1,16 @@
 import { onKeyStroke } from '@vueuse/core';
 import { useModulesVisible } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { activePeaksIdx, goToMeasure, measureCount, peaksInstances, playPause, rewind, selectPeaks } from './player';
-import { currentMeasure, isPlaying, regionLengths, regionToSave } from './variables';
+import { activePeaksIdx, goToMeasure, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
+import {
+    currentMeasure,
+    endMeasureIdx,
+    isPlaying,
+    measureCount,
+    regionLengths,
+    regionToSave,
+    startMeasureIdx,
+} from './variables';
 
 const modulesVisible = useModulesVisible(pinia);
 
@@ -56,17 +64,7 @@ function addControls() {
         (e) => {
             if (modulesVisible.interpretationPlayer) {
                 const newMeasure = currentMeasure.value + 1;
-                if (newMeasure < measureCount) goToMeasure(newMeasure);
-            }
-        },
-        { eventName: 'keyup' }
-    );
-
-    onKeyStroke(
-        'a',
-        (e) => {
-            if (modulesVisible.interpretationPlayer) {
-                zoomAlign();
+                if (newMeasure < measureCount.value) goToMeasure(newMeasure);
             }
         },
         { eventName: 'keyup' }
@@ -78,10 +76,6 @@ function addControls() {
 
     onKeyStroke('Escape', (e) => {
         if (modulesVisible.interpretationPlayer) {
-            // if (regionSelected) {
-            //     regionObjects.selected.fill(false);
-            // }
-            // regionOverlay.value.fill(false);
             if (isPlaying.value) playPause();
             peaksInstances.forEach((peaksInstance, i) => {
                 peaksInstance.segments.removeAll();
@@ -89,6 +83,8 @@ function addControls() {
                 const view = peaksInstance.views.getView('zoomview');
                 view.setZoom({ seconds: 'auto' });
             });
+            startMeasureIdx.value = -1;
+            endMeasureIdx.value = -1;
             regionToSave.value = false;
         }
     });

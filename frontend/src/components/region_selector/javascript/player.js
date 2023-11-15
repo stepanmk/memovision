@@ -1,6 +1,6 @@
 import Peaks from 'peaks.js';
 import { watch } from 'vue';
-import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
+import { useAudioStore, useMeasureData, useRegionData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { createZoomLevels, getTimeString } from '../../../sharedFunctions';
 
@@ -14,15 +14,13 @@ import {
     playing,
     refName,
     regionBeingAdded,
-    regionRef,
     volume,
 } from './variables';
-
-import { getAllRegions } from './regions';
 
 const tracksFromDb = useTracksFromDb(pinia);
 const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
 
 let peaksInstance = null;
 const audioCtx = new AudioContext();
@@ -83,7 +81,6 @@ function initPeaks() {
         peaksInstance = peaks;
         peaksReady.value = true;
         refName.value = tracksFromDb.refTrack.filename;
-        getAllRegions();
         peaks.on('player.timeupdate', (time) => {
             currentTime.value = getTimeString(time, 14, 19);
         });
@@ -122,7 +119,7 @@ function playPause() {
     if (playing.value) {
         peaksInstance.player.pause();
     } else {
-        if (regionRef.selected.includes(true) || regionBeingAdded.value) {
+        if (regionData.selected.includes(true) || regionBeingAdded.value) {
             const segmentToPlay = peaksInstance.segments._segments[0];
             peaksInstance.player.playSegment(segmentToPlay, loopingActive.value);
         } else {

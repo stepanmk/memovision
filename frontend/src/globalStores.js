@@ -196,6 +196,17 @@ export const useAudioStore = defineStore('audioStore', {
     },
 });
 
+export const useRegionData = defineStore('regionData', {
+    state: () => ({
+        selectedRegions: [],
+        selected: [],
+        diffRegions: [],
+        diffRegionsSelected: [],
+        timeSignatures: [],
+        timeSignaturesSelected: [],
+    }),
+});
+
 export const useFeatureLists = defineStore('featureLists', {
     state: () => ({
         dynamicsMetadata: [],

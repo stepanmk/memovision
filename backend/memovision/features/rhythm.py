@@ -100,10 +100,10 @@ def duration(filename):
 def tempo(filename):
     session = Session.query.filter_by(name=current_user.selected_session,
                                       user=current_user).first()
-    ref_track = track = Track.query.filter_by(session_id=session.id,
-                                              reference=True).first()
-    time_signatures = ref_track.time_signatures
     if (request.method == 'PUT'):
+        ref_track = track = Track.query.filter_by(session_id=session.id,
+                                                  reference=True).first()
+        time_signatures = ref_track.time_signatures
         track = Track.query.filter_by(session_id=session.id,
                                       filename=filename).first()
         measures = load_measures(current_user.username, session.name,

@@ -1,26 +1,43 @@
+import { showAlert } from '../../../alerts';
+import { api } from '../../../axiosInstance';
 import { useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getEndMeasure, getStartMeasure, sleep } from '../../../sharedFunctions';
-import { activePeaksIdx, fadeOut, findClosestTimeIdx, peaksInstances, selectedMeasureData, syncPoints } from './player';
-import { isPlaying, regionLengths, regionSelected, regionToSave, zoomingEnabled } from './variables';
+import { getEndMeasure, getSecureConfig, getStartMeasure, sleep } from '../../../sharedFunctions';
+import { getRegionData } from '../../track_manager/javascript/fetch';
+
+import {
+    activePeaksIdx,
+    fadeOut,
+    findClosestTimeIdx,
+    peaksInstances,
+    playPause,
+    selectPeaks,
+    selectedMeasureData,
+    syncPoints,
+} from './player';
+
+import {
+    endMeasureIdx,
+    isPlaying,
+    regionLengths,
+    regionName,
+    regionSelected,
+    regionToSave,
+    startMeasureIdx,
+    zoomingEnabled,
+} from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);
 
 async function selectRegion(regionIdx, obj) {
     hideAllRegions();
     regionToSave.value = false;
-    // regionObjects.selected[regionIdx] = !regionObjects.selected[regionIdx];
-    // regionObjects.selected.forEach((arrayValue, i) => {
-    //     if (i !== regionIdx) regionObjects.selected[i] = false;
-    // });
     const referenceName = tracksFromDb.refTrack.filename;
     const refIdx = tracksFromDb.getIdx(referenceName);
     fadeOut();
     await sleep(10);
     peaksInstances[activePeaksIdx].player.pause();
     isPlaying.value = false;
-    // regionOverlay.value.fill(false);
-    // if (regionObjects.selected[regionIdx]) {
     const startIdx = findClosestTimeIdx(refIdx, obj.startTime);
     const endIdx = findClosestTimeIdx(refIdx, obj.endTime);
     switch (obj.type) {
@@ -35,10 +52,6 @@ async function selectRegion(regionIdx, obj) {
             addRelevantMeasure(obj);
             break;
     }
-    // } else {
-    //     hideAllRegions();
-    //     isPlaying.value = false;
-    // }
 }
 
 function addSelectedRegion(startIdx, endIdx, obj) {
@@ -51,11 +64,8 @@ function addSelectedRegion(startIdx, endIdx, obj) {
             id: 'selectedRegion',
         });
     }
-    const startMeasure = getStartMeasure(obj.startTime) - 1;
-    const endMeasure = getEndMeasure(obj.endTime) - 1;
-    // for (let j = startMeasure; j < endMeasure; j++) {
-    //     regionOverlay.value[j] = true;
-    // }
+    startMeasureIdx.value = getStartMeasure(obj.startTime) - 1;
+    endMeasureIdx.value = getEndMeasure(obj.endTime) - 1;
     zoomOnSelectedRegion();
 }
 
@@ -69,7 +79,6 @@ function addRelevantMeasure(obj) {
             id: 'relevantMeasure',
         });
     }
-    // regionOverlay.value[obj.measureIdx] = true;
     zoomOnMeasureSelection(obj.measureIdx, obj.measureIdx);
 }
 
@@ -90,7 +99,9 @@ function addDifferenceRegion(refIdx, targetIdx, obj) {
         endTime: obj.endTimeTarget,
         id: 'selectedRegion',
     });
-    zoomOnSelectedRegion();
+    const secs = getLongestDiffRegion(refIdx, targetIdx);
+    zoomOnDifferenceRegion(refIdx, secs);
+    zoomOnDifferenceRegion(targetIdx, secs);
 }
 
 function hideAllRegions() {
@@ -98,6 +109,7 @@ function hideAllRegions() {
         peaksInstance.segments.removeAll();
         regionLengths.value.fill(0);
     });
+    startMeasureIdx.value = -1;
     regionSelected.value = false;
 }
 
@@ -109,6 +121,30 @@ function getLongestRegion() {
         if (seglen > secs) secs = seglen + 1;
     }
     return secs;
+}
+
+function getLongestDiffRegion(refIdx, targetIdx) {
+    let secs = -1;
+    let segment = null;
+    let seglen = null;
+    segment = peaksInstances[refIdx].segments.getSegment('selectedRegion');
+    seglen = segment.endTime - segment.startTime;
+    if (seglen > secs) secs = seglen + 1;
+    segment = peaksInstances[targetIdx].segments.getSegment('selectedRegion');
+    seglen = segment.endTime - segment.startTime;
+    if (seglen > secs) secs = seglen + 1;
+    return secs;
+}
+
+function zoomOnDifferenceRegion(peaksIdx, secs) {
+    const view = peaksInstances[peaksIdx].views.getView('zoomview');
+    view.enableAutoScroll(false);
+    const segment = peaksInstances[peaksIdx].segments.getSegment('selectedRegion');
+    regionLengths.value[peaksIdx] = segment.endTime - segment.startTime;
+    if (zoomingEnabled.value) {
+        view.setZoom({ seconds: secs });
+        view.setStartTime(segment.startTime);
+    }
 }
 
 function zoomOnSelectedRegion() {
@@ -127,64 +163,58 @@ function zoomOnSelectedRegion() {
     }
 }
 
-async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
+async function zoomOnMeasureSelection(startMeasure, endMeasure) {
     if (isPlaying.value) await playPause();
     regionSelected.value = true;
+    regionToSave.value = true;
     hideAllRegions();
-    peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
+    peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasure + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
         view.enableAutoScroll(false);
         peaksInstances[i].segments.add({
             color: 'blue',
             borderColor: 'blue',
-            startTime: selectedMeasureData[i][startMeasureIdx + 1],
-            endTime: selectedMeasureData[i][endMeasureIdx + 2],
+            startTime: selectedMeasureData[i][startMeasure + 1],
+            endTime: selectedMeasureData[i][endMeasure + 2],
             id: 'selectedRegion',
         });
-        regionLengths.value[i] =
-            selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1];
+        regionLengths.value[i] = selectedMeasureData[i][endMeasure + 2] - selectedMeasureData[i][startMeasure + 1];
     }
     const secs = getLongestRegion();
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
         if (zoomingEnabled.value) {
             view.setZoom({ seconds: secs });
-            view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
+            view.setStartTime(selectedMeasureData[i][startMeasure + 1]);
         }
     }
+    startMeasureIdx.value = startMeasure;
+    endMeasureIdx.value = endMeasure;
 }
 
 function saveRegion() {
+    const referenceName = tracksFromDb.refTrack.filename;
+    const refIdx = tracksFromDb.getIdx(referenceName);
+    const segment = peaksInstances[refIdx].segments.getSegment('selectedRegion');
     if (regionName.value !== '') {
         const data = {
-            startTime: startTime.value,
-            endTime: endTime.value,
+            startTime: segment.startTime,
+            endTime: segment.endTime,
             regionName: regionName.value,
-            lengthSec: endTime.value - startTime.value,
-            beatsPerMeasure: beatsPerMeasure.value,
+            lengthSec: segment.endTime - segment.startTime,
+            startMeasureIdx: startMeasureIdx.value,
+            endMeasureIdx: endMeasureIdx.value,
         };
         api.post('/save-region', data, getSecureConfig()).then(() => {
             regionToSave.value = false;
             regionName.value = '';
-            beatsPerMeasure.value = 1;
             showAlert(`Region ${data.regionName} successfully added.`, 1500);
-            getAllRegions();
+            getRegionData();
         });
     } else {
         showAlert('Region must have a name!', 1500);
     }
 }
 
-// function zoomAlign() {
-//     for (let i = 0; i < peaksInstances.length; i++) {
-//         if (peaksInstances[i].segments.getSegment('selectedRegion') === null) {
-//             continue;
-//         }
-//         const view = peaksInstances[i].views.getView('zoomview');
-//         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
-//         view.setStartTime(segment.startTime);
-//     }
-// }
-
-export { selectRegion };
+export { saveRegion, selectRegion, zoomOnMeasureSelection };

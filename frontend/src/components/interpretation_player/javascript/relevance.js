@@ -16,10 +16,14 @@ const measureData = useMeasureData(pinia);
 
 function selectDefaultRelevanceFeature() {
     selectRelevanceFeature(measureData.relevanceFeatures[0].id);
+    selectRelevanceLabel(0, 'oneVsRest');
+    selectedRelevanceFeatureName.value = measureData.relevanceFeatures[0].name;
+    oneVsRestRelevance.value[0] = true;
+    trackLabels.value[0] = true;
 }
 
 function selectRelevantMeasures() {
-    let sortedRelevance = selectedRelevanceData.value.slice(0);
+    const sortedRelevance = selectedRelevanceData.value.slice(0);
     sortedRelevance.sort((a, b) => a.relevance - b.relevance).reverse();
     relevantMeasures.value = sortedRelevance.slice(0, 10);
 }

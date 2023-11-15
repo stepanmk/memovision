@@ -4,6 +4,7 @@ import {
     useComponentsVisible,
     useMeasureData,
     useModulesVisible,
+    useRegionData,
     useTracksFromDb,
     useUserInfo,
 } from './globalStores';
@@ -41,6 +42,7 @@ function resetAllStores() {
     const modulesVisible = useModulesVisible(pinia);
     const componentsVisible = useComponentsVisible(pinia);
     const measureData = useMeasureData(pinia);
+    const regionData = useRegionData(pinia);
 
     tracksFromDb.$reset();
     // userInfo.$reset();
@@ -48,6 +50,7 @@ function resetAllStores() {
     modulesVisible.$reset();
     componentsVisible.$reset();
     measureData.$reset();
+    regionData.$reset();
 }
 
 function darkMode() {

@@ -1,7 +1,7 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import { onBeforeUnmount, ref, watch } from 'vue';
-import { useMeasureData, useModulesVisible, useTracksFromDb } from '../../globalStores';
+import { useMeasureData, useModulesVisible, useRegionData, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getEndMeasure, getStartMeasure, getTimeString } from '../../sharedFunctions';
 
@@ -20,7 +20,6 @@ import {
     refName,
     regionBeingNamed,
     regionName,
-    regionRef,
     regionSelectorOpened,
     startMeasureIdx,
     startTimeString,
@@ -49,6 +48,7 @@ import MeasureSelector from './subcomponents/MeasureSelector.vue';
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
 const measureSelector = ref(null);
 
 watch(startMeasureIdx, () => {
@@ -79,7 +79,7 @@ function initRegionSelector() {
 function destroyRegionSelector() {
     playing.value = false;
     loopingActive.value = false;
-    const regionIdx = regionRef.selected.indexOf(true);
+    const regionIdx = regionData.selected.indexOf(true);
     if (regionIdx !== -1) updateRegion(regionIdx);
     measureSelector.value.destroy();
     regionSelectorOpened.value = false;
@@ -135,7 +135,7 @@ onBeforeUnmount(() => {
 
             <MeasureSelector
                 :measure-count="measureCount"
-                :time-signatures="regionRef.timeSignatures"
+                :time-signatures="regionData.timeSignatures"
                 ref="measureSelector"
                 @select-region="addRegion"
                 @delete-time-signature="deleteTimeSignature" />
@@ -213,14 +213,14 @@ onBeforeUnmount(() => {
                 <span class="select-none text-sm">Selected regions</span>
             </div>
             <div
-                class="items-left relative flex h-[calc(100%-31rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
+                class="items-left relative flex h-[calc(100%-30.25rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
                 <div
-                    v-for="(obj, i) in regionRef.regions"
+                    v-for="(obj, i) in regionData.selectedRegions"
                     :id="`region-${i}`"
                     :key="i"
                     class="flex h-7 w-full items-center justify-between rounded-md bg-neutral-200 px-2 text-sm hover:bg-neutral-300"
                     :class="{
-                        'bg-neutral-300 dark:bg-gray-600': regionRef.selected[i],
+                        'bg-neutral-300 dark:bg-gray-600': regionData.selected[i],
                     }">
                     <p class="flex h-full w-full cursor-pointer items-center" @click="selectRegion(i)">
                         {{ obj.regionName }}

@@ -1,5 +1,3 @@
-import json
-
 from flask import Blueprint, jsonify, request, send_from_directory
 from flask_jwt_extended import current_user, jwt_required
 from memovision.db_models import Session, TimeSignature, Track, TrackRegion
@@ -61,46 +59,6 @@ def delete_all_regions():
         db.session.delete(region)
     db.session.commit()
     return jsonify('success')
-
-
-@region_selector.route('/get-all-regions', methods=['GET'])
-@jwt_required()
-def get_all_regions():
-    regs = []
-    time_sigs = []
-    session = Session.query.filter_by(name=current_user.selected_session,
-                                      user=current_user).first()
-    ref_track = Track.query.filter_by(reference=True,
-                                      session_id=session.id).first()
-    regions = TrackRegion.query.filter_by(track=ref_track).order_by(
-        TrackRegion.id.asc())
-    time_signatures = TimeSignature.query.filter_by(track=ref_track)
-    for region in regions:
-        regs.append({
-            'regionName': region.region_name,
-            'startTime': region.start_time,
-            'endTime': region.end_time,
-            'startMeasureIdx': region.start_measure_idx,
-            'endMeasureIdx': region.end_measure_idx,
-            'id': region.id,
-            'lengthSec': region.length_sec,
-            'type': 'selectedRegion',
-            'color': '#0000ff'
-        })
-    for ts in time_signatures:
-        time_sigs.append({
-            'startTime': ts.start_time,
-            'endTime': ts.end_time,
-            'startMeasureIdx': ts.start_measure_idx,
-            'endMeasureIdx': ts.end_measure_idx,
-            'id': ts.id,
-            'lengthSec': ts.length_sec,
-            'noteCount': ts.note_count,
-            'noteValue': ts.note_value,
-            'type': 'timeSignature',
-            'color': '#0000ff'
-        })
-    return jsonify({'regions': regs, 'timeSignatures': time_sigs})
 
 
 @region_selector.route('/save-all-regions', methods=['PUT'])

@@ -44,7 +44,14 @@ import {
     uploadMetadata,
 } from './javascript/upload';
 
-import { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData } from './javascript/fetch';
+import {
+    downloadMeasures,
+    getAudioData,
+    getMeasureData,
+    getMetronomeClick,
+    getRegionData,
+    getTrackData,
+} from './javascript/fetch';
 
 import { deleteAllFilesFromDb, deleteFileFromDb, setReference, updateAllMetadata } from './javascript/track';
 
@@ -88,6 +95,7 @@ async function getAllData() {
     isLoading.value = true;
     isDisabled.value = true;
     await getTrackData();
+    await getRegionData();
     preciseSync.value = userInfo.preciseSync;
     numThingsToCompute.value = tracksFromDb.trackObjects.length;
     for (const track of tracksFromDb.trackObjects) {
@@ -349,12 +357,12 @@ async function closeLabelAssignment() {
                     <input
                         type="checkbox"
                         id="precise-check"
-                        class="accent-pink-700"
+                        class="accent-emerald-600"
                         v-model="preciseSync"
                         @change="setPreciseSync()" />
                 </div>
 
-                <button class="btn btn-blue bg-pink-700 hover:bg-pink-500" @click="processAllTracks()">
+                <button class="btn btn-blue bg-emerald-600 hover:bg-emerald-500" @click="processAllTracks()">
                     Process all tracks
                 </button>
 
