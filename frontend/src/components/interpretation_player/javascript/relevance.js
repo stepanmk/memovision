@@ -17,6 +17,7 @@ const measureData = useMeasureData(pinia);
 function selectDefaultRelevanceFeature() {
     selectRelevanceFeature(measureData.relevanceFeatures[0].id);
     selectRelevanceLabel(0, 'oneVsRest');
+    selectRelevantMeasures();
     selectedRelevanceFeatureName.value = measureData.relevanceFeatures[0].name;
     oneVsRestRelevance.value[0] = true;
     trackLabels.value[0] = true;

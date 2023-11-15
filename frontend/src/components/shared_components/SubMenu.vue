@@ -14,7 +14,12 @@ onClickOutside(clickOutsideRef, () => {
 
 <template>
     <div class="relative z-[15] text-sm" ref="clickOutsideRef">
-        <button class="btn btn-gray" @click="if (numEntries > 0) entriesVisible = !entriesVisible;">{{ name }}</button>
+        <button
+            class="btn btn-gray"
+            :class="{ 'btn-disabled': !(numEntries > 0) }"
+            @click="if (numEntries > 0) entriesVisible = !entriesVisible;">
+            {{ name }}
+        </button>
         <div
             v-if="entriesVisible"
             class="absolute mt-1 flex flex-col whitespace-nowrap rounded-md border bg-white p-1"
