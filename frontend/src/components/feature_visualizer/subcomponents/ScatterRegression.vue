@@ -70,14 +70,14 @@ const compSeries = computed(() => {
     series.push({
         data: regOne.points,
         type: 'line',
-        color: 'red',
+        color: 'blue',
         symbol: 'none',
         name: labelNames[0],
     });
     series.push({
         data: regTwo.points,
         type: 'line',
-        color: 'blue',
+        color: 'red',
         symbol: 'none',
         name: labelNames[1],
     });
