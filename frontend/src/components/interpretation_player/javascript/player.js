@@ -1,9 +1,8 @@
 import Peaks from 'peaks.js';
 import { watch } from 'vue';
-import { api } from '../../../axiosInstance';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getSecureConfig, getStartMeasure, sleep } from '../../../sharedFunctions';
+import { getStartMeasure, sleep } from '../../../sharedFunctions';
 import {
     currentMeasure,
     isPlaying,
@@ -24,11 +23,9 @@ let activePeaksIdx = 0;
 let canRewind = true;
 let prevPeaksIdx = null;
 let selectedIndices = null;
-let syncPoints = null;
 
 let idxArray = [];
 let peaksInstances = [];
-let selectedMeasureData = [];
 
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
@@ -61,8 +58,6 @@ watch(numPeaksLoaded, () => {
 async function initPlayer() {
     audioCtx.resume();
     createFadeRamps();
-    getMeasureData();
-    await getSyncPoints();
     initPeaksInstances();
 }
 
@@ -145,18 +140,6 @@ function initPeaks(filename, idx) {
     });
 }
 
-function getMeasureData() {
-    for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
-        const filename = tracksFromDb.syncTracks[i].filename;
-        if (tracksFromDb.syncTracks[i].gt_measures) {
-            const measures = measureData.getObject(filename).gt_measures;
-            selectedMeasureData.push(measures);
-        } else {
-            selectedMeasureData.push(measureData.getObject(filename).tf_measures);
-        }
-    }
-}
-
 function toggleMeasures() {
     if (measuresVisible.value) {
         peaksInstances.forEach((peaksInstance) => {
@@ -172,10 +155,10 @@ function toggleMeasures() {
 }
 
 function addMeasuresToPeaksInstance(idx) {
-    for (let i = 1; i < selectedMeasureData[idx].length - 1; i++) {
+    for (let i = 1; i < measureData.selectedMeasures[idx].length - 1; i++) {
         let labelText = `${i}`;
         peaksInstances[idx].points.add({
-            time: selectedMeasureData[idx][i],
+            time: measureData.selectedMeasures[idx][i],
             labelText: labelText,
             editable: false,
             color: 'rgb(0, 0, 200)',
@@ -188,7 +171,7 @@ async function goToMeasure(measureIdx) {
         canRewind = false;
         fadeOut();
         await sleep(20);
-        const seekTime = selectedMeasureData[activePeaksIdx][measureIdx + 1];
+        const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
         peaksInstances[activePeaksIdx].player.seek(seekTime);
         fadeIn();
         canRewind = true;
@@ -196,16 +179,16 @@ async function goToMeasure(measureIdx) {
 }
 
 function findClosestTimeIdx(peaksIdx, time) {
-    const closestTime = syncPoints[peaksIdx].reduce((prev, curr) =>
+    const closestTime = tracksFromDb.syncPoints[peaksIdx].reduce((prev, curr) =>
         Math.abs(curr - time) < Math.abs(prev - time) ? curr : prev
     );
-    return syncPoints[peaksIdx].indexOf(closestTime);
+    return tracksFromDb.syncPoints[peaksIdx].indexOf(closestTime);
 }
 
 function seekCallback(time) {
     const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
     selectedIndices.forEach((idx) => {
-        peaksInstances[idx].player.seek(syncPoints[idx][closestTimeIdx]);
+        peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
     });
 }
 
@@ -232,7 +215,7 @@ async function selectPeaks(idx) {
         if (selectedRegion !== null) {
             const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
-            peaksInstances[idx].player.seek(syncPoints[idx][closestTimeIdx]);
+            peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
             await sleep(10);
             fadeIn();
         }
@@ -275,11 +258,6 @@ async function rewind() {
     fadeIn();
 }
 
-async function getSyncPoints() {
-    const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
-    syncPoints = syncPointsRes.data;
-}
-
 export {
     activePeaksIdx,
     fadeIn,
@@ -293,7 +271,5 @@ export {
     resetPlayer,
     rewind,
     selectPeaks,
-    selectedMeasureData,
-    syncPoints,
     toggleMeasures,
 };

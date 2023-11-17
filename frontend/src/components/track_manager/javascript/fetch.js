@@ -49,6 +49,16 @@ async function getMeasureData() {
     const res = await api.get('/get-measure-data', getSecureConfig());
     measureData.measureObjects = res.data.measureData;
     measureData.sortByName();
+    for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
+        const filename = tracksFromDb.syncTracks[i].filename;
+        if (tracksFromDb.syncTracks[i].gt_measures) {
+            const measures = measureData.getObject(filename).gt_measures;
+            measureData.selectedMeasures.push(measures);
+        } else {
+            measureData.selectedMeasures.push(measureData.getObject(filename).tf_measures);
+        }
+    }
+    measureData.measureCount = measureData.selectedMeasures[0].length - 3;
 }
 
 async function downloadMeasures() {
@@ -75,4 +85,17 @@ async function getRegionData() {
     regionData.diffRegionsSelected = new Array(diffRes.data.diffRegions.length).fill(false);
 }
 
-export { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getRegionData, getTrackData };
+async function getSyncPoints() {
+    const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
+    tracksFromDb.syncPoints = syncPointsRes.data;
+}
+
+export {
+    downloadMeasures,
+    getAudioData,
+    getMeasureData,
+    getMetronomeClick,
+    getRegionData,
+    getSyncPoints,
+    getTrackData,
+};

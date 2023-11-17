@@ -1,18 +1,11 @@
 import { onKeyStroke } from '@vueuse/core';
-import { useModulesVisible } from '../../../globalStores';
+import { useMeasureData, useModulesVisible } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { activePeaksIdx, goToMeasure, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
-import {
-    currentMeasure,
-    endMeasureIdx,
-    isPlaying,
-    measureCount,
-    regionLengths,
-    regionToSave,
-    startMeasureIdx,
-} from './variables';
+import { currentMeasure, endMeasureIdx, isPlaying, regionLengths, regionToSave, startMeasureIdx } from './variables';
 
 const modulesVisible = useModulesVisible(pinia);
+const measureData = useMeasureData(pinia);
 
 function addControls() {
     onKeyStroke(' ', (e) => {
@@ -64,7 +57,7 @@ function addControls() {
         (e) => {
             if (modulesVisible.interpretationPlayer) {
                 const newMeasure = currentMeasure.value + 1;
-                if (newMeasure < measureCount.value) goToMeasure(newMeasure);
+                if (newMeasure < measureData.measureCount) goToMeasure(newMeasure);
             }
         },
         { eventName: 'keyup' }

@@ -50,6 +50,7 @@ import {
     getMeasureData,
     getMetronomeClick,
     getRegionData,
+    getSyncPoints,
     getTrackData,
 } from './javascript/fetch';
 
@@ -96,6 +97,7 @@ async function getAllData() {
     isDisabled.value = true;
     await getTrackData();
     await getRegionData();
+    await getSyncPoints();
     preciseSync.value = userInfo.preciseSync;
     numThingsToCompute.value = tracksFromDb.trackObjects.length;
     for (const track of tracksFromDb.trackObjects) {

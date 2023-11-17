@@ -5,16 +5,7 @@ import { pinia } from '../../../piniaInstance';
 import { getEndMeasure, getSecureConfig, getStartMeasure, sleep } from '../../../sharedFunctions';
 import { getRegionData } from '../../track_manager/javascript/fetch';
 
-import {
-    activePeaksIdx,
-    fadeOut,
-    findClosestTimeIdx,
-    peaksInstances,
-    playPause,
-    selectPeaks,
-    selectedMeasureData,
-    syncPoints,
-} from './player';
+import { activePeaksIdx, fadeOut, findClosestTimeIdx, peaksInstances, playPause, selectPeaks } from './player';
 
 import {
     endMeasureIdx,
@@ -59,8 +50,8 @@ function addSelectedRegion(startIdx, endIdx, obj) {
         peaksInstances[i].segments.add({
             color: obj.color,
             borderColor: obj.color,
-            startTime: syncPoints[i][startIdx],
-            endTime: syncPoints[i][endIdx],
+            startTime: tracksFromDb.syncPoints[i][startIdx],
+            endTime: tracksFromDb.syncPoints[i][endIdx],
             id: 'selectedRegion',
         });
     }
@@ -74,8 +65,8 @@ function addRelevantMeasure(obj) {
         peaksInstances[i].segments.add({
             color: obj.color,
             borderColor: obj.color,
-            startTime: selectedMeasureData[i][obj.measureIdx],
-            endTime: selectedMeasureData[i][obj.measureIdx + 1],
+            startTime: measureData.selectedMeasures[i][obj.measureIdx],
+            endTime: measureData.selectedMeasures[i][obj.measureIdx + 1],
             id: 'relevantMeasure',
         });
     }
@@ -168,25 +159,26 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
     regionSelected.value = true;
     regionToSave.value = true;
     hideAllRegions();
-    peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasure + 1]);
+    peaksInstances[activePeaksIdx].player.seek(measureData.selectedMeasures[activePeaksIdx][startMeasure + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
         view.enableAutoScroll(false);
         peaksInstances[i].segments.add({
             color: 'blue',
             borderColor: 'blue',
-            startTime: selectedMeasureData[i][startMeasure + 1],
-            endTime: selectedMeasureData[i][endMeasure + 2],
+            startTime: measureData.selectedMeasures[i][startMeasure + 1],
+            endTime: measureData.selectedMeasures[i][endMeasure + 2],
             id: 'selectedRegion',
         });
-        regionLengths.value[i] = selectedMeasureData[i][endMeasure + 2] - selectedMeasureData[i][startMeasure + 1];
+        regionLengths.value[i] =
+            measureData.selectedMeasures[i][endMeasure + 2] - measureData.selectedMeasures[i][startMeasure + 1];
     }
     const secs = getLongestRegion();
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
         if (zoomingEnabled.value) {
             view.setZoom({ seconds: secs });
-            view.setStartTime(selectedMeasureData[i][startMeasure + 1]);
+            view.setStartTime(measureData.selectedMeasures[i][startMeasure + 1]);
         }
     }
     startMeasureIdx.value = startMeasure;

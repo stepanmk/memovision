@@ -12,7 +12,6 @@ import {
     endMeasureIdx,
     interpretationPlayerOpened,
     isPlaying,
-    measureCount,
     measuresVisible,
     oneVsRestRelevance,
     peaksInstancesReady,
@@ -41,7 +40,6 @@ import {
     resetPlayer,
     rewind,
     selectPeaks,
-    selectedMeasureData,
     toggleMeasures,
 } from './javascript/player';
 
@@ -93,7 +91,6 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 async function initInterpretationPlayer() {
-    measureCount.value = measureData.refTrack.gt_measures.length - 3;
     tracksFromDb.syncTracks.forEach((track, idx) => {
         oneVsRestRelevance.value.push(false);
         peaksInstancesReady.value.push(false);
@@ -125,7 +122,6 @@ function destroyInterpretationPlayer() {
     // player
     idxArray.splice(0);
     peaksInstances.splice(0);
-    selectedMeasureData.splice(0);
 
     resetPlayer();
     measureSelector.value.destroy();
@@ -221,7 +217,7 @@ function destroyInterpretationPlayer() {
                 </div>
             </div>
             <MeasureSelector
-                :measure-count="measureCount"
+                :measure-count="measureData.measureCount"
                 :current-measure="currentMeasure"
                 :relevance-data="selectedRelevanceData"
                 :time-signatures="regionData.timeSignatures"

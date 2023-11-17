@@ -52,6 +52,7 @@ export const useAnalysisState = defineStore('analysisState', {
 export const useTracksFromDb = defineStore('tracksFromDb', {
     state: () => ({
         trackObjects: [],
+        syncPoints: [],
         selected: [],
     }),
     getters: {
@@ -123,10 +124,12 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
 
 export const useMeasureData = defineStore('measureData', {
     state: () => ({
-        measureObjects: [],
-        relevanceFeatures: [],
-        relevance: {},
         labels: [],
+        measureCount: 0,
+        measureObjects: [],
+        relevance: {},
+        relevanceFeatures: [],
+        selectedMeasures: [],
     }),
     getters: {
         refTrack: (state) => state.measureObjects.find((obj) => obj.reference),

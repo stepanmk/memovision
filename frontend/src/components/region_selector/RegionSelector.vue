@@ -11,7 +11,6 @@ import {
     endMeasureIdx,
     endTimeString,
     loopingActive,
-    measureCount,
     measuresVisible,
     metronomeActive,
     noteCount,
@@ -68,7 +67,6 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 function initRegionSelector() {
-    measureCount.value = measureData.refTrack.gt_measures.length - 3;
     setTimeout(() => {
         initPeaks();
         measureSelector.value.init();
@@ -134,7 +132,7 @@ onBeforeUnmount(() => {
             <audio id="audio-element" class="w-full"></audio>
 
             <MeasureSelector
-                :measure-count="measureCount"
+                :measure-count="measureData.measureCount"
                 :time-signatures="regionData.timeSignatures"
                 ref="measureSelector"
                 @select-region="addRegion"

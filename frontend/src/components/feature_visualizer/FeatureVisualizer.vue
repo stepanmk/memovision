@@ -1,7 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import Peaks from 'peaks.js';
-import { computed, reactive, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
 import { api } from '../../axiosInstance';
 import {
@@ -13,6 +12,7 @@ import {
     useTracksFromDb,
 } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
+
 import {
     createZoomLevels,
     getEndMeasure,
@@ -22,14 +22,16 @@ import {
     truncateFilename,
 } from '../../sharedFunctions';
 
+import { allPeaksReady, featureVisualizerOpened } from './javascript/variables';
+
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
 import SelectedRegion from '../shared_components/SelectedRegion.vue';
 import SubMenu from '../shared_components/SubMenu.vue';
-import LineChart from './LineChart.vue';
-import LineChartMeasure from './LineChartMeasure.vue';
-import MeasureSelector from './MeasureSelector.vue';
 import FeatureName from './subcomponents/FeatureName.vue';
+import LineChart from './subcomponents/LineChart.vue';
+import LineChartMeasure from './subcomponents/LineChartMeasure.vue';
+import MeasureSelector from './subcomponents/MeasureSelector.vue';
 import ScatterRegression from './subcomponents/ScatterRegression.vue';
 
 const modulesVisible = useModulesVisible(pinia);
@@ -39,81 +41,19 @@ const featureData = useFeatureData(pinia);
 const featureLists = useFeatureLists(pinia);
 const measureData = useMeasureData(pinia);
 
-// audio context stuff
-const audioCtx = new AudioContext();
-const gainNode = audioCtx.createGain();
-gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-gainNode.connect(audioCtx.destination);
-const volume = ref([1]);
-
-const rampUp = new Float32Array(10);
-const rampDown = new Float32Array(10);
-function createFadeRamps() {
-    for (let i = 0; i < 10; i++) {
-        rampUp[i] = Math.pow(i / 9, 3) * volume.value;
-        rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
+modulesVisible.$subscribe((mutation, state) => {
+    if (state.featureVisualizer && !featureVisualizerOpened.value) {
+        featureVisualizerOpened.value = true;
+        initFeatVisualizer();
+    } else if (!state.featureVisualizer && featureVisualizerOpened.value) {
+        featureVisualizerOpened.value = false;
+        destroyFeatVisualizer();
     }
-}
-const fadeIn = () => gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
-const fadeOut = () => gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
-
-watch(volume, () => {
-    gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
-    createFadeRamps();
 });
-
-let matplotlibColors = [
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
-];
-
-const isPlaying = ref(false);
-const tracksVisible = ref([]);
-const waveformsVisible = ref([]);
-const playing = ref([]);
-const regionOverlay = ref([]);
-const trackNames = ref([]);
-const timeSelections = ref([]);
-const trackLabels = ref([]);
-const selectedLabel = ref('');
-const labelSelectors = ref([]);
-const peaksInstancesReady = ref([]);
-
-let syncPoints = null;
-let activePeaksIdx = 0;
-let peaksInstances = [];
-let idxArray = [];
-let selectedMeasureData = [];
-let selectedFeatureLists = reactive({});
-let startTimes = [];
-let endTimes = [];
-
-const cursorPositions = ref([]);
-const measureSelector = ref(null);
-const currentMeasure = ref(-1);
-
-const selectedRegions = ref([]);
-const selectedRegionsBool = ref([]);
-async function getAllRegions() {
-    const selRegionsRes = await api.get('/get-all-regions', getSecureConfig());
-    selectedRegions.value = selRegionsRes.data;
-    selectedRegions.value.forEach(() => {
-        selectedRegionsBool.push(false);
-    });
-}
 
 function initFeatVisualizer() {
     getSyncPoints();
     getMeasureData();
-    getAllRegions();
 
     tracksFromDb.syncTracks.forEach((track, idx) => {
         tracksVisible.value.push(true);
@@ -173,22 +113,6 @@ function destroyFeatVisualizer() {
     measureSelector.value.destroy();
 }
 
-let featVisualizerOpened = false;
-
-modulesVisible.$subscribe((mutation, state) => {
-    if (state.featureVisualizer && !featVisualizerOpened) {
-        featVisualizerOpened = true;
-        initFeatVisualizer();
-    } else if (!state.featureVisualizer && featVisualizerOpened) {
-        featVisualizerOpened = false;
-        destroyFeatVisualizer();
-    }
-});
-
-const allPeaksReady = computed(() => {
-    return peaksInstancesReady.value.includes(false);
-});
-
 async function getSyncPoints() {
     const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
     syncPoints = syncPointsRes.data;
@@ -225,8 +149,6 @@ function getFeatureLists() {
     });
 }
 
-const startMeasure = ref(0);
-const endMeasure = ref(0);
 function getMeasureData() {
     for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
         const filename = tracksFromDb.syncTracks[i].filename;
@@ -338,7 +260,6 @@ function addMeasuresToPeaksInstance(idx) {
     }
 }
 
-const measuresVisible = ref(false);
 function toggleMeasures() {
     if (measuresVisible.value) {
         peaksInstances.forEach((peaksInstance) => {
@@ -367,8 +288,6 @@ function seekCallback(time) {
     });
 }
 
-let prevPeaksIdx = null;
-let selectedIndices = null;
 async function selectPeaks(idx) {
     selectedIndices = idxArray.slice();
     selectedIndices.splice(idx, 1);

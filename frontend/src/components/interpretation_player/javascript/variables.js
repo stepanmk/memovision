@@ -7,7 +7,6 @@ const currentMeasure = ref(-1);
 const endMeasureIdx = ref(-1);
 const interpretationPlayerOpened = ref(false);
 const isPlaying = ref(false);
-const measureCount = ref(0);
 const measuresVisible = ref(false);
 const numPeaksLoaded = ref(0);
 const oneVsRestRelevance = ref([]);
@@ -41,7 +40,6 @@ export {
     endMeasureIdx,
     interpretationPlayerOpened,
     isPlaying,
-    measureCount,
     measuresVisible,
     numPeaksLoaded,
     oneVsRestRelevance,

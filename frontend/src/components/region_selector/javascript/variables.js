@@ -10,7 +10,6 @@ const endMeasureIdx = ref(-1);
 const endTime = ref(0);
 const endTimeString = ref('');
 const loopingActive = ref(false);
-const measureCount = ref(0);
 const measuresVisible = ref(false);
 const metronomeActive = ref(false);
 const noteCount = ref(4);
@@ -37,7 +36,6 @@ export {
     endTime,
     endTimeString,
     loopingActive,
-    measureCount,
     measuresVisible,
     metronomeActive,
     noteCount,
