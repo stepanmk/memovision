@@ -1,9 +1,8 @@
 <script setup>
-import { useComponentsVisible, useModulesVisible } from '../../globalStores';
+import { useModulesVisible } from '../../globalStores';
 import SideNavButton from './SideNavButton.vue';
 
 // pinia stores
-const componentsVisible = useComponentsVisible();
 const modulesVisible = useModulesVisible();
 
 // select active module
@@ -20,7 +19,6 @@ function selectModule(moduleName) {
             name="Track manager"
             icon-type="carbon:document-audio"
             width="22"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.trackManager"
             @click="selectModule('trackManager')"></SideNavButton>
 
@@ -28,7 +26,6 @@ function selectModule(moduleName) {
             name="Region selector"
             icon-type="mdi:timer-music-outline"
             width="25"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.regionSelector"
             @click="selectModule('regionSelector')"></SideNavButton>
 
@@ -36,7 +33,6 @@ function selectModule(moduleName) {
             name="Interpretation player"
             icon-type="material-symbols:play-circle-outline"
             width="25"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.interpretationPlayer"
             @click="selectModule('interpretationPlayer')"></SideNavButton>
 
@@ -44,7 +40,6 @@ function selectModule(moduleName) {
             name="Feature visualizer"
             icon-type="icon-park-solid:analysis"
             width="21"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.featureVisualizer"
             @click="selectModule('featureVisualizer')"></SideNavButton>
     </div>

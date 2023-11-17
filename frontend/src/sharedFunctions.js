@@ -1,7 +1,6 @@
 import { api } from './axiosInstance';
 import {
     useAudioStore,
-    useComponentsVisible,
     useMeasureData,
     useModulesVisible,
     useRegionData,
@@ -40,7 +39,6 @@ function resetAllStores() {
     // const userInfo = useUserInfo(pinia);
     const audioStore = useAudioStore(pinia);
     const modulesVisible = useModulesVisible(pinia);
-    const componentsVisible = useComponentsVisible(pinia);
     const measureData = useMeasureData(pinia);
     const regionData = useRegionData(pinia);
 
@@ -48,7 +46,6 @@ function resetAllStores() {
     // userInfo.$reset();
     audioStore.$reset();
     modulesVisible.$reset();
-    componentsVisible.$reset();
     measureData.$reset();
     regionData.$reset();
 }

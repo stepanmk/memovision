@@ -33,22 +33,6 @@ export const useModulesVisible = defineStore('modulesVisible', {
     },
 });
 
-export const useComponentsVisible = defineStore('componentsVisible', {
-    state: () => ({
-        sidenav: false,
-        tracklist: false,
-    }),
-});
-
-export const useAnalysisState = defineStore('analysisState', {
-    state: () => ({
-        individualAnalysis: true,
-        batchAnalysis: false,
-        multiSelectEnabled: false,
-        multiSelectActive: false,
-    }),
-});
-
 export const useTracksFromDb = defineStore('tracksFromDb', {
     state: () => ({
         trackObjects: [],
