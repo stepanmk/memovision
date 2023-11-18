@@ -1,6 +1,6 @@
 import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
-import { useTracksFromDb } from '../../../globalStores';
+import { useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getEndMeasure, getSecureConfig, getStartMeasure, sleep } from '../../../sharedFunctions';
 import { getRegionData } from '../../track_manager/javascript/fetch';
@@ -19,6 +19,7 @@ import {
 } from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);
+const measureData = useMeasureData(pinia);
 
 async function selectRegion(regionIdx, obj) {
     hideAllRegions();
