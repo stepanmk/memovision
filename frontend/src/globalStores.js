@@ -28,7 +28,34 @@ export const useModulesVisible = defineStore('modulesVisible', {
         hideAllModules() {
             this.trackManager = false;
             this.regionSelector = false;
-            (this.interpretationPlayer = false), (this.featureVisualizer = false);
+            this.interpretationPlayer = false;
+            this.featureVisualizer = false;
+        },
+    },
+});
+
+export const useMenuButtonsDisable = defineStore('menuButtonsDisable', {
+    state: () => ({
+        trackManager: true,
+        regionSelector: true,
+        interpretationPlayer: true,
+        featureVisualizer: true,
+    }),
+    actions: {
+        startLoading(moduleName) {
+            // console.log('started');
+            this.trackManager = true;
+            this.regionSelector = true;
+            this.interpretationPlayer = true;
+            this.featureVisualizer = true;
+            this[moduleName] = false;
+        },
+        stopLoading() {
+            // console.log('finished');
+            this.trackManager = false;
+            this.regionSelector = false;
+            this.interpretationPlayer = false;
+            this.featureVisualizer = false;
         },
     },
 });

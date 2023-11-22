@@ -106,7 +106,6 @@ const compSeries = computed(() => {
             showSymbol: false,
             lineStyle: {
                 width: 2,
-                type: 'dashed',
             },
             data: labelOneAvg,
         });
@@ -117,7 +116,6 @@ const compSeries = computed(() => {
             showSymbol: false,
             lineStyle: {
                 width: 2,
-                type: 'dashed',
             },
             data: labelTwoAvg,
         });

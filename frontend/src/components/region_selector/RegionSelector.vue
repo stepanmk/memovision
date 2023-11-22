@@ -1,7 +1,13 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import { onBeforeUnmount, ref, watch } from 'vue';
-import { useMeasureData, useModulesVisible, useRegionData, useTracksFromDb } from '../../globalStores';
+import {
+    useMeasureData,
+    useMenuButtonsDisable,
+    useModulesVisible,
+    useRegionData,
+    useTracksFromDb,
+} from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getEndMeasure, getStartMeasure, getTimeString } from '../../sharedFunctions';
 
@@ -46,6 +52,8 @@ import MeasureSelector from './subcomponents/MeasureSelector.vue';
 // pinia stores
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
+
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
 const measureSelector = ref(null);
@@ -67,6 +75,7 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 function initRegionSelector() {
+    menuButtonsDisable.startLoading('regionSelector');
     setTimeout(() => {
         initPeaks();
         measureSelector.value.init();

@@ -35,7 +35,7 @@ const volume = ref(1.0);
 const waveformsVisible = ref([]);
 
 const allPeaksReady = computed(() => {
-    return peaksInstancesReady.value.includes(false);
+    return !peaksInstancesReady.value.includes(false);
 });
 
 export {

@@ -3,7 +3,13 @@ import { Icon } from '@iconify/vue';
 import { useDropZone } from '@vueuse/core';
 import { onMounted, ref } from 'vue';
 import Popper from 'vue3-popper';
-import { useFeatureLists, useModulesVisible, useTracksFromDb, useUserInfo } from '../../globalStores';
+import {
+    useFeatureLists,
+    useMenuButtonsDisable,
+    useModulesVisible,
+    useTracksFromDb,
+    useUserInfo,
+} from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
 import DialogWindow from '../DialogWindow.vue';
@@ -69,10 +75,11 @@ import {
 } from './javascript/process';
 
 /* pinia stores */
-const userInfo = useUserInfo(pinia);
 const featureLists = useFeatureLists(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
+const userInfo = useUserInfo(pinia);
 
 /* dropzone variables */
 const dropzone = ref();
@@ -92,6 +99,7 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 async function getAllData() {
+    menuButtonsDisable.startLoading('trackManager');
     loadingMessage.value = 'Retrieving audio data...';
     isLoading.value = true;
     isDisabled.value = true;
@@ -112,6 +120,7 @@ async function getAllData() {
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
+    menuButtonsDisable.stopLoading();
 }
 
 function onDrop(files) {
@@ -119,6 +128,7 @@ function onDrop(files) {
 }
 
 function openLabelAssignment() {
+    menuButtonsDisable.startLoading('trackManager');
     isDisabled.value = true;
     labelAssignmentVisible.value = true;
 }
@@ -133,6 +143,7 @@ async function closeLabelAssignment() {
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
+    menuButtonsDisable.stopLoading();
 }
 </script>
 
@@ -234,6 +245,7 @@ async function closeLabelAssignment() {
                             {
                                 featureExtractionWindow = false;
                                 isDisabled = false;
+                                menuButtonsDisable.stopLoading();
                             }
                         ">
                         Close
@@ -373,11 +385,16 @@ async function closeLabelAssignment() {
                     type="file"
                     class="hidden"
                     accept=".txt, .csv, .xlsx"
-                    @change="uploadMetadata()"
+                    @change="tracksFromDb.somethingUploaded ? uploadMetadata() : null"
                     @click="$event.target.value = ''" />
 
                 <label for="upload-metadata" class="flex h-full items-center justify-center hover:cursor-pointer">
-                    <div id="upload-metadata-btn" class="btn btn-blue">
+                    <div
+                        id="upload-metadata-btn"
+                        class="btn btn-blue"
+                        :class="{
+                            'btn-disabled': !tracksFromDb.somethingUploaded,
+                        }">
                         <p>Upload metadata</p>
                     </div>
                 </label>

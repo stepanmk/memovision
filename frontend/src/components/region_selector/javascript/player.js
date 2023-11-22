@@ -1,6 +1,12 @@
 import Peaks from 'peaks.js';
 import { watch } from 'vue';
-import { useAudioStore, useMeasureData, useRegionData, useTracksFromDb } from '../../../globalStores';
+import {
+    useAudioStore,
+    useMeasureData,
+    useMenuButtonsDisable,
+    useRegionData,
+    useTracksFromDb,
+} from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { createZoomLevels, getTimeString } from '../../../sharedFunctions';
 
@@ -21,6 +27,7 @@ const tracksFromDb = useTracksFromDb(pinia);
 const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 
 let peaksInstance = null;
 const audioCtx = new AudioContext();
@@ -93,6 +100,9 @@ function initPeaks() {
         measuresVisible.value = false;
         toggleMeasures();
         peaksInstance.zoom.setZoom(zoomLevels.length - 1);
+        setTimeout(() => {
+            menuButtonsDisable.stopLoading();
+        }, 200);
     });
 }
 

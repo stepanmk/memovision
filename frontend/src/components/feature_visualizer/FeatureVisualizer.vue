@@ -2,7 +2,14 @@
 import { Icon } from '@iconify/vue';
 import { onBeforeUnmount, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
-import { useFeatureData, useMeasureData, useModulesVisible, useRegionData, useTracksFromDb } from '../../globalStores';
+import {
+    useFeatureData,
+    useMeasureData,
+    useMenuButtonsDisable,
+    useModulesVisible,
+    useRegionData,
+    useTracksFromDb,
+} from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getEndMeasure, getStartMeasure, getTimeString, truncateFilename } from '../../sharedFunctions';
 
@@ -61,6 +68,7 @@ const tracksFromDb = useTracksFromDb(pinia);
 const featureData = useFeatureData(pinia);
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 
 const measureSelector = ref(null);
 
@@ -72,6 +80,10 @@ watch(startMeasureIdx, () => {
     }
 });
 
+watch(allPeaksReady, () => {
+    if (allPeaksReady.value) menuButtonsDisable.stopLoading();
+});
+
 modulesVisible.$subscribe((mutation, state) => {
     if (state.featureVisualizer && !featureVisualizerOpened.value) {
         initFeatVisualizer();
@@ -81,6 +93,7 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 async function initFeatVisualizer() {
+    menuButtonsDisable.startLoading('featureVisualizer');
     setFeatureLists();
     startMeasureIdx.value = 0;
     endMeasureIdx.value = measureData.measureCount - 1;
@@ -164,9 +177,9 @@ function showAllInPlots() {
         :module-title="'Feature visualization'"
         :module-identifier="'feat-visualisation'"
         :visible="modulesVisible.featureVisualizer"
-        :is-disabled="allPeaksReady">
+        :is-disabled="!allPeaksReady">
         <template v-slot:window>
-            <LoadingWindow :visible="allPeaksReady" :loading-message="'Loading tracks...'" :progress-bar-perc="0" />
+            <LoadingWindow :visible="!allPeaksReady" :loading-message="'Loading tracks...'" :progress-bar-perc="0" />
         </template>
         <template v-slot:module-content>
             <div class="flex h-[3rem] w-full items-center gap-2 border-b px-5">

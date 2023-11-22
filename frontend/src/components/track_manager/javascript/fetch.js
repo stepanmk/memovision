@@ -54,11 +54,11 @@ async function getMeasureData() {
         if (tracksFromDb.syncTracks[i].gt_measures) {
             const measures = measureData.getObject(filename).gt_measures;
             measureData.selectedMeasures.push(measures);
+            measureData.measureCount = measureData.selectedMeasures[i].length - 3;
         } else {
             measureData.selectedMeasures.push(measureData.getObject(filename).tf_measures);
         }
     }
-    measureData.measureCount = measureData.selectedMeasures[0].length - 3;
 }
 
 async function downloadMeasures() {
@@ -86,8 +86,10 @@ async function getRegionData() {
 }
 
 async function getSyncPoints() {
-    const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
-    tracksFromDb.syncPoints = syncPointsRes.data;
+    if (tracksFromDb.syncTracks.length > 0) {
+        const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
+        tracksFromDb.syncPoints = syncPointsRes.data;
+    }
 }
 
 export {

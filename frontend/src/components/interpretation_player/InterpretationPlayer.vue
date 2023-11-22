@@ -2,7 +2,13 @@
 import { Icon } from '@iconify/vue';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
-import { useMeasureData, useModulesVisible, useRegionData, useTracksFromDb } from '../../globalStores';
+import {
+    useMeasureData,
+    useMenuButtonsDisable,
+    useModulesVisible,
+    useRegionData,
+    useTracksFromDb,
+} from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getEndMeasure, getStartMeasure, getTimeString, truncateFilename } from '../../sharedFunctions';
 
@@ -63,10 +69,11 @@ import MeasureSelector from './subcomponents/MeasureSelector.vue';
 import RelevantMeasure from './subcomponents/RelevantMeasure.vue';
 
 // pinia stores
-const modulesVisible = useModulesVisible(pinia);
-const tracksFromDb = useTracksFromDb(pinia);
 const measureData = useMeasureData(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
+const modulesVisible = useModulesVisible(pinia);
 const regionData = useRegionData(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
 
 const measureSelector = ref(null);
 
@@ -76,6 +83,10 @@ watch(startMeasureIdx, () => {
     } else if (startMeasureIdx.value > -1) {
         measureSelector.value.setRegionOverlay(startMeasureIdx.value, endMeasureIdx.value);
     }
+});
+
+watch(allPeaksReady, () => {
+    if (allPeaksReady.value) menuButtonsDisable.stopLoading();
 });
 
 onMounted(() => {
@@ -95,6 +106,7 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 async function initInterpretationPlayer() {
+    menuButtonsDisable.startLoading('interpretationPlayer');
     tracksFromDb.syncTracks.forEach((track, idx) => {
         oneVsRestRelevance.value.push(false);
         peaksInstancesReady.value.push(false);

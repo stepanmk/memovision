@@ -49,7 +49,9 @@ function logoutUser(data) {
     <div
         id="navbar"
         class="flex h-16 w-full flex-row items-center justify-between border-b bg-white px-7 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-        <div id="first" class="flex h-full w-[calc(100%-7rem)] flex-row items-center justify-start text-xl font-bold">
+        <div
+            id="first"
+            class="flex h-full w-[calc(100%-7rem)] select-none flex-row items-center justify-start text-xl font-bold">
             MemoVision
         </div>
 
