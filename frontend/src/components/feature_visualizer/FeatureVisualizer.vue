@@ -1,6 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue';
-import { ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
 import { useFeatureData, useMeasureData, useModulesVisible, useRegionData, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
@@ -128,6 +128,10 @@ function destroyFeatVisualizer() {
     measuresVisible.value = false;
     featureVisualizerOpened.value = false;
 }
+
+onBeforeUnmount(() => {
+    if (measureSelector.value !== null) measureSelector.value.destroy();
+});
 
 function showWaveform(idx) {
     waveformsVisible.value[idx] = !waveformsVisible.value[idx];

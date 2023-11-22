@@ -1,6 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue';
-import { onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
 import { useMeasureData, useModulesVisible, useRegionData, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
@@ -80,6 +80,10 @@ watch(startMeasureIdx, () => {
 
 onMounted(() => {
     addControls();
+});
+
+onBeforeUnmount(() => {
+    if (measureSelector.value !== null) measureSelector.value.destroy();
 });
 
 modulesVisible.$subscribe((mutation, state) => {
