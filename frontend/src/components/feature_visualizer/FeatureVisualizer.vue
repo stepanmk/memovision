@@ -17,6 +17,7 @@ import {
     measuresVisible,
     peaksInstancesReady,
     playing,
+    scatterVisible,
     selectedFeatureLists,
     selectedLabel,
     startMeasureIdx,
@@ -67,7 +68,6 @@ watch(startMeasureIdx, () => {
     if (startMeasureIdx.value === -1) {
         measureSelector.value.resetRegionOverlay();
     } else if (startMeasureIdx.value > -1) {
-        console.log(startMeasureIdx.value, endMeasureIdx.value);
         measureSelector.value.setRegionOverlay(startMeasureIdx.value, endMeasureIdx.value);
     }
 });
@@ -89,7 +89,7 @@ async function initFeatVisualizer() {
         peaksInstancesReady.value.push(false);
         playing.push(false);
         timeSelections.value.push(track.length_sec);
-        trackLabels.value.push(false);
+        trackLabels.value.push(undefined);
         tracksVisible.value.push(true);
         trackTimes.value.push(0.0);
         waveformsVisible.value.push(true);
@@ -115,6 +115,11 @@ function destroyFeatVisualizer() {
     trackTimes.value = [];
     waveformsVisible.value = [];
 
+    startMeasureIdx.value = 0;
+    endMeasureIdx.value = measureData.measureCount - 1;
+    selectedLabel.value = '';
+    labelSelectors.value.fill(false);
+
     resetPlayer();
     peaksInstances.splice(0);
     idxArray.splice(0);
@@ -130,6 +135,22 @@ function showWaveform(idx) {
 
 function showInPlots(idx) {
     tracksVisible.value[idx] = !tracksVisible.value[idx];
+}
+
+function showAllWaveforms() {
+    if (waveformsVisible.value.includes(false)) {
+        waveformsVisible.value.fill(true);
+    } else {
+        waveformsVisible.value.fill(false);
+    }
+}
+
+function showAllInPlots() {
+    if (tracksVisible.value.includes(false)) {
+        tracksVisible.value.fill(true);
+    } else {
+        tracksVisible.value.fill(false);
+    }
 }
 </script>
 
@@ -198,7 +219,6 @@ function showInPlots(idx) {
                 </SubMenu>
                 <SubMenu :name="'Selected regions'" :num-entries="regionData.selectedRegions.length">
                     <SelectedRegion
-                        :class="{ 'bg-neutral-200': regionData.selected[i] }"
                         v-for="(obj, i) in regionData.selectedRegions"
                         :region-name="obj.regionName"
                         :idx="i"
@@ -207,18 +227,29 @@ function showInPlots(idx) {
                         :start-measure="getStartMeasure(obj.startTime)"
                         :end-measure="getEndMeasure(obj.endTime)"
                         :beats-per-measure="obj.beatsPerMeasure"
+                        :class="{ 'bg-neutral-200': regionData.selected[i] }"
                         @click="
-                            zoomOnMeasureSelection(getStartMeasure(obj.startTime) - 1, getEndMeasure(obj.endTime) - 1)
+                            zoomOnMeasureSelection(
+                                getStartMeasure(obj.startTime) - 1,
+                                getEndMeasure(obj.endTime) - 1,
+                                i
+                            )
                         ">
                     </SelectedRegion>
                 </SubMenu>
+                <button
+                    class="btn btn-gray"
+                    :class="{ 'bg-cyan-700 text-white': scatterVisible }"
+                    @click="scatterVisible = !scatterVisible">
+                    Regression plot
+                </button>
             </div>
             <MeasureSelector
                 :measure-count="measureData.measureCount"
                 :time-signatures="regionData.timeSignatures"
                 @select-region="zoomOnMeasureSelection"
                 ref="measureSelector" />
-            <div class="flex h-[calc(100%-12rem)] w-full flex-row border-b">
+            <div class="flex h-[calc(100%-11.5rem)] w-full flex-row border-b">
                 <div
                     id="tracklist"
                     class="flex h-full w-[12rem] flex-col items-center justify-start gap-2 overflow-y-scroll border-r p-2">
@@ -228,7 +259,14 @@ function showInPlots(idx) {
                         :key="obj.filename"
                         class="dark: flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200 dark:bg-gray-400 dark:text-black">
                         <div
-                            class="flex h-full w-[calc(100%-0.5rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
+                            class="h-full w-[0.5rem] rounded-l-md"
+                            :class="{
+                                'bg-red-600': trackLabels[i] === false,
+                                'bg-blue-600': trackLabels[i],
+                                'bg-neutral-400': trackLabels[i] === undefined,
+                            }"></div>
+                        <div
+                            class="flex h-full w-[calc(100%-1rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
                             <div
                                 class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs"
                                 :class="{
@@ -274,7 +312,7 @@ function showInPlots(idx) {
                                         'bg-cyan-700 text-white': waveformsVisible[i],
                                     }"
                                     @click="showWaveform(i)"
-                                    @dblclick="waveformsVisible.fill(false)">
+                                    @dblclick="showAllWaveforms()">
                                     <Icon icon="ph:waveform" width="20" />
                                 </div>
                                 <div
@@ -283,7 +321,7 @@ function showInPlots(idx) {
                                         'bg-cyan-700 text-white': tracksVisible[i],
                                     }"
                                     @click="showInPlots(i)"
-                                    @dblclick="tracksVisible.fill(false)">
+                                    @dblclick="showAllInPlots()">
                                     <Icon icon="icon-park-solid:analysis" width="20" />
                                 </div>
                             </div>
@@ -383,17 +421,19 @@ function showInPlots(idx) {
                         <div v-for="(feat, j) in selectedFeatureLists.dynamicsMeasure" class="relative">
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
-                                :feature-name="feat.name"
-                                :track-names="trackNames"
-                                :units="feat.units"
-                                :data="featureData.dynamics[feat.id]"
                                 :colors="colors"
-                                :visible="tracksVisible"
-                                :start-measure-idx="startMeasureIdx"
+                                :data="featureData.dynamics[feat.id]"
                                 :end-measure-idx="endMeasureIdx"
-                                :y-min="feat.yMin"
-                                :y-max="feat.yMax"
+                                :feature-name="feat.name"
                                 :fpm="feat.fpm"
+                                :label-names="selectedLabel"
+                                :labels="trackLabels"
+                                :start-measure-idx="startMeasureIdx"
+                                :track-objects="tracksFromDb.syncTracks"
+                                :units="feat.units"
+                                :visible="tracksVisible"
+                                :y-max="feat.yMax"
+                                :y-min="feat.yMin"
                                 class="h-[16rem]" />
                             <div
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
@@ -415,17 +455,19 @@ function showInPlots(idx) {
                         <div v-for="(feat, j) in selectedFeatureLists.rhythmMeasure" class="relative">
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
-                                :feature-name="feat.name"
-                                :track-names="trackNames"
-                                :units="feat.units"
-                                :data="featureData.rhythm[feat.id]"
                                 :colors="colors"
-                                :visible="tracksVisible"
-                                :start-measure-idx="startMeasureIdx"
+                                :data="featureData.rhythm[feat.id]"
                                 :end-measure-idx="endMeasureIdx"
-                                :y-min="feat.yMin"
-                                :y-max="feat.yMax"
+                                :feature-name="feat.name"
                                 :fpm="feat.fpm"
+                                :label-names="selectedLabel"
+                                :labels="trackLabels"
+                                :start-measure-idx="startMeasureIdx"
+                                :track-objects="tracksFromDb.syncTracks"
+                                :units="feat.units"
+                                :visible="tracksVisible"
+                                :y-max="feat.yMax"
+                                :y-min="feat.yMin"
                                 class="h-[16rem]" />
                             <div
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
@@ -444,14 +486,14 @@ function showInPlots(idx) {
                                     step="0.1" />
                             </div>
                         </div>
-                        <div class="h-[30rem] w-full">
+                        <div class="h-[30rem] w-full" v-if="scatterVisible">
                             <ScatterRegression
                                 :colors="colors"
+                                :label-names="selectedLabel"
                                 :labels="trackLabels"
-                                :track-objects="tracksFromDb.syncTracks"
                                 :time-selections="timeSelections"
-                                :visible="tracksVisible"
-                                :label-names="selectedLabel" />
+                                :track-objects="tracksFromDb.syncTracks"
+                                :visible="tracksVisible" />
                         </div>
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>

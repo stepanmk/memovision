@@ -8,20 +8,21 @@ import { computed, ref } from 'vue';
 import VChart from 'vue-echarts';
 
 use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, GridComponent]);
-// registerTransform([ecStat.regression]);
 
 const props = defineProps({
-    featureName: String,
-    trackNames: Array,
-    units: String,
-    startMeasureIdx: Number,
-    endMeasureIdx: Number,
-    yMin: [Number, String],
-    yMax: [Number, String],
-    data: Object,
     colors: Array,
-    visible: Array,
+    data: Object,
+    endMeasureIdx: Number,
+    featureName: String,
     fpm: Number,
+    labelNames: String,
+    startMeasureIdx: Number,
+    labels: Array,
+    trackObjects: Array,
+    units: String,
+    visible: Array,
+    yMax: [Number, String],
+    yMin: [Number, String],
 });
 
 let data = [];
@@ -64,19 +65,77 @@ const compAxis = computed(() => {
 
 const compSeries = computed(() => {
     let series = [];
-    props.data.forEach((featObject, i) => {
-        if (props.visible[i]) {
-            series.push({
-                name: props.trackNames[i],
-                type: 'line',
-                showSymbol: false,
-                lineStyle: {
-                    width: 2,
-                },
-                data: featObject.featDataMeasure,
-            });
+    if (props.labelNames) {
+        let labelOneAvg = [];
+        let labelTwoAvg = [];
+        const labelNames = props.labelNames.split('_');
+        props.data.forEach((featObject, i) => {
+            if (props.visible[i]) {
+                series.push({
+                    name: props.trackObjects[i].performer + '; ' + props.trackObjects[i].year,
+                    type: 'line',
+                    showSymbol: false,
+                    lineStyle: {
+                        width: 2,
+                    },
+                    data: featObject.featDataMeasure,
+                });
+            }
+            if (i === 0) {
+                labelOneAvg = new Array(featObject.featDataMeasure.length).fill(0.0);
+                labelTwoAvg = new Array(featObject.featDataMeasure.length).fill(0.0);
+            }
+            if (!props.labels[i]) {
+                featObject.featDataMeasure.forEach((value, idx) => {
+                    labelOneAvg[idx] += value;
+                });
+            } else {
+                featObject.featDataMeasure.forEach((value, idx) => {
+                    labelTwoAvg[idx] += value;
+                });
+            }
+        });
+        for (let i = 0; i < labelOneAvg.length; i++) {
+            labelOneAvg[i] = labelOneAvg[i] / props.labels.filter((label) => label === false).length;
+            labelTwoAvg[i] = labelTwoAvg[i] / props.labels.filter((label) => label === true).length;
         }
-    });
+        series.push({
+            name: labelNames[0] + ' (mean)',
+            type: 'line',
+            color: 'red',
+            showSymbol: false,
+            lineStyle: {
+                width: 2,
+                type: 'dashed',
+            },
+            data: labelOneAvg,
+        });
+        series.push({
+            name: labelNames[1] + ' (mean)',
+            type: 'line',
+            color: 'blue',
+            showSymbol: false,
+            lineStyle: {
+                width: 2,
+                type: 'dashed',
+            },
+            data: labelTwoAvg,
+        });
+    } else {
+        props.data.forEach((featObject, i) => {
+            if (props.visible[i]) {
+                series.push({
+                    name: props.trackObjects[i].performer + '; ' + props.trackObjects[i].year,
+                    type: 'line',
+                    showSymbol: false,
+                    lineStyle: {
+                        width: 2,
+                    },
+                    data: featObject.featDataMeasure,
+                });
+            }
+        });
+    }
     return series;
 });
 

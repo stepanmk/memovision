@@ -39,8 +39,8 @@ const compSeries = computed(() => {
     let allData = [];
     let dataClassOne = [];
     let dataClassTwo = [];
-    props.trackObjects.forEach((track, i) => {
-        if (track.performer) {
+    if (props.labelNames) {
+        props.trackObjects.forEach((track, i) => {
             series.push({
                 type: 'scatter',
                 name: track.performer + '; ' + track.year,
@@ -54,12 +54,37 @@ const compSeries = computed(() => {
             } else {
                 dataClassOne.push([Number(track.year), props.timeSelections[i]]);
             }
-        }
-    });
+        });
+        const labelNames = props.labelNames.split('_');
+        const regOne = ecStat.regression('linear', dataClassOne);
+        const regTwo = ecStat.regression('linear', dataClassTwo);
+        series.push({
+            data: regOne.points,
+            type: 'line',
+            color: 'red',
+            symbol: 'none',
+            name: labelNames[0],
+        });
+        series.push({
+            data: regTwo.points,
+            type: 'line',
+            color: 'blue',
+            symbol: 'none',
+            name: labelNames[1],
+        });
+    } else {
+        props.trackObjects.forEach((track, i) => {
+            series.push({
+                type: 'scatter',
+                name: track.performer + '; ' + track.year,
+                data: [[Number(track.year), props.timeSelections[i]]],
+                color: 'gray',
+                showSymbol: false,
+            });
+            allData.push([Number(track.year), props.timeSelections[i]]);
+        });
+    }
     const regAll = ecStat.regression('linear', allData);
-    const regOne = ecStat.regression('linear', dataClassOne);
-    const regTwo = ecStat.regression('linear', dataClassTwo);
-    const labelNames = props.labelNames.split('_');
     series.push({
         data: regAll.points,
         type: 'line',
@@ -67,29 +92,19 @@ const compSeries = computed(() => {
         symbol: 'none',
         name: 'All recordings',
     });
-    series.push({
-        data: regOne.points,
-        type: 'line',
-        color: 'red',
-        symbol: 'none',
-        name: labelNames[0],
-    });
-    series.push({
-        data: regTwo.points,
-        type: 'line',
-        color: 'blue',
-        symbol: 'none',
-        name: labelNames[1],
-    });
+    if (props.labelNames) {
+    }
     return series;
 });
 
 const compLegendData = computed(() => {
     let data = [];
     data.push({ name: 'All recordings' });
-    const labelNames = props.labelNames.split('_');
-    data.push({ name: labelNames[0] });
-    data.push({ name: labelNames[1] });
+    if (props.labelNames) {
+        const labelNames = props.labelNames.split('_');
+        data.push({ name: labelNames[0] });
+        data.push({ name: labelNames[1] });
+    }
     return data;
 });
 
@@ -115,10 +130,10 @@ const option = ref({
         nameLocation: 'center',
     },
     yAxis: {
-        min: (value) => value.min - 2,
-        max: (value) => value.max + 2,
+        min: (value) => value.min - 1,
+        max: (value) => value.max + 1,
         axisLabel: {
-            formatter: (v) => getTimeString(v, 14, 19),
+            formatter: (v) => getTimeString(v, 14, 22),
         },
         name: 'Duration',
         nameTextStyle: {
@@ -128,8 +143,8 @@ const option = ref({
     },
     series: compSeries,
     grid: {
-        left: 45,
-        right: 45,
+        left: 65,
+        right: 65,
         top: 30,
         bottom: 45,
     },

@@ -30,6 +30,7 @@ async function getDynamics() {
                 id: `${featureList[i].id}`,
                 name: `${featureList[i].name}`,
             });
+            measureData.relevanceFeaturesSelected.push(false);
         }
         featureLists.dynamicsMetadata[i].computed = true;
     }

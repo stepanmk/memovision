@@ -1,10 +1,11 @@
-import { useMeasureData, useTracksFromDb } from '../../../globalStores';
+import { useMeasureData, useRegionData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { activePeaksIdx, endTimes, peaksInstances, playPause, setCursorPos, startTimes } from './player';
 import { endMeasureIdx, isPlaying, startMeasureIdx, timeSelections } from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
 
 function hideAllRegions() {
     peaksInstances.forEach((peaksInstance, idx) => {
@@ -13,6 +14,7 @@ function hideAllRegions() {
         timeSelections.value[idx] = tracksFromDb.syncTracks[idx].length_sec;
         peaksInstance.segments.removeAll();
     });
+    regionData.selected.fill(false);
 }
 
 function zoomOut() {
@@ -21,13 +23,21 @@ function zoomOut() {
         view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
         setCursorPos(idx, 0);
     });
-    startMeasureIdx.value = 0;
-    endMeasureIdx.value = measureData.selectedMeasures[0].length - 3;
+    startMeasureIdx.value = -1;
+    endMeasureIdx.value = -1;
 }
 
-async function zoomOnMeasureSelection(startMeasure, endMeasure) {
+async function zoomOnMeasureSelection(startMeasure, endMeasure, regionIdx) {
     if (isPlaying.value) await playPause();
+    if (regionIdx !== undefined) {
+        if (regionData.selected[regionIdx]) {
+            hideAllRegions();
+            zoomOut();
+            return;
+        }
+    }
     hideAllRegions();
+    regionData.selected[regionIdx] = true;
     startMeasureIdx.value = startMeasure;
     endMeasureIdx.value = endMeasure;
     if (startMeasure === -1) {

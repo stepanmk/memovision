@@ -22,14 +22,15 @@ const labelSelectors = ref([]);
 const measuresVisible = ref(false);
 const peaksInstancesReady = ref([]);
 const playing = reactive([]);
+const scatterVisible = ref(false);
 const selectedFeatureLists = reactive({});
 const selectedLabel = ref('');
 const startMeasureIdx = ref(0);
 const timeSelections = ref([]);
 const trackLabels = ref([]);
 const trackNames = ref([]);
-const trackTimes = ref([]);
 const tracksVisible = ref([]);
+const trackTimes = ref([]);
 const volume = ref(1.0);
 const waveformsVisible = ref([]);
 
@@ -49,6 +50,7 @@ export {
     measuresVisible,
     peaksInstancesReady,
     playing,
+    scatterVisible,
     selectedFeatureLists,
     selectedLabel,
     startMeasureIdx,

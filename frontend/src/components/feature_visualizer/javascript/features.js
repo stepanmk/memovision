@@ -37,11 +37,17 @@ function setFeatureLists() {
 }
 
 function selectRelevanceLabel(idx) {
-    trackLabels.value.fill(false);
-    labelSelectors.value.fill(false);
-    labelSelectors.value[idx] = true;
-    trackLabels.value = measureData.relevance['duration']['custom'][idx].labels.slice();
-    selectedLabel.value = measureData.relevance['duration']['custom'][idx].labelName;
+    if (labelSelectors.value[idx]) {
+        trackLabels.value.splice(0);
+        labelSelectors.value.fill(false);
+        selectedLabel.value = '';
+    } else {
+        trackLabels.value.fill(false);
+        labelSelectors.value.fill(false);
+        labelSelectors.value[idx] = true;
+        trackLabels.value = measureData.relevance['duration']['custom'][idx].labels.slice();
+        selectedLabel.value = measureData.relevance['duration']['custom'][idx].labelName;
+    }
 }
 
 export { selectRelevanceLabel, setFeatureLists };

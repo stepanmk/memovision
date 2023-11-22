@@ -109,10 +109,12 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
 export const useMeasureData = defineStore('measureData', {
     state: () => ({
         labels: [],
+        labelsSelected: [],
         measureCount: 0,
         measureObjects: [],
         relevance: {},
         relevanceFeatures: [],
+        relevanceFeaturesSelected: [],
         selectedMeasures: [],
     }),
     getters: {

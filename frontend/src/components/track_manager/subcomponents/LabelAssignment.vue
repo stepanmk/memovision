@@ -58,6 +58,7 @@ async function getLabelNames() {
     const res = await api.get('/get-label-names', getSecureConfig());
     labelNames.value = res.data.labelNames;
     measureData.labels = res.data.labelNames;
+    measureData.labelsSelected = new Array(measureData.labels.length).fill(false);
 }
 
 async function saveLabel() {
@@ -156,7 +157,7 @@ async function deleteLabel(label) {
                 <input
                     v-model="v$.labelName0.$model"
                     type="text"
-                    class="input-field-nomargin h-7 text-blue-600"
+                    class="input-field-nomargin h-7 text-red-600"
                     placeholder="Label A name"
                     maxlength="20"
                     :class="{
@@ -167,7 +168,7 @@ async function deleteLabel(label) {
                 <input
                     v-model="v$.labelName1.$model"
                     type="text"
-                    class="input-field-nomargin h-7 text-red-600"
+                    class="input-field-nomargin h-7 text-blue-600"
                     placeholder="Label B name"
                     maxlength="20"
                     :class="{
