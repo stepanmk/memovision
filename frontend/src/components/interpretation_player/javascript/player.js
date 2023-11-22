@@ -22,10 +22,10 @@ const tracksFromDb = useTracksFromDb(pinia);
 let activePeaksIdx = 0;
 let canRewind = true;
 let prevPeaksIdx = null;
-let selectedIndices = null;
 
 let idxArray = [];
 let peaksInstances = [];
+let selectedIndices = [];
 
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
@@ -62,9 +62,12 @@ async function initPlayer() {
 }
 
 function resetPlayer() {
+    audioCtx.suspend();
+    isPlaying.value = false;
     numPeaksLoaded.value = 0;
     percLoaded.value = 0;
     prevPeaksIdx = null;
+    selectedIndices = [];
 }
 
 function waveformListener(idx, event) {

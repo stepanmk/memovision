@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 const colors = [
     '#1f77b4',
@@ -19,11 +19,10 @@ const endMeasure = ref(0);
 const featureVisualizerOpened = ref(false);
 const isPlaying = ref(false);
 const labelSelectors = ref([]);
-const measureSelector = ref(null);
 const measuresVisible = ref(false);
 const peaksInstancesReady = ref([]);
-const playing = ref([]);
-const regionOverlay = ref([]);
+const playing = reactive([]);
+const selectedFeatureLists = reactive({});
 const selectedLabel = ref('');
 const startMeasure = ref(0);
 const timeSelections = ref([]);
@@ -37,4 +36,25 @@ const allPeaksReady = computed(() => {
     return peaksInstancesReady.value.includes(false);
 });
 
-export { allPeaksReady, featureVisualizerOpened };
+export {
+    allPeaksReady,
+    colors,
+    currentMeasure,
+    cursorPositions,
+    endMeasure,
+    featureVisualizerOpened,
+    isPlaying,
+    labelSelectors,
+    measuresVisible,
+    peaksInstancesReady,
+    playing,
+    selectedFeatureLists,
+    selectedLabel,
+    startMeasure,
+    timeSelections,
+    trackLabels,
+    trackNames,
+    tracksVisible,
+    volume,
+    waveformsVisible,
+};

@@ -10,6 +10,7 @@ import {
 import { pinia } from './piniaInstance';
 
 const measureData = useMeasureData(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
 
 async function getSessions() {
     const res = await api.get('/get-sessions', getSecureConfig());
@@ -116,10 +117,18 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function findClosestTimeIdx(peaksIdx, time) {
+    const closestTime = tracksFromDb.syncPoints[peaksIdx].reduce((prev, curr) =>
+        Math.abs(curr - time) < Math.abs(prev - time) ? curr : prev
+    );
+    return tracksFromDb.syncPoints[peaksIdx].indexOf(closestTime);
+}
+
 export {
     createZoomLevels,
     darkMode,
     disableDarkMode,
+    findClosestTimeIdx,
     getCookie,
     getEndMeasure,
     getSecureConfig,
