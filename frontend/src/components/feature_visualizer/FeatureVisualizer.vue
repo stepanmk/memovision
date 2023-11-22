@@ -126,6 +126,7 @@ function destroyFeatVisualizer() {
     endTimes.splice(0);
     startTimes.splice(0);
     measuresVisible.value = false;
+    measureSelector.value.destroy();
     featureVisualizerOpened.value = false;
 }
 
