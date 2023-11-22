@@ -1,6 +1,6 @@
 import { useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { activePeaksIdx, endTimes, peaksInstances, setCursorPos, startTimes } from './player';
+import { activePeaksIdx, endTimes, peaksInstances, playPause, setCursorPos, startTimes } from './player';
 import { endMeasureIdx, isPlaying, startMeasureIdx, timeSelections } from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);

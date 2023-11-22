@@ -23,6 +23,7 @@ import {
     timeSelections,
     trackLabels,
     trackNames,
+    trackTimes,
     tracksVisible,
     volume,
     waveformsVisible,
@@ -66,6 +67,7 @@ watch(startMeasureIdx, () => {
     if (startMeasureIdx.value === -1) {
         measureSelector.value.resetRegionOverlay();
     } else if (startMeasureIdx.value > -1) {
+        console.log(startMeasureIdx.value, endMeasureIdx.value);
         measureSelector.value.setRegionOverlay(startMeasureIdx.value, endMeasureIdx.value);
     }
 });
@@ -83,12 +85,13 @@ async function initFeatVisualizer() {
     startMeasureIdx.value = 0;
     endMeasureIdx.value = measureData.measureCount - 1;
     tracksFromDb.syncTracks.forEach((track, idx) => {
+        cursorPositions.value.push(0.0);
         peaksInstancesReady.value.push(false);
         playing.push(false);
         timeSelections.value.push(track.length_sec);
         trackLabels.value.push(false);
         tracksVisible.value.push(true);
-        cursorPositions.value.push(0);
+        trackTimes.value.push(0.0);
         waveformsVisible.value.push(true);
 
         peaksInstances.push(null);
@@ -103,15 +106,16 @@ async function initFeatVisualizer() {
 }
 
 function destroyFeatVisualizer() {
-    tracksVisible.value = [];
-    waveformsVisible.value = [];
+    peaksInstancesReady.value = [];
     playing.splice(0);
-    trackNames.value = [];
     timeSelections.value = [];
     trackLabels.value = [];
-    peaksInstancesReady.value = [];
-    resetPlayer();
+    trackNames.value = [];
+    tracksVisible.value = [];
+    trackTimes.value = [];
+    waveformsVisible.value = [];
 
+    resetPlayer();
     peaksInstances.splice(0);
     idxArray.splice(0);
     endTimes.splice(0);

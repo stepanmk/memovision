@@ -28,6 +28,7 @@ const startMeasureIdx = ref(0);
 const timeSelections = ref([]);
 const trackLabels = ref([]);
 const trackNames = ref([]);
+const trackTimes = ref([]);
 const tracksVisible = ref([]);
 const volume = ref(1.0);
 const waveformsVisible = ref([]);
@@ -54,6 +55,7 @@ export {
     timeSelections,
     trackLabels,
     trackNames,
+    trackTimes,
     tracksVisible,
     volume,
     waveformsVisible,

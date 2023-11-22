@@ -10,6 +10,7 @@ import {
     measuresVisible,
     peaksInstancesReady,
     playing,
+    trackTimes,
     volume,
 } from './variables';
 
@@ -124,14 +125,17 @@ function initPeaks(filename, idx) {
         if (idx === 0) {
             selectPeaks(idx);
         }
-        peaksInstances[idx].on('player.timeupdate', (time) => {
-            setCursorPos(idx, time);
-        });
         if (filename === tracksFromDb.refTrack.filename) {
             peaksInstances[idx].on('player.timeupdate', (time) => {
-                // add 1 ms to the time to indicate the proper measure
+                trackTimes.value[idx] = time;
                 const measureIdx = getStartMeasure(time + 0.001);
                 currentMeasure.value = measureIdx - 2;
+                setCursorPos(idx, time);
+            });
+        } else {
+            peaksInstances[idx].on('player.timeupdate', (time) => {
+                trackTimes.value[idx] = time;
+                setCursorPos(idx, time);
             });
         }
         peaksInstancesReady.value[idx] = true;
