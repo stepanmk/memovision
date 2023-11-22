@@ -15,7 +15,7 @@ const colors = [
 
 const currentMeasure = ref(-1);
 const cursorPositions = ref([]);
-const endMeasure = ref(0);
+const endMeasureIdx = ref(0);
 const featureVisualizerOpened = ref(false);
 const isPlaying = ref(false);
 const labelSelectors = ref([]);
@@ -24,7 +24,7 @@ const peaksInstancesReady = ref([]);
 const playing = reactive([]);
 const selectedFeatureLists = reactive({});
 const selectedLabel = ref('');
-const startMeasure = ref(0);
+const startMeasureIdx = ref(0);
 const timeSelections = ref([]);
 const trackLabels = ref([]);
 const trackNames = ref([]);
@@ -41,7 +41,7 @@ export {
     colors,
     currentMeasure,
     cursorPositions,
-    endMeasure,
+    endMeasureIdx,
     featureVisualizerOpened,
     isPlaying,
     labelSelectors,
@@ -50,7 +50,7 @@ export {
     playing,
     selectedFeatureLists,
     selectedLabel,
-    startMeasure,
+    startMeasureIdx,
     timeSelections,
     trackLabels,
     trackNames,

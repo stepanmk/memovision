@@ -1,6 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import Popper from 'vue3-popper';
 import { useFeatureData, useMeasureData, useModulesVisible, useRegionData, useTracksFromDb } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
@@ -10,6 +10,7 @@ import {
     allPeaksReady,
     colors,
     cursorPositions,
+    endMeasureIdx,
     featureVisualizerOpened,
     isPlaying,
     labelSelectors,
@@ -18,6 +19,7 @@ import {
     playing,
     selectedFeatureLists,
     selectedLabel,
+    startMeasureIdx,
     timeSelections,
     trackLabels,
     trackNames,
@@ -40,12 +42,14 @@ import {
 } from './javascript/player';
 
 import { selectRelevanceLabel, setFeatureLists } from './javascript/features';
+import { zoomOnMeasureSelection } from './javascript/regions';
 
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
 import SelectedRegion from '../shared_components/SelectedRegion.vue';
 import SubMenu from '../shared_components/SubMenu.vue';
 import FeatureName from './subcomponents/FeatureName.vue';
+import LineChart from './subcomponents/LineChart.vue';
 import LineChartMeasure from './subcomponents/LineChartMeasure.vue';
 import MeasureSelector from './subcomponents/MeasureSelector.vue';
 import ScatterRegression from './subcomponents/ScatterRegression.vue';
@@ -58,6 +62,14 @@ const regionData = useRegionData(pinia);
 
 const measureSelector = ref(null);
 
+watch(startMeasureIdx, () => {
+    if (startMeasureIdx.value === -1) {
+        measureSelector.value.resetRegionOverlay();
+    } else if (startMeasureIdx.value > -1) {
+        measureSelector.value.setRegionOverlay(startMeasureIdx.value, endMeasureIdx.value);
+    }
+});
+
 modulesVisible.$subscribe((mutation, state) => {
     if (state.featureVisualizer && !featureVisualizerOpened.value) {
         initFeatVisualizer();
@@ -68,6 +80,8 @@ modulesVisible.$subscribe((mutation, state) => {
 
 async function initFeatVisualizer() {
     setFeatureLists();
+    startMeasureIdx.value = 0;
+    endMeasureIdx.value = measureData.measureCount - 1;
     tracksFromDb.syncTracks.forEach((track, idx) => {
         peaksInstancesReady.value.push(false);
         playing.push(false);
@@ -198,7 +212,7 @@ function showInPlots(idx) {
             <MeasureSelector
                 :measure-count="measureData.measureCount"
                 :time-signatures="regionData.timeSignatures"
-                @select-region=""
+                @select-region="zoomOnMeasureSelection"
                 ref="measureSelector" />
             <div class="flex h-[calc(100%-12rem)] w-full flex-row border-b">
                 <div
@@ -292,7 +306,7 @@ function showInPlots(idx) {
                                         :id="`track-div-${i}`"></div>
                                 </div>
                                 <div class="">
-                                    <!-- <div
+                                    <div
                                         v-for="(feat, j) in selectedFeatureLists.dynamicsTime"
                                         class="relative flex flex-col gap-2">
                                         <LineChart
@@ -311,20 +325,20 @@ function showInPlots(idx) {
                                             v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
                                             class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
                                             <input
-                                                :id="`${feat.name}-measure-ymin`"
+                                                :id="`${feat.name}-time-ymin-${i}`"
                                                 type="number"
                                                 v-model="feat.yMin"
                                                 class="h-5 w-16 rounded-md"
                                                 step="0.1" />
                                             <input
-                                                :id="`${feat.name}-measure-ymax`"
+                                                :id="`${feat.name}-time-ymax-${i}`"
                                                 type="number"
                                                 v-model="feat.yMax"
                                                 class="h-5 w-16 rounded-md"
                                                 step="0.1" />
                                         </div>
-                                    </div> -->
-                                    <!-- <div
+                                    </div>
+                                    <div
                                         v-for="(feat, j) in selectedFeatureLists.rhythmTime"
                                         class="relative flex flex-col gap-2">
                                         <LineChart
@@ -343,19 +357,19 @@ function showInPlots(idx) {
                                             v-if="selectedFeatureLists.rhythmTimeVisible[j]"
                                             class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
                                             <input
-                                                :id="`${feat.name}-time-ymin`"
+                                                :id="`${feat.name}-time-ymin-${i}`"
                                                 type="number"
                                                 v-model="feat.yMin"
                                                 class="h-5 w-16 rounded-md"
                                                 step="0.1" />
                                             <input
-                                                :id="`${feat.name}-time-ymax`"
+                                                :id="`${feat.name}-time-ymax-${i}`"
                                                 type="number"
                                                 v-model="feat.yMax"
                                                 class="h-5 w-16 rounded-md"
                                                 step="0.1" />
                                         </div>
-                                    </div> -->
+                                    </div>
                                 </div>
                                 <div
                                     class="absolute top-0 h-full w-[1px] bg-[red]"
@@ -371,8 +385,8 @@ function showInPlots(idx) {
                                 :data="featureData.dynamics[feat.id]"
                                 :colors="colors"
                                 :visible="tracksVisible"
-                                :start-measure-idx="startMeasure"
-                                :end-measure-idx="endMeasure"
+                                :start-measure-idx="startMeasureIdx"
+                                :end-measure-idx="endMeasureIdx"
                                 :y-min="feat.yMin"
                                 :y-max="feat.yMax"
                                 :fpm="feat.fpm"
@@ -403,8 +417,8 @@ function showInPlots(idx) {
                                 :data="featureData.rhythm[feat.id]"
                                 :colors="colors"
                                 :visible="tracksVisible"
-                                :start-measure-idx="startMeasure"
-                                :end-measure-idx="endMeasure"
+                                :start-measure-idx="startMeasureIdx"
+                                :end-measure-idx="endMeasureIdx"
                                 :y-min="feat.yMin"
                                 :y-max="feat.yMax"
                                 :fpm="feat.fpm"

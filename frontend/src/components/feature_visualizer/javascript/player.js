@@ -269,6 +269,7 @@ export {
     resetPlayer,
     rewind,
     selectPeaks,
+    setCursorPos,
     startTimes,
     toggleMeasures,
 };
