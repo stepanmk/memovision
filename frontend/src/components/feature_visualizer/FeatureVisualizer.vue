@@ -16,6 +16,7 @@ import { getEndMeasure, getStartMeasure, getTimeString, truncateFilename } from 
 import {
     allPeaksReady,
     colors,
+    currentMeasure,
     cursorPositions,
     endMeasureIdx,
     featureVisualizerOpened,
@@ -39,6 +40,7 @@ import {
 
 import {
     endTimes,
+    goToMeasure,
     idxArray,
     initPlayer,
     peaksInstances,
@@ -73,9 +75,9 @@ const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const measureSelector = ref(null);
 
 watch(startMeasureIdx, () => {
-    if (startMeasureIdx.value === -1) {
+    if (startMeasureIdx.value === 0 && endMeasureIdx.value === measureData.measureCount - 1) {
         measureSelector.value.resetRegionOverlay();
-    } else if (startMeasureIdx.value > -1) {
+    } else {
         measureSelector.value.setRegionOverlay(startMeasureIdx.value, endMeasureIdx.value);
     }
 });
@@ -265,7 +267,9 @@ function showAllInPlots() {
             <MeasureSelector
                 :measure-count="measureData.measureCount"
                 :time-signatures="regionData.timeSignatures"
+                :current-measure="currentMeasure"
                 @select-region="zoomOnMeasureSelection"
+                @go-to-measure="goToMeasure"
                 ref="measureSelector" />
             <div class="flex h-[calc(100%-11.5rem)] w-full flex-row border-b">
                 <div

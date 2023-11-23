@@ -267,15 +267,17 @@ function destroyInterpretationPlayer() {
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :id="`audio-controls-${i}`"
                             :key="obj.filename"
-                            class="dark: flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200 dark:bg-gray-400 dark:text-black"
-                            :class="{
-                                'bg-violet-300': obj.reference,
-                            }">
+                            class="dark: flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200 dark:bg-gray-400 dark:text-black">
                             <div
                                 class="flex h-full w-[calc(100%-0.5rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
                                 <div
-                                    class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs">
-                                    <p class="font-bold">{{ i + 1 }}</p>
+                                    class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs"
+                                    :class="{
+                                        'bg-violet-800 text-white': obj.reference,
+                                    }">
+                                    <p class="font-bold">
+                                        {{ i + 1 }}
+                                    </p>
                                     <Popper
                                         v-if="obj.performer"
                                         :content="obj.performer + '; ' + obj.year + '; ' + obj.filename"

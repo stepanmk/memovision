@@ -63,9 +63,6 @@ const compAxis = computed(() => {
                 color: 'black',
             },
         },
-        // axisLabel: {
-        //     interval: 10,
-        // },
     };
     return axis;
 });

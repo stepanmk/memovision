@@ -44,7 +44,7 @@ const compSeries = computed(() => {
             if (track.year) {
                 series.push({
                     type: 'scatter',
-                    name: track.performer + '; ' + track.year,
+                    name: track.performer ? track.performer + '; ' + track.year : track.filename + '; ' + track.year,
                     data: [[Number(track.year), props.timeSelections[i]]],
                     color: props.labels[i] === false ? 'red' : 'blue',
                     showSymbol: false,
@@ -79,7 +79,7 @@ const compSeries = computed(() => {
             if (track.year) {
                 series.push({
                     type: 'scatter',
-                    name: track.performer + '; ' + track.year,
+                    name: track.performer ? track.performer + '; ' + track.year : track.filename + '; ' + track.year,
                     data: [[Number(track.year), props.timeSelections[i]]],
                     color: 'gray',
                     showSymbol: false,

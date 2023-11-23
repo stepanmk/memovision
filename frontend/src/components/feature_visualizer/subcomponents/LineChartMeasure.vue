@@ -37,6 +37,7 @@ for (let i = 0; i < props.data[0].featDataMeasure.length; i += props.fpm) {
 
 const compAxis = computed(() => {
     let end = props.endMeasureIdx * props.fpm;
+    const numMeasures = props.endMeasureIdx - props.startMeasureIdx;
     if (props.fpm > 1) end = (props.endMeasureIdx + 1) * props.fpm;
     const axis = {
         min: props.startMeasureIdx * props.fpm,
@@ -44,6 +45,7 @@ const compAxis = computed(() => {
         data: data,
         alignTicks: true,
         type: 'category',
+        boundaryGap: props.fpm === 1 ? true : false,
         axisLine: {
             onZero: false,
         },
@@ -57,7 +59,7 @@ const compAxis = computed(() => {
         axisLabel: {
             show: true,
             color: 'black',
-            interval: 0,
+            interval: numMeasures > 60 ? 6 : 0,
         },
     };
     return axis;

@@ -90,6 +90,7 @@ function destroyRegionSelector() {
     const regionIdx = regionData.selected.indexOf(true);
     if (regionIdx !== -1) updateRegion(regionIdx);
     measureSelector.value.destroy();
+    performer.value = '';
     regionSelectorOpened.value = false;
 }
 
