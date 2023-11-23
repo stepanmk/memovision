@@ -18,6 +18,7 @@ const peaksReady = ref(false);
 const playing = ref(false);
 const prevRegionIdx = ref(null);
 const refName = ref('');
+const performer = ref('');
 const regionBeingAdded = ref(false);
 const regionBeingNamed = ref(false);
 const regionName = ref('');
@@ -41,6 +42,7 @@ export {
     noteCount,
     noteValue,
     peaksReady,
+    performer,
     playing,
     prevRegionIdx,
     refName,

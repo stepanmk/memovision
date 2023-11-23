@@ -71,8 +71,11 @@ const compSeries = computed(() => {
         const labelNames = props.labelNames.split('_');
         props.data.forEach((featObject, i) => {
             if (props.visible[i]) {
+                const name = props.trackObjects[i].performer
+                    ? props.trackObjects[i].performer + '; ' + props.trackObjects[i].year
+                    : props.trackObjects[i].filename;
                 series.push({
-                    name: props.trackObjects[i].performer + '; ' + props.trackObjects[i].year,
+                    name: name,
                     type: 'line',
                     showSymbol: false,
                     lineStyle: {
@@ -122,9 +125,13 @@ const compSeries = computed(() => {
     } else {
         props.data.forEach((featObject, i) => {
             if (props.visible[i]) {
+                const name = props.trackObjects[i].performer
+                    ? props.trackObjects[i].performer + '; ' + props.trackObjects[i].year
+                    : props.trackObjects[i].filename;
                 series.push({
-                    name: props.trackObjects[i].performer + '; ' + props.trackObjects[i].year,
+                    name: name,
                     type: 'line',
+                    color: props.colors[i % 10],
                     showSymbol: false,
                     lineStyle: {
                         width: 2,
@@ -168,7 +175,7 @@ const option = ref({
     textStyle: {
         fontFamily: 'Inter',
     },
-    color: compColors,
+    // color: compColors,
     title: {
         text: props.featureName + ' (measure)',
         left: 'center',
@@ -189,6 +196,7 @@ const option = ref({
     },
     tooltip: {
         trigger: 'axis',
+        extraCssText: 'z-index: 150;',
         transitionDuration: 0,
         valueFormatter: (value) => value.toFixed(2) + ' ' + props.units,
         textStyle: {

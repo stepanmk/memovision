@@ -17,6 +17,7 @@ import {
     measuresVisible,
     metronomeActive,
     peaksReady,
+    performer,
     playing,
     refName,
     regionBeingAdded,
@@ -88,6 +89,12 @@ function initPeaks() {
         peaksInstance = peaks;
         peaksReady.value = true;
         refName.value = tracksFromDb.refTrack.filename;
+        if (tracksFromDb.refTrack.performer) {
+            performer.value += tracksFromDb.refTrack.performer;
+        }
+        if (tracksFromDb.refTrack.year) {
+            performer.value += '; ' + tracksFromDb.refTrack.year;
+        }
         peaks.on('player.timeupdate', (time) => {
             currentTime.value = getTimeString(time, 14, 19);
         });

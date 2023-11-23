@@ -41,18 +41,20 @@ const compSeries = computed(() => {
     let dataClassTwo = [];
     if (props.labelNames) {
         props.trackObjects.forEach((track, i) => {
-            series.push({
-                type: 'scatter',
-                name: track.performer + '; ' + track.year,
-                data: [[Number(track.year), props.timeSelections[i]]],
-                color: props.labels[i] === false ? 'red' : 'blue',
-                showSymbol: false,
-            });
-            allData.push([Number(track.year), props.timeSelections[i]]);
-            if (props.labels[i]) {
-                dataClassTwo.push([Number(track.year), props.timeSelections[i]]);
-            } else {
-                dataClassOne.push([Number(track.year), props.timeSelections[i]]);
+            if (track.year) {
+                series.push({
+                    type: 'scatter',
+                    name: track.performer + '; ' + track.year,
+                    data: [[Number(track.year), props.timeSelections[i]]],
+                    color: props.labels[i] === false ? 'red' : 'blue',
+                    showSymbol: false,
+                });
+                allData.push([Number(track.year), props.timeSelections[i]]);
+                if (props.labels[i]) {
+                    dataClassTwo.push([Number(track.year), props.timeSelections[i]]);
+                } else {
+                    dataClassOne.push([Number(track.year), props.timeSelections[i]]);
+                }
             }
         });
         const labelNames = props.labelNames.split('_');
@@ -74,14 +76,16 @@ const compSeries = computed(() => {
         });
     } else {
         props.trackObjects.forEach((track, i) => {
-            series.push({
-                type: 'scatter',
-                name: track.performer + '; ' + track.year,
-                data: [[Number(track.year), props.timeSelections[i]]],
-                color: 'gray',
-                showSymbol: false,
-            });
-            allData.push([Number(track.year), props.timeSelections[i]]);
+            if (track.year) {
+                series.push({
+                    type: 'scatter',
+                    name: track.performer + '; ' + track.year,
+                    data: [[Number(track.year), props.timeSelections[i]]],
+                    color: 'gray',
+                    showSymbol: false,
+                });
+                allData.push([Number(track.year), props.timeSelections[i]]);
+            }
         });
     }
     const regAll = ecStat.regression('linear', allData);

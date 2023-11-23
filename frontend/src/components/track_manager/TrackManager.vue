@@ -83,7 +83,9 @@ const userInfo = useUserInfo(pinia);
 
 /* dropzone variables */
 const dropzone = ref();
+const metadataDropzone = ref();
 const { isOverDropzone } = useDropZone(dropzone, onDrop);
+const { isOverMetadataDropzone } = useDropZone(metadataDropzone, uploadMetadata);
 
 onMounted(() => {
     resetAllStores();
@@ -260,7 +262,8 @@ async function closeLabelAssignment() {
             <!-- uploaded files -->
             <TopLegend />
             <div
-                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900">
+                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900"
+                ref="metadataDropzone">
                 <TransitionGroup name="list">
                     <div
                         v-for="(obj, i) in tracksFromDb.trackObjects"

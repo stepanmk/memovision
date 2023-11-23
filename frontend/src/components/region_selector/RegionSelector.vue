@@ -21,6 +21,7 @@ import {
     metronomeActive,
     noteCount,
     noteValue,
+    performer,
     playing,
     refName,
     regionBeingNamed,
@@ -94,6 +95,8 @@ function destroyRegionSelector() {
 
 onBeforeUnmount(() => {
     if (measureSelector.value !== null) measureSelector.value.destroy();
+    refName.value = '';
+    performer.value = '';
 });
 </script>
 
@@ -109,11 +112,9 @@ onBeforeUnmount(() => {
                 <p class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
                     {{ refName }}
                 </p>
-                <p v-if="tracksFromDb.refTrack.performer">Performer:</p>
-                <p
-                    v-if="tracksFromDb.refTrack.performer"
-                    class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
-                    {{ tracksFromDb.refTrack.performer }}; {{ tracksFromDb.refTrack.year }}
+                <p v-if="performer">Performer:</p>
+                <p v-if="performer" class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
+                    {{ performer }}
                 </p>
             </div>
             <div class="flex w-full flex-col items-center border-b px-5 dark:border-gray-700">

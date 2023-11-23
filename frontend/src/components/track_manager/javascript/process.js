@@ -1,6 +1,12 @@
 import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
-import { useFeatureLists, useMenuButtonsDisable, useTracksFromDb, useUserInfo } from '../../../globalStores';
+import {
+    useFeatureLists,
+    useMenuButtonsDisable,
+    useRegionData,
+    useTracksFromDb,
+    useUserInfo,
+} from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getSecureConfig } from '../../../sharedFunctions';
 import { getMeasureData, getSyncPoints } from './fetch';
@@ -31,6 +37,7 @@ const tracksFromDb = useTracksFromDb(pinia);
 const featureLists = useFeatureLists(pinia);
 const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const userInfo = useUserInfo(pinia);
+const regionData = useRegionData(pinia);
 
 /*  actual process functions 
     
@@ -145,6 +152,9 @@ async function keepDiffStructureTracks() {
     });
     diffRegionsWindow.value = false;
     diffRegions.value = [];
+    const diffRes = await api.get('/get-diff-regions', getSecureConfig());
+    regionData.diffRegions = diffRes.data.diffRegions;
+    regionData.diffRegionsSelected = new Array(diffRes.data.diffRegions.length).fill(false);
     resetProgress();
     await computeAllFeatures();
     await getAllFeatures();

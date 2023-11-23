@@ -119,15 +119,24 @@ def upload_measures():
 @jwt_required()
 def upload_metadata():
     file = request.files['file']
-    df = pd.read_excel(file, header=None)
-    session = Session.query.filter_by(name=current_user.selected_session,
-                                      user=current_user).first()
-    for _, row in df.iterrows():
-        row_dict = row.to_dict()
-        track = Track.query.filter_by(filename=secure_filename(row_dict[0]),
-                                      session_id=session.id).first()
-        if track:
-            track.performer = row_dict[1]
-            track.year = row_dict[2]
-    db.session.commit()
+    filename = file.filename
+    if filename.endswith('.csv'):
+        df = pd.read_csv(file)
+    elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+        df = pd.read_excel(file)
+    else:
+        return jsonify({'message': 'wrong extension'})
+    col_names = df.keys().to_list()
+    if col_names == ['filename', 'performer', 'year']:
+        session = Session.query.filter_by(name=current_user.selected_session,
+                                          user=current_user).first()
+        for _, row in df.iterrows():
+            row_dict = row.to_dict()
+            track = Track.query.filter_by(filename=secure_filename(
+                row_dict['filename']),
+                                          session_id=session.id).first()
+            if track:
+                track.performer = row_dict['performer']
+                track.year = row_dict['year']
+        db.session.commit()
     return jsonify({'message': 'metadata uploaded'})

@@ -26,6 +26,7 @@ def compute_duration(measures):
 
 def compute_tempo(measures, time_signatures=None):
     duration = compute_duration(measures)
+    duration[duration == 0] = 5
     tempo = 4 * 60 / duration
     if time_signatures:
         for ts in time_signatures:
