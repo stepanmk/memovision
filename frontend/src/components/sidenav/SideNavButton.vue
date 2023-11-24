@@ -1,5 +1,9 @@
 <script setup>
 import { Icon } from '@iconify/vue';
+import { useMenuButtonsDisable } from '../../globalStores';
+import { pinia } from '../../piniaInstance';
+
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 
 const props = defineProps({
     active: Boolean,
@@ -18,7 +22,12 @@ const props = defineProps({
                 'btn-disabled': !props.disabled,
                 'bg-cyan-700 text-white dark:bg-cyan-700 dark:text-white': active,
             }">
-            <Icon :icon="props.iconType" :width="props.width" :inline="true" />
+            <Icon
+                v-if="menuButtonsDisable.isLoading && props.disabled"
+                icon="eos-icons:loading"
+                :width="props.width"
+                :inline="true" />
+            <Icon v-else :icon="props.iconType" :width="props.width" :inline="true" />
         </div>
     </div>
 </template>

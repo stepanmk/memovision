@@ -116,7 +116,9 @@ async function recomputeTempo() {
     await Promise.all(tempos);
     const featureRes = await api.get('/tempo/all', getSecureConfig());
     featureData.rhythm['tempo'] = featureRes.data.featureList;
-    menuButtonsDisable.stopLoading();
+    setTimeout(() => {
+        menuButtonsDisable.stopLoading();
+    }, 200);
 }
 
 async function saveTimeSignature() {
