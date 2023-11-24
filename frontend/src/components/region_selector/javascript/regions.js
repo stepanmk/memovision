@@ -197,10 +197,12 @@ function deleteRegion(regionIdx) {
 }
 
 async function deleteTimeSignature(timeSignatureIdx) {
-    api.put('/delete-time-signature', regionData.timeSignatures[timeSignatureIdx], getSecureConfig());
-    await getRegionData();
-    await recomputeTempo();
-    showAlert('Tempo has been recomputed!');
+    if (!menuButtonsDisable.isLoading) {
+        api.put('/delete-time-signature', regionData.timeSignatures[timeSignatureIdx], getSecureConfig());
+        await getRegionData();
+        await recomputeTempo();
+        showAlert('Tempo has been recomputed!');
+    }
 }
 
 export {
