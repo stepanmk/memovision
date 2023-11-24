@@ -11,6 +11,7 @@ use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, GridComponent]
 
 const props = defineProps({
     colors: Array,
+    currentMeasure: Number,
     data: Object,
     endMeasureIdx: Number,
     featureName: String,
@@ -34,6 +35,12 @@ for (let i = 0; i < props.data[0].featDataMeasure.length; i += props.fpm) {
     data[i] = count;
     count++;
 }
+
+const indicatorWidth = computed(() => {
+    const numMeasures = props.endMeasureIdx - props.startMeasureIdx;
+    const featureContent = document.getElementById('feature-content');
+    return (featureContent.scrollWidth - 45) / (numMeasures + 1);
+});
 
 const compAxis = computed(() => {
     let end = props.endMeasureIdx * props.fpm;
@@ -211,7 +218,15 @@ const option = ref({
 </script>
 
 <template>
-    <v-chart class="chart" :option="option" :autoresize="true" :update-options="{ notMerge: true }" />
+    <div class="relative">
+        <v-chart class="chart z-50" :option="option" :autoresize="true" :update-options="{ notMerge: true }" />
+        <div
+            class="absolute top-[30px] h-[calc(100%-50px)] bg-red-600 bg-opacity-10"
+            :style="{
+                width: `${indicatorWidth}px`,
+                marginLeft: `${(currentMeasure - startMeasureIdx) * indicatorWidth + 45}px`,
+            }"></div>
+    </div>
 </template>
 
 <style scoped></style>

@@ -444,6 +444,7 @@ function showAllInPlots() {
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
                                 :colors="colors"
+                                :current-measure="currentMeasure"
                                 :data="featureData.dynamics[feat.id]"
                                 :end-measure-idx="endMeasureIdx"
                                 :feature-name="feat.name"
@@ -478,6 +479,7 @@ function showAllInPlots() {
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
                                 :colors="colors"
+                                :current-measure="currentMeasure"
                                 :data="featureData.rhythm[feat.id]"
                                 :end-measure-idx="endMeasureIdx"
                                 :feature-name="feat.name"
