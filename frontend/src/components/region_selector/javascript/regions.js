@@ -137,9 +137,9 @@ async function saveTimeSignature() {
         peaksInstance.player.pause();
         loopingActive.value = false;
         cancelRegionAdding();
-        getRegionData();
+        await getRegionData();
         await recomputeTempo();
-        showAlert('Tempo has been recomputed!');
+        showAlert('Tempo has been recomputed.', 1500);
     } else {
         showAlert('Time signatures must not overlap!', 1500);
     }
@@ -198,10 +198,10 @@ function deleteRegion(regionIdx) {
 
 async function deleteTimeSignature(timeSignatureIdx) {
     if (!menuButtonsDisable.isLoading) {
-        api.put('/delete-time-signature', regionData.timeSignatures[timeSignatureIdx], getSecureConfig());
+        await api.put('/delete-time-signature', regionData.timeSignatures[timeSignatureIdx], getSecureConfig());
         await getRegionData();
         await recomputeTempo();
-        showAlert('Tempo has been recomputed!');
+        showAlert('Tempo has been recomputed.', 1500);
     }
 }
 

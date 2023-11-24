@@ -7,7 +7,7 @@ csv_path = './metadata/metadata/csv/'
 metadata_files = os.listdir(metadata_path)
 
 
-def save_as_csv(files, out_path):
+def metadata_to_csv(files, out_path):
     for file in files:
         path = f'{metadata_path}{file}'
         df = pd.read_excel(path,
@@ -20,4 +20,4 @@ def save_as_csv(files, out_path):
         df.to_csv(csv_path, encoding='utf-8-sig')
 
 
-save_as_csv(metadata_files, csv_path)
+metadata_to_csv(metadata_files, csv_path)
