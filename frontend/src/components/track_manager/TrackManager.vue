@@ -3,7 +3,13 @@ import { Icon } from '@iconify/vue';
 import { useDropZone } from '@vueuse/core';
 import { onMounted, ref } from 'vue';
 import Popper from 'vue3-popper';
-import { useFeatureLists, useModulesVisible, useTracksFromDb, useUserInfo } from '../../globalStores';
+import {
+    useFeatureLists,
+    useMenuButtonsDisable,
+    useModulesVisible,
+    useTracksFromDb,
+    useUserInfo,
+} from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
 import DialogWindow from '../DialogWindow.vue';
@@ -44,7 +50,15 @@ import {
     uploadMetadata,
 } from './javascript/upload';
 
-import { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData } from './javascript/fetch';
+import {
+    downloadMeasures,
+    getAudioData,
+    getMeasureData,
+    getMetronomeClick,
+    getRegionData,
+    getSyncPoints,
+    getTrackData,
+} from './javascript/fetch';
 
 import { deleteAllFilesFromDb, deleteFileFromDb, setReference, updateAllMetadata } from './javascript/track';
 
@@ -61,14 +75,17 @@ import {
 } from './javascript/process';
 
 /* pinia stores */
-const userInfo = useUserInfo(pinia);
 const featureLists = useFeatureLists(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
+const userInfo = useUserInfo(pinia);
 
 /* dropzone variables */
 const dropzone = ref();
+const metadataDropzone = ref();
 const { isOverDropzone } = useDropZone(dropzone, onDrop);
+const { isOverMetadataDropzone } = useDropZone(metadataDropzone, uploadMetadata);
 
 onMounted(() => {
     resetAllStores();
@@ -84,10 +101,13 @@ modulesVisible.$subscribe((mutation, state) => {
 });
 
 async function getAllData() {
+    menuButtonsDisable.startLoading('trackManager');
     loadingMessage.value = 'Retrieving audio data...';
     isLoading.value = true;
     isDisabled.value = true;
     await getTrackData();
+    await getRegionData();
+    await getSyncPoints();
     preciseSync.value = userInfo.preciseSync;
     numThingsToCompute.value = tracksFromDb.trackObjects.length;
     for (const track of tracksFromDb.trackObjects) {
@@ -97,14 +117,12 @@ async function getAllData() {
     await getMetronomeClick();
     await getMeasureData();
     await getFeatureNames();
-
     loadingMessage.value = 'Retrieving audio features...';
     await getAllFeatures();
-
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
-    // console.log(tracksFromDb.trackObjects);
+    menuButtonsDisable.stopLoading();
 }
 
 function onDrop(files) {
@@ -112,6 +130,7 @@ function onDrop(files) {
 }
 
 function openLabelAssignment() {
+    menuButtonsDisable.startLoading('trackManager');
     isDisabled.value = true;
     labelAssignmentVisible.value = true;
 }
@@ -126,6 +145,7 @@ async function closeLabelAssignment() {
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
+    menuButtonsDisable.stopLoading();
 }
 </script>
 
@@ -227,6 +247,7 @@ async function closeLabelAssignment() {
                             {
                                 featureExtractionWindow = false;
                                 isDisabled = false;
+                                menuButtonsDisable.stopLoading();
                             }
                         ">
                         Close
@@ -241,21 +262,22 @@ async function closeLabelAssignment() {
             <!-- uploaded files -->
             <TopLegend />
             <div
-                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900">
+                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900"
+                ref="metadataDropzone">
                 <TransitionGroup name="list">
                     <div
                         v-for="(obj, i) in tracksFromDb.trackObjects"
                         :id="`uploaded-file-${i}`"
                         :key="obj.filename"
-                        class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400">
+                        class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400 dark:hover:bg-gray-500"
+                        :class="{
+                            'bg-violet-300 hover:bg-violet-400 dark:bg-violet-300 dark:hover:bg-violet-400':
+                                obj.reference,
+                        }">
                         <div
                             class="flex h-7 w-[calc(100%-22.5rem)] cursor-pointer flex-row items-center justify-between"
                             @click="setReference(obj.filename)">
-                            <div
-                                class="w-30 flex items-center justify-start px-1 text-xs"
-                                :class="{
-                                    'rounded-md bg-violet-800 text-white': obj.reference,
-                                }">
+                            <div class="w-30 flex items-center justify-start px-1 text-sm">
                                 <Popper
                                     :content="obj.filename"
                                     hover
@@ -352,12 +374,12 @@ async function closeLabelAssignment() {
                     <input
                         type="checkbox"
                         id="precise-check"
-                        class="accent-indigo-700"
+                        class="accent-emerald-600"
                         v-model="preciseSync"
                         @change="setPreciseSync()" />
                 </div>
 
-                <button class="btn btn-blue bg-indigo-700 hover:bg-indigo-500" @click="processAllTracks()">
+                <button class="btn btn-blue bg-emerald-600 hover:bg-emerald-500" @click="processAllTracks()">
                     Process all tracks
                 </button>
 
@@ -366,11 +388,16 @@ async function closeLabelAssignment() {
                     type="file"
                     class="hidden"
                     accept=".txt, .csv, .xlsx"
-                    @change="uploadMetadata()"
+                    @change="tracksFromDb.somethingUploaded ? uploadMetadata() : null"
                     @click="$event.target.value = ''" />
 
                 <label for="upload-metadata" class="flex h-full items-center justify-center hover:cursor-pointer">
-                    <div id="upload-metadata-btn" class="btn btn-blue">
+                    <div
+                        id="upload-metadata-btn"
+                        class="btn btn-blue"
+                        :class="{
+                            'btn-disabled': !tracksFromDb.somethingUploaded,
+                        }">
                         <p>Upload metadata</p>
                     </div>
                 </label>
@@ -424,7 +451,7 @@ async function closeLabelAssignment() {
                         :id="`file-${i}`"
                         :key="obj.filename"
                         class="flex h-7 w-full shrink-0 rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400">
-                        <div class="flex w-[17rem] items-center px-1 text-xs">
+                        <div class="flex w-[17rem] items-center px-1 text-sm">
                             <Popper :content="obj.filename" hover placement="right" :arrow="true" class="select-none">
                                 {{ truncateFilename(obj.filename, 14) }}
                             </Popper>

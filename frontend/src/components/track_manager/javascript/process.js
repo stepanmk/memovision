@@ -1,9 +1,15 @@
 import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
-import { useFeatureData, useFeatureLists, useTracksFromDb, useUserInfo } from '../../../globalStores';
+import {
+    useFeatureLists,
+    useMenuButtonsDisable,
+    useRegionData,
+    useTracksFromDb,
+    useUserInfo,
+} from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getSecureConfig } from '../../../sharedFunctions';
-import { getMeasureData } from './fetch';
+import { getMeasureData, getSyncPoints } from './fetch';
 import { deleteFileFromDb } from './track';
 
 import {
@@ -29,8 +35,9 @@ import { computeRhythm, getRhythm } from '../../../features/rhythm';
 
 const tracksFromDb = useTracksFromDb(pinia);
 const featureLists = useFeatureLists(pinia);
-const featureData = useFeatureData(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const userInfo = useUserInfo(pinia);
+const regionData = useRegionData(pinia);
 
 /*  actual process functions 
     
@@ -145,6 +152,9 @@ async function keepDiffStructureTracks() {
     });
     diffRegionsWindow.value = false;
     diffRegions.value = [];
+    const diffRes = await api.get('/get-diff-regions', getSecureConfig());
+    regionData.diffRegions = diffRes.data.diffRegions;
+    regionData.diffRegionsSelected = new Array(diffRes.data.diffRegions.length).fill(false);
     resetProgress();
     await computeAllFeatures();
     await getAllFeatures();
@@ -194,6 +204,7 @@ async function synchronizeTracks() {
     await Promise.all(syncPromises);
     await transferAllMeasures();
     await getMeasureData();
+    await getSyncPoints();
     isLoading.value = false;
     diffRegions.value = await checkStructure();
     if (diffRegions.value.length > 0) {
@@ -212,6 +223,7 @@ async function processAllTracks() {
         showAlert('Please select a reference track.', 1500);
         return;
     }
+    menuButtonsDisable.startLoading('trackManager');
     loadingMessage.value = 'Finding duplicates...';
     isDisabled.value = true;
     isLoading.value = true;

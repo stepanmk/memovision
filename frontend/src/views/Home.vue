@@ -1,8 +1,8 @@
 <script setup>
-import TrackManager from '../components/track_manager/TrackManager.vue';
-import RegionSelector from '../components/region_selector/RegionSelector.vue';
 import FeatureVisualizer from '../components/feature_visualizer/FeatureVisualizer.vue';
 import InterpretationPlayer from '../components/interpretation_player/InterpretationPlayer.vue';
+import RegionSelector from '../components/region_selector/RegionSelector.vue';
+import TrackManager from '../components/track_manager/TrackManager.vue';
 
 import TopNav from '../components/TopNav.vue';
 import SideNav from '../components/sidenav/SideNav.vue';

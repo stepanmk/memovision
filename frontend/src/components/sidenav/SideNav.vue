@@ -1,10 +1,12 @@
 <script setup>
-import { useComponentsVisible, useModulesVisible } from '../../globalStores';
+import { useMenuButtonsDisable, useModulesVisible, useTracksFromDb } from '../../globalStores';
+import { pinia } from '../../piniaInstance';
 import SideNavButton from './SideNavButton.vue';
 
 // pinia stores
-const componentsVisible = useComponentsVisible();
-const modulesVisible = useModulesVisible();
+const modulesVisible = useModulesVisible(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
 
 // select active module
 function selectModule(moduleName) {
@@ -20,33 +22,45 @@ function selectModule(moduleName) {
             name="Track manager"
             icon-type="carbon:document-audio"
             width="22"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.trackManager"
-            @click="selectModule('trackManager')"></SideNavButton>
+            :disabled="!menuButtonsDisable.trackManager"
+            @click="!menuButtonsDisable.trackManager ? selectModule('trackManager') : null"></SideNavButton>
 
         <SideNavButton
             name="Region selector"
             icon-type="mdi:timer-music-outline"
             width="25"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.regionSelector"
-            @click="selectModule('regionSelector')"></SideNavButton>
+            :disabled="!menuButtonsDisable.regionSelector && tracksFromDb.allTracksHaveMeasures"
+            @click="
+                !menuButtonsDisable.regionSelector && tracksFromDb.allTracksHaveMeasures
+                    ? selectModule('regionSelector')
+                    : null
+            "></SideNavButton>
 
         <SideNavButton
             name="Interpretation player"
             icon-type="material-symbols:play-circle-outline"
             width="25"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.interpretationPlayer"
-            @click="selectModule('interpretationPlayer')"></SideNavButton>
+            :disabled="!menuButtonsDisable.interpretationPlayer && tracksFromDb.allTracksHaveMeasures"
+            @click="
+                !menuButtonsDisable.interpretationPlayer && tracksFromDb.allTracksHaveMeasures
+                    ? selectModule('interpretationPlayer')
+                    : null
+            "></SideNavButton>
 
         <SideNavButton
             name="Feature visualizer"
             icon-type="icon-park-solid:analysis"
             width="21"
-            :expanded="componentsVisible.sidenav"
             :active="modulesVisible.featureVisualizer"
-            @click="selectModule('featureVisualizer')"></SideNavButton>
+            :disabled="!menuButtonsDisable.featureVisualizer && tracksFromDb.allTracksHaveMeasures"
+            @click="
+                !menuButtonsDisable.featureVisualizer && tracksFromDb.allTracksHaveMeasures
+                    ? selectModule('featureVisualizer')
+                    : null
+            "></SideNavButton>
     </div>
     <!-- sidenav end -->
 </template>

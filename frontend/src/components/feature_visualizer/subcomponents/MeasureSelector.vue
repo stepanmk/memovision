@@ -4,9 +4,10 @@ import { ref } from 'vue';
 const props = defineProps({
     measureCount: Number,
     timeSignatures: Array,
+    currentMeasure: Number,
 });
 
-const emit = defineEmits(['selectRegion', 'deleteTimeSignature']);
+const emit = defineEmits(['selectRegion', 'goToMeasure']);
 
 defineExpose({
     init,
@@ -87,8 +88,12 @@ function removeListeners() {
 
 function relevanceBarMouseUp() {
     isHoldingMouseButton = false;
-    const startMeasureIdx = regionOverlay.value.indexOf(true);
-    const endMeasureIdx = regionOverlay.value.lastIndexOf(true);
+    let startMeasureIdx = regionOverlay.value.indexOf(true);
+    let endMeasureIdx = regionOverlay.value.lastIndexOf(true);
+    if (startMeasureIdx === -1) {
+        startMeasureIdx = 0;
+        endMeasureIdx = measureCount - 1;
+    }
     if (dragged) {
         emit('selectRegion', startMeasureIdx, endMeasureIdx);
     }
@@ -135,12 +140,11 @@ function relevanceBarMouseDown(event) {
                 <div
                     v-for="(obj, i) in timeSignatures"
                     :id="`ts-${i}`"
-                    class="absolute flex h-full cursor-pointer select-none items-center justify-start bg-teal-600 text-xs font-semibold text-white hover:bg-teal-500"
+                    class="absolute flex h-full select-none items-center justify-start bg-teal-600 text-xs font-semibold text-white"
                     :style="{
                         width: (obj.endMeasureIdx - obj.startMeasureIdx + 1) * 16 + 'px',
                         'margin-left': obj.startMeasureIdx * 16 + 'px',
-                    }"
-                    @click="$emit('deleteTimeSignature', i)">
+                    }">
                     <p class="flex w-[32px] items-center justify-center bg-teal-900 px-1">
                         {{ obj.noteCount }}/{{ obj.noteValue }}
                     </p>
@@ -154,6 +158,7 @@ function relevanceBarMouseDown(event) {
                             'bg-neutral-400': i % 2 !== 0,
                             'bg-neutral-300': i % 2 == 0,
                         }"
+                        @click="$emit('goToMeasure', i)"
                         @mouseover="logMeasure(i)"
                         @mouseleave="clearMessage()">
                         <div
@@ -161,7 +166,13 @@ function relevanceBarMouseDown(event) {
                             :class="{
                                 'border-t border-b border-cyan-600 bg-neutral-900 bg-opacity-70 hover:bg-red-600  dark:border-gray-400':
                                     regionOverlay[i],
-                            }"></div>
+                            }">
+                            <div
+                                class="h-full w-full"
+                                :class="{
+                                    'bg-red-600 bg-opacity-100': i === currentMeasure,
+                                }"></div>
+                        </div>
                     </div>
                 </div>
             </div>

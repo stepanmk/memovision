@@ -28,30 +28,46 @@ export const useModulesVisible = defineStore('modulesVisible', {
         hideAllModules() {
             this.trackManager = false;
             this.regionSelector = false;
-            (this.interpretationPlayer = false), (this.featureVisualizer = false);
+            this.interpretationPlayer = false;
+            this.featureVisualizer = false;
         },
     },
 });
 
-export const useComponentsVisible = defineStore('componentsVisible', {
+export const useMenuButtonsDisable = defineStore('menuButtonsDisable', {
     state: () => ({
-        sidenav: false,
-        tracklist: false,
+        trackManager: true,
+        regionSelector: true,
+        interpretationPlayer: true,
+        featureVisualizer: true,
+        isLoading: false,
     }),
-});
+    actions: {
+        startLoading(moduleName) {
+            // console.log('started');
+            this.isLoading = true;
+            this.trackManager = true;
+            this.regionSelector = true;
+            this.interpretationPlayer = true;
+            this.featureVisualizer = true;
 
-export const useAnalysisState = defineStore('analysisState', {
-    state: () => ({
-        individualAnalysis: true,
-        batchAnalysis: false,
-        multiSelectEnabled: false,
-        multiSelectActive: false,
-    }),
+            this[moduleName] = false;
+        },
+        stopLoading() {
+            // console.log('finished');
+            this.isLoading = false;
+            this.trackManager = false;
+            this.regionSelector = false;
+            this.interpretationPlayer = false;
+            this.featureVisualizer = false;
+        },
+    },
 });
 
 export const useTracksFromDb = defineStore('tracksFromDb', {
     state: () => ({
         trackObjects: [],
+        syncPoints: [],
         selected: [],
     }),
     getters: {
@@ -123,10 +139,14 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
 
 export const useMeasureData = defineStore('measureData', {
     state: () => ({
-        measureObjects: [],
-        relevanceFeatures: [],
-        relevance: {},
         labels: [],
+        labelsSelected: [],
+        measureCount: 0,
+        measureObjects: [],
+        relevance: {},
+        relevanceFeatures: [],
+        relevanceFeaturesSelected: [],
+        selectedMeasures: [],
     }),
     getters: {
         refTrack: (state) => state.measureObjects.find((obj) => obj.reference),
@@ -194,6 +214,17 @@ export const useAudioStore = defineStore('audioStore', {
             this.audioObjects.splice(0);
         },
     },
+});
+
+export const useRegionData = defineStore('regionData', {
+    state: () => ({
+        selectedRegions: [],
+        selected: [],
+        diffRegions: [],
+        diffRegionsSelected: [],
+        timeSignatures: [],
+        timeSignaturesSelected: [],
+    }),
 });
 
 export const useFeatureLists = defineStore('featureLists', {

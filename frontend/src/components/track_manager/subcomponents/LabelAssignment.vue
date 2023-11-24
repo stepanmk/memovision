@@ -6,7 +6,7 @@ import { onMounted, ref } from 'vue';
 import { api } from '../../../axiosInstance';
 import { useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getSecureConfig } from '../../../sharedFunctions';
+import { getCookie, getSecureConfig } from '../../../sharedFunctions';
 
 defineProps({
     visible: Boolean,
@@ -58,6 +58,7 @@ async function getLabelNames() {
     const res = await api.get('/get-label-names', getSecureConfig());
     labelNames.value = res.data.labelNames;
     measureData.labels = res.data.labelNames;
+    measureData.labelsSelected = new Array(measureData.labels.length).fill(false);
 }
 
 async function saveLabel() {
@@ -104,6 +105,20 @@ async function editLabel() {
 
 async function deleteLabel(label) {
     await api.delete(`/delete-label/${label}`, getSecureConfig());
+    await getLabelNames();
+}
+
+async function uploadLabels() {
+    const metadata = document.getElementById('upload-labels').files[0];
+    let formData = new FormData();
+    formData.append('file', metadata);
+    const axiosConfig = {
+        headers: {
+            'X-CSRF-TOKEN': getCookie('csrf_access_token'),
+            'Content-Type': 'multipart/form-data',
+        },
+    };
+    await api.post('/upload-labels', formData, axiosConfig);
     await getLabelNames();
 }
 </script>
@@ -156,7 +171,7 @@ async function deleteLabel(label) {
                 <input
                     v-model="v$.labelName0.$model"
                     type="text"
-                    class="input-field-nomargin h-7 text-blue-600"
+                    class="input-field-nomargin h-7 w-28 text-red-600"
                     placeholder="Label A name"
                     maxlength="20"
                     :class="{
@@ -167,7 +182,7 @@ async function deleteLabel(label) {
                 <input
                     v-model="v$.labelName1.$model"
                     type="text"
-                    class="input-field-nomargin h-7 text-red-600"
+                    class="input-field-nomargin h-7 w-28 text-blue-600"
                     placeholder="Label B name"
                     maxlength="20"
                     :class="{
@@ -185,10 +200,28 @@ async function deleteLabel(label) {
                     Add new labels
                 </button>
             </div>
-            <div class="flex items-center">
+            <div class="flex items-center gap-2">
+                <input
+                    id="upload-labels"
+                    type="file"
+                    class="hidden"
+                    accept=".csv, .xlsx, .xls"
+                    @change="uploadLabels()"
+                    @click="$event.target.value = ''" />
+
+                <label
+                    v-if="!labelBeingAdded"
+                    for="upload-labels"
+                    class="flex h-full items-center justify-center hover:cursor-pointer">
+                    <div id="upload-labels-btn" class="btn btn-blue">
+                        <p>Upload labels</p>
+                    </div>
+                </label>
+
                 <button v-if="!labelBeingAdded" class="btn btn-blue" @click="$emit('closeLabelAssignment')">
                     Close
                 </button>
+
                 <button
                     v-if="labelBeingAdded && labelBeingEdited"
                     class="btn btn-blue"

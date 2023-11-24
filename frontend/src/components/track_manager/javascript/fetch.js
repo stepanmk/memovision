@@ -1,5 +1,5 @@
 import { api } from '../../../axiosInstance';
-import { useAudioStore, useMeasureData, useTracksFromDb, useUserInfo } from '../../../globalStores';
+import { useAudioStore, useMeasureData, useRegionData, useTracksFromDb, useUserInfo } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getSecureConfig } from '../../../sharedFunctions';
 
@@ -9,6 +9,7 @@ const tracksFromDb = useTracksFromDb(pinia);
 const userInfo = useUserInfo(pinia);
 const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
 
 /*   actual fetch functions 
 
@@ -48,6 +49,16 @@ async function getMeasureData() {
     const res = await api.get('/get-measure-data', getSecureConfig());
     measureData.measureObjects = res.data.measureData;
     measureData.sortByName();
+    for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
+        const filename = tracksFromDb.syncTracks[i].filename;
+        if (tracksFromDb.syncTracks[i].gt_measures) {
+            const measures = measureData.getObject(filename).gt_measures;
+            measureData.selectedMeasures.push(measures);
+            measureData.measureCount = measureData.selectedMeasures[i].length - 3;
+        } else {
+            measureData.selectedMeasures.push(measureData.getObject(filename).tf_measures);
+        }
+    }
 }
 
 async function downloadMeasures() {
@@ -63,4 +74,30 @@ async function downloadMeasures() {
     URL.revokeObjectURL(url);
 }
 
-export { downloadMeasures, getAudioData, getMeasureData, getMetronomeClick, getTrackData };
+async function getRegionData() {
+    const res = await api.get('/get-all-regions', getSecureConfig());
+    regionData.selectedRegions = res.data.regions;
+    regionData.selected = new Array(res.data.regions.length).fill(false);
+    regionData.timeSignatures = res.data.timeSignatures;
+    regionData.timeSignaturesSelected = new Array(res.data.timeSignatures.length).fill(false);
+    const diffRes = await api.get('/get-diff-regions', getSecureConfig());
+    regionData.diffRegions = diffRes.data.diffRegions;
+    regionData.diffRegionsSelected = new Array(diffRes.data.diffRegions.length).fill(false);
+}
+
+async function getSyncPoints() {
+    if (tracksFromDb.syncTracks.length > 0) {
+        const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
+        tracksFromDb.syncPoints = syncPointsRes.data;
+    }
+}
+
+export {
+    downloadMeasures,
+    getAudioData,
+    getMeasureData,
+    getMetronomeClick,
+    getRegionData,
+    getSyncPoints,
+    getTrackData,
+};

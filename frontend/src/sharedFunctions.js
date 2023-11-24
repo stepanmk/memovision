@@ -1,15 +1,16 @@
 import { api } from './axiosInstance';
 import {
     useAudioStore,
-    useComponentsVisible,
     useMeasureData,
     useModulesVisible,
+    useRegionData,
     useTracksFromDb,
     useUserInfo,
 } from './globalStores';
 import { pinia } from './piniaInstance';
 
 const measureData = useMeasureData(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
 
 async function getSessions() {
     const res = await api.get('/get-sessions', getSecureConfig());
@@ -36,17 +37,18 @@ function getSecureConfig(responseType) {
 
 function resetAllStores() {
     const tracksFromDb = useTracksFromDb(pinia);
-    const userInfo = useUserInfo(pinia);
+    // const userInfo = useUserInfo(pinia);
     const audioStore = useAudioStore(pinia);
     const modulesVisible = useModulesVisible(pinia);
-    const componentsVisible = useComponentsVisible(pinia);
     const measureData = useMeasureData(pinia);
+    const regionData = useRegionData(pinia);
 
     tracksFromDb.$reset();
+    // userInfo.$reset();
     audioStore.$reset();
     modulesVisible.$reset();
-    componentsVisible.$reset();
     measureData.$reset();
+    regionData.$reset();
 }
 
 function darkMode() {
@@ -75,17 +77,8 @@ function truncateFilename(filename, numChars) {
     return shortFilename;
 }
 
-// function getTimeString(seconds) {
-//     if (seconds < 3600) {
-//         return new Date(seconds * 1000).toISOString().slice(14, 19);
-//     } else {
-//         return new Date(seconds * 1000).toISOString().slice(11, 19);
-//     }
-// }
-
 function createZoomLevels(zoomviewWidth, trackLengthSec) {
     const maxZoom = Math.pow(2, Math.floor(Math.log2((trackLengthSec * 44100) / zoomviewWidth)));
-    const maxPower = Math.log2(maxZoom);
     let zoomLevels = [];
     for (let i = 64; i < maxZoom; i += 300) {
         zoomLevels.push(i);
@@ -120,10 +113,22 @@ function getTimeString(seconds, start, end) {
     return new Date(seconds * 1000).toISOString().slice(start, end);
 }
 
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function findClosestTimeIdx(peaksIdx, time) {
+    const closestTime = tracksFromDb.syncPoints[peaksIdx].reduce((prev, curr) =>
+        Math.abs(curr - time) < Math.abs(prev - time) ? curr : prev
+    );
+    return tracksFromDb.syncPoints[peaksIdx].indexOf(closestTime);
+}
+
 export {
     createZoomLevels,
     darkMode,
     disableDarkMode,
+    findClosestTimeIdx,
     getCookie,
     getEndMeasure,
     getSecureConfig,
@@ -131,5 +136,6 @@ export {
     getStartMeasure,
     getTimeString,
     resetAllStores,
+    sleep,
     truncateFilename,
 };

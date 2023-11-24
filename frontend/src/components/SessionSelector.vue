@@ -1,16 +1,12 @@
 <script setup>
-import router from '../router.js';
-
-import { reactive } from 'vue';
-import { useVuelidate } from '@vuelidate/core';
-import { required, minLength, maxLength, alphaNum } from '@vuelidate/validators';
-
 import { Icon } from '@iconify/vue';
-
-import { useUserInfo } from '../globalStores';
-import { getSessions, getSecureConfig } from '../sharedFunctions';
-
+import { useVuelidate } from '@vuelidate/core';
+import { alphaNum, maxLength, minLength, required } from '@vuelidate/validators';
+import { reactive } from 'vue';
 import { api } from '../axiosInstance';
+import { useUserInfo } from '../globalStores';
+import router from '../router.js';
+import { getSecureConfig, getSessions } from '../sharedFunctions';
 
 // validation
 const formData = reactive({
@@ -27,7 +23,6 @@ const rules = {
 };
 
 const v$ = useVuelidate(rules, formData);
-
 const userInfo = useUserInfo();
 
 // function for session selection

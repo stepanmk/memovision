@@ -1,21 +1,17 @@
 <script setup>
-import router from '../router.js';
-
-import { ref } from 'vue';
 import { Icon } from '@iconify/vue';
-import { useI18n } from 'vue-i18n';
-import { storeToRefs } from 'pinia';
 import { onClickOutside } from '@vueuse/core';
-
-import { useUserInfo, useTracksFromDb, useComponentsVisible } from '../globalStores';
-
-import { darkMode, disableDarkMode } from '../sharedFunctions';
+import { storeToRefs } from 'pinia';
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { showAlert } from '../alerts';
 import { api } from '../axiosInstance';
+import { useTracksFromDb, useUserInfo } from '../globalStores';
+import router from '../router.js';
+import { darkMode, disableDarkMode } from '../sharedFunctions';
 
 const userInfo = useUserInfo();
 const tracksFromDb = useTracksFromDb();
-const componentsVisible = useComponentsVisible();
 
 const { t, locale } = useI18n();
 const { username, darkModeEnabled } = storeToRefs(userInfo);
@@ -36,7 +32,6 @@ function logoutUser(data) {
             if (response.data.message === 'logout successful') {
                 // reset track pinia stores
                 tracksFromDb.$reset();
-                componentsVisible.$reset();
                 userInfo.$reset();
                 showAlert('Successfully logged out.', 1500);
                 // if the logout was successful, redirect user to the sign in page
@@ -54,7 +49,9 @@ function logoutUser(data) {
     <div
         id="navbar"
         class="flex h-16 w-full flex-row items-center justify-between border-b bg-white px-7 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
-        <div id="first" class="flex h-full w-[calc(100%-7rem)] flex-row items-center justify-start text-xl font-bold">
+        <div
+            id="first"
+            class="flex h-full w-[calc(100%-7rem)] select-none flex-row items-center justify-start text-xl font-bold">
             MemoVision
         </div>
 

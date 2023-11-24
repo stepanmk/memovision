@@ -1,247 +1,153 @@
 <script setup>
 import { Icon } from '@iconify/vue';
-import Peaks from 'peaks.js';
-import { computed, reactive, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
-import { api } from '../../axiosInstance';
 import {
-    useAudioStore,
     useFeatureData,
-    useFeatureLists,
     useMeasureData,
+    useMenuButtonsDisable,
     useModulesVisible,
+    useRegionData,
     useTracksFromDb,
 } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
+import { getEndMeasure, getStartMeasure, getTimeString, truncateFilename } from '../../sharedFunctions';
+
 import {
-    createZoomLevels,
-    getEndMeasure,
-    getSecureConfig,
-    getStartMeasure,
-    getTimeString,
-    truncateFilename,
-} from '../../sharedFunctions';
+    allPeaksReady,
+    colors,
+    currentMeasure,
+    cursorPositions,
+    endMeasureIdx,
+    featureVisualizerOpened,
+    isPlaying,
+    labelSelectors,
+    measuresVisible,
+    peaksInstancesReady,
+    playing,
+    scatterVisible,
+    selectedFeatureLists,
+    selectedLabel,
+    startMeasureIdx,
+    timeSelections,
+    trackLabels,
+    trackNames,
+    trackTimes,
+    tracksVisible,
+    volume,
+    waveformsVisible,
+} from './javascript/variables';
+
+import {
+    endTimes,
+    goToMeasure,
+    idxArray,
+    initPlayer,
+    peaksInstances,
+    playPause,
+    resetPlayer,
+    rewind,
+    selectPeaks,
+    startTimes,
+    toggleMeasures,
+} from './javascript/player';
+
+import { selectRelevanceLabel, setFeatureLists } from './javascript/features';
+import { zoomOnMeasureSelection } from './javascript/regions';
 
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
 import SelectedRegion from '../shared_components/SelectedRegion.vue';
 import SubMenu from '../shared_components/SubMenu.vue';
-import LineChart from './LineChart.vue';
-import LineChartMeasure from './LineChartMeasure.vue';
-import MeasureSelector from './MeasureSelector.vue';
 import FeatureName from './subcomponents/FeatureName.vue';
+import LineChart from './subcomponents/LineChart.vue';
+import LineChartMeasure from './subcomponents/LineChartMeasure.vue';
+import MeasureSelector from './subcomponents/MeasureSelector.vue';
 import ScatterRegression from './subcomponents/ScatterRegression.vue';
 
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
-const audioStore = useAudioStore(pinia);
 const featureData = useFeatureData(pinia);
-const featureLists = useFeatureLists(pinia);
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 
-// audio context stuff
-const audioCtx = new AudioContext();
-const gainNode = audioCtx.createGain();
-gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-gainNode.connect(audioCtx.destination);
-const volume = ref([1]);
+const measureSelector = ref(null);
 
-const rampUp = new Float32Array(10);
-const rampDown = new Float32Array(10);
-function createFadeRamps() {
-    for (let i = 0; i < 10; i++) {
-        rampUp[i] = Math.pow(i / 9, 3) * volume.value;
-        rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
+watch(startMeasureIdx, () => {
+    if (startMeasureIdx.value === 0 && endMeasureIdx.value === measureData.measureCount - 1) {
+        measureSelector.value.resetRegionOverlay();
+    } else {
+        measureSelector.value.setRegionOverlay(startMeasureIdx.value, endMeasureIdx.value);
     }
-}
-const fadeIn = () => gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
-const fadeOut = () => gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
-
-watch(volume, () => {
-    gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
-    createFadeRamps();
 });
 
-let matplotlibColors = [
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
-];
-
-const isPlaying = ref(false);
-const tracksVisible = ref([]);
-const waveformsVisible = ref([]);
-const playing = ref([]);
-const regionOverlay = ref([]);
-const trackNames = ref([]);
-const timeSelections = ref([]);
-const trackLabels = ref([]);
-const selectedLabel = ref('');
-const labelSelectors = ref([]);
-const peaksInstancesReady = ref([]);
-
-let syncPoints = null;
-let activePeaksIdx = 0;
-let peaksInstances = [];
-let idxArray = [];
-let selectedMeasureData = [];
-let selectedFeatureLists = reactive({});
-let startTimes = [];
-let endTimes = [];
-
-const cursorPositions = ref([]);
-const measureSelector = ref(null);
-const currentMeasure = ref(-1);
-
-const selectedRegions = ref([]);
-const selectedRegionsBool = ref([]);
-async function getAllRegions() {
-    const selRegionsRes = await api.get('/get-all-regions', getSecureConfig());
-    selectedRegions.value = selRegionsRes.data;
-    selectedRegions.value.forEach(() => {
-        selectedRegionsBool.push(false);
-    });
-}
-
-function initFeatVisualizer() {
-    getSyncPoints();
-    getMeasureData();
-    getAllRegions();
-
-    tracksFromDb.syncTracks.forEach((track, idx) => {
-        tracksVisible.value.push(true);
-        waveformsVisible.value.push(true);
-        playing.value.push(false);
-        peaksInstancesReady.value.push(false);
-        if (track.performer) {
-            trackNames.value.push(track.performer + '; ' + track.year);
-        } else {
-            trackNames.value.push(track.filename);
-        }
-        timeSelections.value.push(track.length_sec);
-
-        trackLabels.value.push(false);
-        peaksInstances.push(null);
-        idxArray.push(idx);
-        cursorPositions.value.push(0);
-        startTimes.push(0);
-        endTimes.push(track.length_sec);
-
-        audioCtx.resume();
-        createFadeRamps();
-        measuresVisible.value = true;
-    });
-
-    measureData.relevance['duration']['custom'].forEach(() => {
-        labelSelectors.value.push(false);
-    });
-
-    setTimeout(() => {
-        tracksFromDb.syncTracks.forEach((track, idx) => {
-            addTrack(track.filename, idx);
-        });
-        measureSelector.value.init();
-        getFeatureLists();
-    }, 50);
-}
-
-function destroyFeatVisualizer() {
-    tracksVisible.value = [];
-    waveformsVisible.value = [];
-    playing.value = [];
-    trackNames.value = [];
-    timeSelections.value = [];
-    trackLabels.value = [];
-    peaksInstancesReady.value = [];
-    labelSelectors.value = [];
-
-    peaksInstances = [];
-    idxArray = [];
-    cursorPositions.value = [];
-    selectedMeasureData = [];
-    tracksFromDb.syncTracks.forEach((track, idx) => {
-        startTimes[idx] = 0;
-        endTimes[idx] = track.length_sec;
-    });
-    measureSelector.value.destroy();
-}
-
-let featVisualizerOpened = false;
+watch(allPeaksReady, () => {
+    if (allPeaksReady.value) menuButtonsDisable.stopLoading();
+});
 
 modulesVisible.$subscribe((mutation, state) => {
-    if (state.featureVisualizer && !featVisualizerOpened) {
-        featVisualizerOpened = true;
+    if (state.featureVisualizer && !featureVisualizerOpened.value) {
         initFeatVisualizer();
-    } else if (!state.featureVisualizer && featVisualizerOpened) {
-        featVisualizerOpened = false;
+    } else if (!state.featureVisualizer && featureVisualizerOpened.value) {
         destroyFeatVisualizer();
     }
 });
 
-const allPeaksReady = computed(() => {
-    return peaksInstancesReady.value.includes(false);
+async function initFeatVisualizer() {
+    menuButtonsDisable.startLoading('featureVisualizer');
+    setFeatureLists();
+    startMeasureIdx.value = 0;
+    endMeasureIdx.value = measureData.measureCount - 1;
+    tracksFromDb.syncTracks.forEach((track, idx) => {
+        cursorPositions.value.push(0.0);
+        peaksInstancesReady.value.push(false);
+        playing.push(false);
+        timeSelections.value.push(track.length_sec);
+        trackLabels.value.push(undefined);
+        tracksVisible.value.push(true);
+        trackTimes.value.push(0.0);
+        waveformsVisible.value.push(true);
+
+        peaksInstances.push(null);
+        idxArray.push(idx);
+        startTimes.push(0);
+        endTimes.push(track.length_sec);
+    });
+    await initPlayer();
+    measureSelector.value.init();
+    measuresVisible.value = true;
+    featureVisualizerOpened.value = true;
+}
+
+function destroyFeatVisualizer() {
+    peaksInstancesReady.value = [];
+    playing.splice(0);
+    timeSelections.value = [];
+    trackLabels.value = [];
+    trackNames.value = [];
+    tracksVisible.value = [];
+    trackTimes.value = [];
+    waveformsVisible.value = [];
+
+    startMeasureIdx.value = 0;
+    endMeasureIdx.value = measureData.measureCount - 1;
+    selectedLabel.value = '';
+    labelSelectors.value.fill(false);
+
+    resetPlayer();
+    peaksInstances.splice(0);
+    idxArray.splice(0);
+    endTimes.splice(0);
+    startTimes.splice(0);
+    measuresVisible.value = false;
+    measureSelector.value.destroy();
+    featureVisualizerOpened.value = false;
+}
+
+onBeforeUnmount(() => {
+    if (measureSelector.value !== null) measureSelector.value.destroy();
 });
-
-async function getSyncPoints() {
-    const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
-    syncPoints = syncPointsRes.data;
-}
-
-function getFeatureLists() {
-    selectedFeatureLists['dynamicsTime'] = [];
-    selectedFeatureLists['dynamicsTimeVisible'] = [];
-    selectedFeatureLists['dynamicsMeasure'] = [];
-    selectedFeatureLists['dynamicsMeasureVisible'] = [];
-    selectedFeatureLists['rhythmTime'] = [];
-    selectedFeatureLists['rhythmTimeVisible'] = [];
-    selectedFeatureLists['rhythmMeasure'] = [];
-    selectedFeatureLists['rhythmMeasureVisible'] = [];
-    featureLists.dynamicsMetadata.forEach((feat) => {
-        if (featureLists.dynamicsTime.includes(feat.id)) {
-            selectedFeatureLists['dynamicsTime'].push({ ...feat });
-            selectedFeatureLists['dynamicsTimeVisible'].push(false);
-        }
-        if (featureLists.dynamicsMeasure.includes(feat.id)) {
-            selectedFeatureLists['dynamicsMeasure'].push({ ...feat });
-            selectedFeatureLists['dynamicsTimeVisible'].push(false);
-        }
-    });
-    featureLists.rhythmMetadata.forEach((feat) => {
-        if (featureLists.rhythmTime.includes(feat.id)) {
-            selectedFeatureLists['rhythmTime'].push({ ...feat });
-            selectedFeatureLists['rhythmTimeVisible'].push(false);
-        }
-        if (featureLists.rhythmMeasure.includes(feat.id)) {
-            selectedFeatureLists['rhythmMeasure'].push({ ...feat });
-            selectedFeatureLists['rhythmMeasureVisible'].push(false);
-        }
-    });
-}
-
-const startMeasure = ref(0);
-const endMeasure = ref(0);
-function getMeasureData() {
-    for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
-        const filename = tracksFromDb.syncTracks[i].filename;
-        if (tracksFromDb.syncTracks[i].gt_measures) {
-            const measures = measureData.getObject(filename).gt_measures;
-            selectedMeasureData.push(measures);
-            for (let j = 1; j < measures.length - 2; j++) {
-                regionOverlay.value.push(false);
-            }
-        } else {
-            selectedMeasureData.push(measureData.getObject(filename).tf_measures);
-        }
-    }
-    endMeasure.value = selectedMeasureData[0].length - 3;
-}
 
 function showWaveform(idx) {
     waveformsVisible.value[idx] = !waveformsVisible.value[idx];
@@ -251,249 +157,20 @@ function showInPlots(idx) {
     tracksVisible.value[idx] = !tracksVisible.value[idx];
 }
 
-function waveformListener(idx, event) {
-    if (idx !== activePeaksIdx) {
-        selectPeaks(idx);
-    }
-}
-
-function addTrack(filename, idx) {
-    const audioElement = document.getElementById(`audio-${idx}`);
-    const audio = audioStore.getAudio(filename);
-    audioElement.src = URL.createObjectURL(audio);
-    const audioSource = audioCtx.createMediaElementSource(audioElement);
-    audioSource.connect(gainNode);
-    // get waveform data
-    const waveformData = audioStore.getWaveformData(filename);
-    const waveformContainer = document.getElementById(`track-div-${idx}`);
-    waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
-    const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
-    const zoomLevels = createZoomLevels(waveformContainer.offsetWidth, trackLengthSec);
-    // peaks.js options
-    const options = {
-        zoomview: {
-            fontFamily: 'Inter',
-            segmentOptions: {
-                style: 'overlay',
-                overlayOffset: 0,
-                overlayOpacity: 0.15,
-                overlayCornerRadius: 0,
-            },
-            container: waveformContainer,
-            playheadColor: 'rgba(0, 0, 0, 0)',
-            playheadClickTolerance: 2500,
-            waveformColor: 'rgb(17 24 39)',
-            axisLabelColor: 'rgb(17 24 39)',
-            axisGridlineColor: 'rgb(17 24 39)',
-        },
-        mediaElement: audioElement,
-        dataUri: {
-            arraybuffer: URL.createObjectURL(waveformData),
-        },
-        showAxisLabels: true,
-        emitCueEvents: true,
-        fontSize: 12,
-        zoomLevels: zoomLevels,
-    };
-    Peaks.init(options, (err, peaks) => {
-        if (err) console.log(err);
-        peaksInstances[idx] = peaks;
-        const view = peaksInstances[idx].views.getView('zoomview');
-        view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
-        view.enableAutoScroll(false);
-        setCursorPos(idx, 0);
-        addMeasuresToPeaksInstance(idx);
-        if (idx === 0) {
-            selectPeaks(idx);
-        }
-        peaksInstances[idx].on('player.timeupdate', (time) => {
-            setCursorPos(idx, time);
-        });
-        if (filename === tracksFromDb.refTrack.filename) {
-            peaksInstances[idx].on('player.timeupdate', (time) => {
-                // add 1 ms to the time to indicate the proper measure
-                const measureIdx = getStartMeasure(time + 0.001);
-                currentMeasure.value = measureIdx - 2;
-            });
-        }
-        peaksInstancesReady.value[idx] = true;
-    });
-}
-
-function setCursorPos(idx, time) {
-    cursorPositions.value[idx] = `calc(${99.9 * ((time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))}% + ${
-        45 * (1 - (time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]))
-    }px)`;
-}
-
-function addMeasuresToPeaksInstance(idx) {
-    for (let j = 1; j < selectedMeasureData[idx].length - 1; j++) {
-        let labelText = `${j}`;
-        peaksInstances[idx].points.add({
-            time: selectedMeasureData[idx][j],
-            labelText: labelText,
-            editable: false,
-            color: 'rgb(0, 0, 200)',
-        });
-    }
-}
-
-const measuresVisible = ref(false);
-function toggleMeasures() {
-    if (measuresVisible.value) {
-        peaksInstances.forEach((peaksInstance) => {
-            peaksInstance.points.removeAll();
-        });
-        measuresVisible.value = false;
+function showAllWaveforms() {
+    if (waveformsVisible.value.includes(false)) {
+        waveformsVisible.value.fill(true);
     } else {
-        for (let i = 0; i < tracksFromDb.syncTracks.length; i++) {
-            addMeasuresToPeaksInstance(i);
-        }
-        measuresVisible.value = true;
+        waveformsVisible.value.fill(false);
     }
 }
 
-function findClosestTimeIdx(peaksIdx, time) {
-    const closestTime = syncPoints[peaksIdx].reduce((prev, curr) =>
-        Math.abs(curr - time) < Math.abs(prev - time) ? curr : prev
-    );
-    return syncPoints[peaksIdx].indexOf(closestTime);
-}
-
-function seekCallback(time) {
-    let closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
-    selectedIndices.forEach((idx) => {
-        peaksInstances[idx].player.seek(syncPoints[idx][closestTimeIdx]);
-    });
-}
-
-let prevPeaksIdx = null;
-let selectedIndices = null;
-async function selectPeaks(idx) {
-    selectedIndices = idxArray.slice();
-    selectedIndices.splice(idx, 1);
-    if (prevPeaksIdx !== null) {
-        playing.value[prevPeaksIdx] = false;
-        if (isPlaying.value) {
-            fadeOut();
-            await sleep(10);
-            peaksInstances[prevPeaksIdx].player.pause();
-        }
-        peaksInstances[prevPeaksIdx].off('player.timeupdate', seekCallback);
-    }
-    // add seekCallback to peaks instance specified by idx
-    playing.value[idx] = true;
-    activePeaksIdx = idx;
-    peaksInstances[idx].on('player.timeupdate', seekCallback);
-    // if playing is active
-    if (isPlaying.value) {
-        // play currently selected region if it is not null
-        const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
-            peaksInstances[idx].player.playSegment(selectedRegion, true);
-            await sleep(10);
-            fadeIn();
-        }
-        // otherwise just continue playing at the current cursor position
-        else {
-            peaksInstances[idx].player.play();
-            await sleep(10);
-            fadeIn();
-        }
-    }
-    prevPeaksIdx = idx;
-}
-
-async function playPause() {
-    // pause playing if it is active
-    if (isPlaying.value) {
-        fadeOut();
-        await sleep(10);
-        peaksInstances[activePeaksIdx].player.pause();
+function showAllInPlots() {
+    if (tracksVisible.value.includes(false)) {
+        tracksVisible.value.fill(true);
     } else {
-        // play currently selected region if it is not null
-        const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
-            peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
-            fadeIn();
-        }
-        // otherwise just continue playing at the current cursor position
-        else {
-            peaksInstances[activePeaksIdx].player.play();
-            fadeIn();
-        }
+        tracksVisible.value.fill(false);
     }
-    isPlaying.value = !isPlaying.value;
-}
-
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function rewind() {
-    fadeOut();
-    await sleep(20);
-    peaksInstances[activePeaksIdx].player.seek(0);
-    fadeIn();
-}
-
-function hideAllRegions() {
-    peaksInstances.forEach((peaksInstance, idx) => {
-        startTimes[idx] = 0;
-        endTimes[idx] = tracksFromDb.syncTracks[idx].length_sec;
-        timeSelections.value[idx] = tracksFromDb.syncTracks[idx].length_sec;
-        peaksInstance.segments.removeAll();
-    });
-}
-
-function zoomOut() {
-    peaksInstances.forEach((peaksInstance, idx) => {
-        const view = peaksInstance.views.getView('zoomview');
-        view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
-        setCursorPos(idx, 0);
-    });
-    startMeasure.value = 0;
-    endMeasure.value = selectedMeasureData[0].length - 3;
-}
-
-async function zoomOnMeasureSelection(startMeasureIdx, endMeasureIdx) {
-    if (isPlaying.value) await playPause();
-    hideAllRegions();
-    startMeasure.value = startMeasureIdx;
-    endMeasure.value = endMeasureIdx;
-    if (startMeasureIdx === -1) {
-        zoomOut();
-        return;
-    }
-    peaksInstances[activePeaksIdx].player.seek(selectedMeasureData[activePeaksIdx][startMeasureIdx + 1]);
-    for (let i = 0; i < peaksInstances.length; i++) {
-        const view = peaksInstances[i].views.getView('zoomview');
-        startTimes[i] = selectedMeasureData[i][startMeasureIdx + 1];
-        endTimes[i] = selectedMeasureData[i][endMeasureIdx + 2];
-        timeSelections.value[i] = endTimes[i] - startTimes[i];
-        setCursorPos(i, selectedMeasureData[i][startMeasureIdx + 1]);
-        view.setZoom({
-            seconds: selectedMeasureData[i][endMeasureIdx + 2] - selectedMeasureData[i][startMeasureIdx + 1],
-        });
-        view.setStartTime(selectedMeasureData[i][startMeasureIdx + 1]);
-        view.enableAutoScroll(false);
-        peaksInstances[i].segments.add({
-            color: 'grey',
-            borderColor: 'grey',
-            startTime: selectedMeasureData[i][startMeasureIdx + 1],
-            endTime: selectedMeasureData[i][endMeasureIdx + 2],
-            id: 'selectedRegion',
-        });
-    }
-    measureSelector.value.setRegionOverlay(startMeasureIdx, endMeasureIdx);
-}
-
-function selectRelevanceLabel(idx) {
-    trackLabels.value.fill(false);
-    labelSelectors.value.fill(false);
-    labelSelectors.value[idx] = true;
-    trackLabels.value = measureData.relevance['duration']['custom'][idx].labels.slice();
-    selectedLabel.value = measureData.relevance['duration']['custom'][idx].labelName;
 }
 </script>
 
@@ -502,21 +179,15 @@ function selectRelevanceLabel(idx) {
         :module-title="'Feature visualization'"
         :module-identifier="'feat-visualisation'"
         :visible="modulesVisible.featureVisualizer"
-        :is-disabled="allPeaksReady">
+        :is-disabled="!allPeaksReady">
         <template v-slot:window>
-            <LoadingWindow :visible="allPeaksReady" :loading-message="'Loading tracks...'" :progress-bar-perc="0" />
+            <LoadingWindow :visible="!allPeaksReady" :loading-message="'Loading tracks...'" :progress-bar-perc="0" />
         </template>
         <template v-slot:module-content>
-            <MeasureSelector
-                :all-measure-data="selectedMeasureData"
-                :measure-data="selectedMeasureData[0]"
-                :peaks-instances="peaksInstances"
-                :current-measure="currentMeasure"
-                @zoom-on="zoomOnMeasureSelection"
-                ref="measureSelector" />
-
             <div class="flex h-[3rem] w-full items-center gap-2 border-b px-5">
-                <SubMenu :name="'Features'">
+                <SubMenu
+                    :name="'Features'"
+                    :num-entries="selectedFeatureLists.dynamicsTime.length + selectedFeatureLists.rhythmTime.length">
                     <FeatureName
                         :class="{ 'bg-neutral-200': selectedFeatureLists.dynamicsTimeVisible[i] }"
                         v-for="(obj, i) in selectedFeatureLists.dynamicsTime"
@@ -534,7 +205,7 @@ function selectRelevanceLabel(idx) {
                             selectedFeatureLists.rhythmTimeVisible[i] = !selectedFeatureLists.rhythmTimeVisible[i]
                         " />
                 </SubMenu>
-                <SubMenu :name="'Label'">
+                <SubMenu :name="'Label'" :num-entries="measureData.labels.length">
                     <p
                         v-for="(obj, i) in measureData.labels"
                         :class="{ 'bg-neutral-200': labelSelectors[i] }"
@@ -543,7 +214,11 @@ function selectRelevanceLabel(idx) {
                         {{ obj }}
                     </p>
                 </SubMenu>
-                <SubMenu :name="'Measure features'">
+                <SubMenu
+                    :name="'Measure features'"
+                    :num-entries="
+                        selectedFeatureLists.dynamicsMeasure.length + selectedFeatureLists.rhythmMeasure.length
+                    ">
                     <FeatureName
                         :class="{ 'bg-neutral-200': selectedFeatureLists.dynamicsMeasureVisible[i] }"
                         v-for="(obj, i) in selectedFeatureLists.dynamicsMeasure"
@@ -562,10 +237,9 @@ function selectRelevanceLabel(idx) {
                             selectedFeatureLists.rhythmMeasureVisible[i] = !selectedFeatureLists.rhythmMeasureVisible[i]
                         " />
                 </SubMenu>
-                <SubMenu :name="'Selected regions'">
+                <SubMenu :name="'Selected regions'" :num-entries="regionData.selectedRegions.length">
                     <SelectedRegion
-                        :class="{ 'bg-neutral-200': selectedRegionsBool[i] }"
-                        v-for="(obj, i) in selectedRegions"
+                        v-for="(obj, i) in regionData.selectedRegions"
                         :region-name="obj.regionName"
                         :idx="i"
                         :start-time="getTimeString(obj.startTime, 14, 22)"
@@ -573,23 +247,48 @@ function selectRelevanceLabel(idx) {
                         :start-measure="getStartMeasure(obj.startTime)"
                         :end-measure="getEndMeasure(obj.endTime)"
                         :beats-per-measure="obj.beatsPerMeasure"
+                        :class="{ 'bg-neutral-200': regionData.selected[i] }"
                         @click="
-                            zoomOnMeasureSelection(getStartMeasure(obj.startTime) - 1, getEndMeasure(obj.endTime) - 1)
+                            zoomOnMeasureSelection(
+                                getStartMeasure(obj.startTime) - 1,
+                                getEndMeasure(obj.endTime) - 1,
+                                i
+                            )
                         ">
                     </SelectedRegion>
                 </SubMenu>
+                <button
+                    class="btn btn-gray"
+                    :class="{ 'bg-cyan-700 text-white': scatterVisible }"
+                    @click="scatterVisible = !scatterVisible">
+                    Regression plot
+                </button>
             </div>
-            <div class="flex h-[calc(100%-10rem)] w-full flex-row border-b">
+            <MeasureSelector
+                :measure-count="measureData.measureCount"
+                :time-signatures="regionData.timeSignatures"
+                :current-measure="currentMeasure"
+                @select-region="zoomOnMeasureSelection"
+                @go-to-measure="goToMeasure"
+                ref="measureSelector" />
+            <div class="flex h-[calc(100%-11.5rem)] w-full flex-row border-b">
                 <div
                     id="tracklist"
-                    class="flex h-full w-[12rem] flex-col items-center justify-start gap-1 overflow-y-scroll border-r p-2">
+                    class="flex h-full w-[12rem] flex-col items-center justify-start gap-2 overflow-y-scroll border-r p-2">
                     <div
                         v-for="(obj, i) in tracksFromDb.syncTracks"
                         :id="`audio-controls-${i}`"
                         :key="obj.filename"
                         class="dark: flex h-16 w-full shrink-0 flex-row items-center justify-start rounded-md bg-neutral-200 dark:bg-gray-400 dark:text-black">
                         <div
-                            class="flex h-full w-[calc(100%-0.5rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
+                            class="h-full w-[0.5rem] rounded-l-md"
+                            :class="{
+                                'bg-red-600': trackLabels[i] === false,
+                                'bg-blue-600': trackLabels[i],
+                                'bg-neutral-400': trackLabels[i] === undefined,
+                            }"></div>
+                        <div
+                            class="flex h-full w-[calc(100%-1rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
                             <div
                                 class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs"
                                 :class="{
@@ -597,13 +296,25 @@ function selectRelevanceLabel(idx) {
                                 }">
                                 <p class="font-bold">{{ i + 1 }}</p>
                                 <Popper
-                                    :content="trackNames[i]"
+                                    v-if="obj.performer"
+                                    :content="obj.performer + '; ' + obj.year + '; ' + obj.filename"
                                     hover
                                     placement="right"
                                     :arrow="true"
                                     class="select-none text-xs">
                                     <p class="text-xs">
-                                        {{ truncateFilename(trackNames[i], 11) }}
+                                        {{ truncateFilename(obj.performer, 11) }}
+                                    </p>
+                                </Popper>
+                                <Popper
+                                    v-else
+                                    :content="obj.filename"
+                                    hover
+                                    placement="right"
+                                    :arrow="true"
+                                    class="select-none text-xs">
+                                    <p class="text-xs">
+                                        {{ truncateFilename(obj.filename, 11) }}
                                     </p>
                                 </Popper>
                             </div>
@@ -623,7 +334,7 @@ function selectRelevanceLabel(idx) {
                                         'bg-cyan-700 text-white': waveformsVisible[i],
                                     }"
                                     @click="showWaveform(i)"
-                                    @dblclick="waveformsVisible.fill(false)">
+                                    @dblclick="showAllWaveforms()">
                                     <Icon icon="ph:waveform" width="20" />
                                 </div>
                                 <div
@@ -632,7 +343,7 @@ function selectRelevanceLabel(idx) {
                                         'bg-cyan-700 text-white': tracksVisible[i],
                                     }"
                                     @click="showInPlots(i)"
-                                    @dblclick="tracksVisible.fill(false)">
+                                    @dblclick="showAllInPlots()">
                                     <Icon icon="icon-park-solid:analysis" width="20" />
                                 </div>
                             </div>
@@ -640,11 +351,11 @@ function selectRelevanceLabel(idx) {
                         <div
                             class="h-full w-[0.5rem] rounded-r-md"
                             :style="{
-                                backgroundColor: matplotlibColors[i % 10],
+                                backgroundColor: colors[i % 10],
                             }"></div>
                     </div>
                 </div>
-                <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-y-scroll">
+                <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-x-hidden overflow-y-scroll">
                     <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
                         <div
                             class="border"
@@ -672,19 +383,19 @@ function selectRelevanceLabel(idx) {
                                             :y-min="feat.yMin"
                                             :y-max="feat.yMax"
                                             :length-sec="obj.length_sec"
-                                            :color="matplotlibColors[i]"
+                                            :color="colors[i]"
                                             class="h-[10rem]" />
                                         <div
                                             v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
                                             class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
                                             <input
-                                                :id="`${feat.name}-measure-ymin`"
+                                                :id="`${feat.name}-time-ymin-${i}`"
                                                 type="number"
                                                 v-model="feat.yMin"
                                                 class="h-5 w-16 rounded-md"
                                                 step="0.1" />
                                             <input
-                                                :id="`${feat.name}-measure-ymax`"
+                                                :id="`${feat.name}-time-ymax-${i}`"
                                                 type="number"
                                                 v-model="feat.yMax"
                                                 class="h-5 w-16 rounded-md"
@@ -704,19 +415,19 @@ function selectRelevanceLabel(idx) {
                                             :y-min="feat.yMin"
                                             :y-max="feat.yMax"
                                             :length-sec="obj.length_sec"
-                                            :color="matplotlibColors[i % 10]"
+                                            :color="colors[i % 10]"
                                             class="h-[10rem]" />
                                         <div
                                             v-if="selectedFeatureLists.rhythmTimeVisible[j]"
                                             class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
                                             <input
-                                                :id="`${feat.name}-time-ymin`"
+                                                :id="`${feat.name}-time-ymin-${i}`"
                                                 type="number"
                                                 v-model="feat.yMin"
                                                 class="h-5 w-16 rounded-md"
                                                 step="0.1" />
                                             <input
-                                                :id="`${feat.name}-time-ymax`"
+                                                :id="`${feat.name}-time-ymax-${i}`"
                                                 type="number"
                                                 v-model="feat.yMax"
                                                 class="h-5 w-16 rounded-md"
@@ -732,17 +443,20 @@ function selectRelevanceLabel(idx) {
                         <div v-for="(feat, j) in selectedFeatureLists.dynamicsMeasure" class="relative">
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
-                                :feature-name="feat.name"
-                                :track-names="trackNames"
-                                :units="feat.units"
+                                :colors="colors"
+                                :current-measure="currentMeasure"
                                 :data="featureData.dynamics[feat.id]"
-                                :colors="matplotlibColors"
-                                :visible="tracksVisible"
-                                :start-measure-idx="startMeasure"
-                                :end-measure-idx="endMeasure"
-                                :y-min="feat.yMin"
-                                :y-max="feat.yMax"
+                                :end-measure-idx="endMeasureIdx"
+                                :feature-name="feat.name"
                                 :fpm="feat.fpm"
+                                :label-names="selectedLabel"
+                                :labels="trackLabels"
+                                :start-measure-idx="startMeasureIdx"
+                                :track-objects="tracksFromDb.syncTracks"
+                                :units="feat.units"
+                                :visible="tracksVisible"
+                                :y-max="feat.yMax"
+                                :y-min="feat.yMin"
                                 class="h-[16rem]" />
                             <div
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
@@ -764,17 +478,20 @@ function selectRelevanceLabel(idx) {
                         <div v-for="(feat, j) in selectedFeatureLists.rhythmMeasure" class="relative">
                             <LineChartMeasure
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
-                                :feature-name="feat.name"
-                                :track-names="trackNames"
-                                :units="feat.units"
+                                :colors="colors"
+                                :current-measure="currentMeasure"
                                 :data="featureData.rhythm[feat.id]"
-                                :colors="matplotlibColors"
-                                :visible="tracksVisible"
-                                :start-measure-idx="startMeasure"
-                                :end-measure-idx="endMeasure"
-                                :y-min="feat.yMin"
-                                :y-max="feat.yMax"
+                                :end-measure-idx="endMeasureIdx"
+                                :feature-name="feat.name"
                                 :fpm="feat.fpm"
+                                :label-names="selectedLabel"
+                                :labels="trackLabels"
+                                :start-measure-idx="startMeasureIdx"
+                                :track-objects="tracksFromDb.syncTracks"
+                                :units="feat.units"
+                                :visible="tracksVisible"
+                                :y-max="feat.yMax"
+                                :y-min="feat.yMin"
                                 class="h-[16rem]" />
                             <div
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
@@ -793,19 +510,18 @@ function selectRelevanceLabel(idx) {
                                     step="0.1" />
                             </div>
                         </div>
-                        <div class="h-[30rem] w-full">
+                        <div class="h-[30rem] w-full" v-if="scatterVisible">
                             <ScatterRegression
-                                :colors="matplotlibColors"
+                                :colors="colors"
+                                :label-names="selectedLabel"
                                 :labels="trackLabels"
-                                :track-objects="tracksFromDb.syncTracks"
                                 :time-selections="timeSelections"
-                                :visible="tracksVisible"
-                                :label-names="selectedLabel" />
+                                :track-objects="tracksFromDb.syncTracks"
+                                :visible="tracksVisible" />
                         </div>
                         <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
                     </div>
                 </div>
-                <!-- <div class="h-full w-[12rem] bg-red-100"></div> -->
             </div>
             <div
                 id="interp-player-controls"

@@ -4,7 +4,6 @@ import AlertModal from './components/AlertModal.vue';
 
 <template>
     <router-view />
-
     <AlertModal />
 </template>
 

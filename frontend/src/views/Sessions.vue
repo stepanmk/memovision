@@ -9,5 +9,3 @@ import SessionSelector from '../components/SessionSelector.vue';
         <SessionSelector />
     </div>
 </template>
-
-<style scoped></style>
