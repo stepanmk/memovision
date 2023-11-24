@@ -1,6 +1,12 @@
 import { showAlert } from '../../../alerts.js';
 import { api } from '../../../axiosInstance.js';
-import { useFeatureData, useMeasureData, useRegionData, useTracksFromDb } from '../../../globalStores';
+import {
+    useFeatureData,
+    useMeasureData,
+    useMenuButtonsDisable,
+    useRegionData,
+    useTracksFromDb,
+} from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getEndMeasure, getSecureConfig, getStartMeasure, getTimeString } from '../../../sharedFunctions';
 import { getRegionData } from '../../track_manager/javascript/fetch';
@@ -26,6 +32,7 @@ const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 const featureData = useFeatureData(pinia);
+const menuButtonsDisable = useMenuButtonsDisable(pinia);
 
 function addRegion(startIdx, endIdx) {
     if (startIdx !== -1) {
@@ -101,6 +108,7 @@ function timeSignatureOverlap(currentTimeSignature) {
 }
 
 async function recomputeTempo() {
+    menuButtonsDisable.startLoading('regionSelector');
     let tempos = [];
     tracksFromDb.trackObjects.forEach((track) => {
         tempos.push(api.put(`/tempo/${track.filename}`, {}, getSecureConfig()));
@@ -108,6 +116,7 @@ async function recomputeTempo() {
     await Promise.all(tempos);
     const featureRes = await api.get('/tempo/all', getSecureConfig());
     featureData.rhythm['tempo'] = featureRes.data.featureList;
+    menuButtonsDisable.stopLoading();
 }
 
 async function saveTimeSignature() {
