@@ -1,7 +1,7 @@
 # MemoVision
 
 Official repository for the MemoVision software. 
-Note that this repository is far from finished or comprehensive and will be updated soon (November 8, 2023). The code has not yet been refactored or adequately commented.
+Note that this repository is far from finished and will be updated soon (November 8, 2023). The code has not yet been refactored or adequately commented. We will soon prepare the user manual.
 
 MemoVision software aims to provide an interface for comparative performance music analysis. This includes music information retrieval and feature selection methods. The frontend is developed with the Vue.js framework and communicates with the Python backend server built with Flask. JavaScript allows the interface to update dynamically and provides modern visuals together with Tailwind CSS. The Python backend leverages the open-source music feature extraction modules and deep learning implementations that are already available.
 
