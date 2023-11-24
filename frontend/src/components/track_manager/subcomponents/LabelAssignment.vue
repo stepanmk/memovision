@@ -171,7 +171,7 @@ async function uploadLabels() {
                 <input
                     v-model="v$.labelName0.$model"
                     type="text"
-                    class="input-field-nomargin h-7 text-red-600"
+                    class="input-field-nomargin h-7 w-28 text-red-600"
                     placeholder="Label A name"
                     maxlength="20"
                     :class="{
@@ -182,7 +182,7 @@ async function uploadLabels() {
                 <input
                     v-model="v$.labelName1.$model"
                     type="text"
-                    class="input-field-nomargin h-7 text-blue-600"
+                    class="input-field-nomargin h-7 w-28 text-blue-600"
                     placeholder="Label B name"
                     maxlength="20"
                     :class="{
@@ -209,7 +209,10 @@ async function uploadLabels() {
                     @change="uploadLabels()"
                     @click="$event.target.value = ''" />
 
-                <label for="upload-labels" class="flex h-full items-center justify-center hover:cursor-pointer">
+                <label
+                    v-if="!labelBeingAdded"
+                    for="upload-labels"
+                    class="flex h-full items-center justify-center hover:cursor-pointer">
                     <div id="upload-labels-btn" class="btn btn-blue">
                         <p>Upload labels</p>
                     </div>

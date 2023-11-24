@@ -79,6 +79,7 @@ const compSeries = computed(() => {
                 series.push({
                     name: name,
                     type: 'line',
+                    color: props.colors[i % 10],
                     showSymbol: false,
                     lineStyle: {
                         width: 2,

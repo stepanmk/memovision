@@ -355,7 +355,7 @@ function showAllInPlots() {
                             }"></div>
                     </div>
                 </div>
-                <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-y-scroll">
+                <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-x-hidden overflow-y-scroll">
                     <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
                         <div
                             class="border"

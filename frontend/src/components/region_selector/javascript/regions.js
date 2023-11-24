@@ -1,6 +1,6 @@
 import { showAlert } from '../../../alerts.js';
 import { api } from '../../../axiosInstance.js';
-import { useMeasureData, useRegionData } from '../../../globalStores';
+import { useFeatureData, useMeasureData, useRegionData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getEndMeasure, getSecureConfig, getStartMeasure, getTimeString } from '../../../sharedFunctions';
 import { getRegionData } from '../../track_manager/javascript/fetch';
@@ -24,6 +24,8 @@ import {
 
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
+const featureData = useFeatureData(pinia);
 
 function addRegion(startIdx, endIdx) {
     if (startIdx !== -1) {
@@ -98,7 +100,17 @@ function timeSignatureOverlap(currentTimeSignature) {
     return checks.includes(true);
 }
 
-function saveTimeSignature() {
+async function recomputeTempo() {
+    let tempos = [];
+    tracksFromDb.trackObjects.forEach((track) => {
+        tempos.push(api.put(`/tempo/${track.filename}`, {}, getSecureConfig()));
+    });
+    await Promise.all(tempos);
+    const featureRes = await api.get('/tempo/all', getSecureConfig());
+    featureData.rhythm['tempo'] = featureRes.data.featureList;
+}
+
+async function saveTimeSignature() {
     const data = {
         startTime: startTime.value,
         endTime: endTime.value,
@@ -109,13 +121,14 @@ function saveTimeSignature() {
         lengthSec: endTime.value - startTime.value,
     };
     if (!timeSignatureOverlap(data)) {
-        api.post(`/save-time-signature`, data, getSecureConfig()).then(() => {
-            peaksInstance.segments.removeAll();
-            peaksInstance.player.pause();
-            loopingActive.value = false;
-            cancelRegionAdding();
-            getRegionData();
-        });
+        await api.post(`/save-time-signature`, data, getSecureConfig());
+        peaksInstance.segments.removeAll();
+        peaksInstance.player.pause();
+        loopingActive.value = false;
+        cancelRegionAdding();
+        getRegionData();
+        await recomputeTempo();
+        showAlert('Tempo has been recomputed!');
     } else {
         showAlert('Time signatures must not overlap!', 1500);
     }
@@ -172,10 +185,11 @@ function deleteRegion(regionIdx) {
     });
 }
 
-function deleteTimeSignature(timeSignatureIdx) {
-    api.put('/delete-time-signature', regionData.timeSignatures[timeSignatureIdx], getSecureConfig()).then((res) => {
-        getRegionData();
-    });
+async function deleteTimeSignature(timeSignatureIdx) {
+    api.put('/delete-time-signature', regionData.timeSignatures[timeSignatureIdx], getSecureConfig());
+    await getRegionData();
+    await recomputeTempo();
+    showAlert('Tempo has been recomputed!');
 }
 
 export {
