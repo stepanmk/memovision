@@ -25,7 +25,7 @@ const props = defineProps({
             <Icon
                 v-if="menuButtonsDisable.isLoading && props.disabled"
                 icon="eos-icons:loading"
-                :width="props.width"
+                width="24"
                 :inline="true" />
             <Icon v-else :icon="props.iconType" :width="props.width" :inline="true" />
         </div>
