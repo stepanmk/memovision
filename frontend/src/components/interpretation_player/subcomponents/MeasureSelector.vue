@@ -144,12 +144,14 @@ function relevanceBarMouseDown(event) {
                 <div
                     v-for="(obj, i) in timeSignatures"
                     :id="`ts-${i}`"
-                    class="absolute flex h-full select-none items-center justify-start bg-teal-600 pl-1 text-xs font-semibold text-white"
+                    class="absolute flex h-full select-none items-center justify-start bg-teal-600 text-xs font-semibold text-white"
                     :style="{
                         width: (obj.endMeasureIdx - obj.startMeasureIdx + 1) * 16 + 'px',
                         'margin-left': obj.startMeasureIdx * 16 + 'px',
                     }">
-                    <p>{{ obj.noteCount }}/{{ obj.noteValue }}</p>
+                    <p class="flex w-[32px] items-center justify-center bg-teal-900 px-1">
+                        {{ obj.noteCount }}/{{ obj.noteValue }}
+                    </p>
                 </div>
             </div>
             <div id="overview-2" class="flex h-[1rem] flex-row rounded-md">
