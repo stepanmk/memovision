@@ -460,7 +460,7 @@ function showAllInPlots() {
                                 class="h-[16rem]" />
                             <div
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
-                                class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
                                 <input
                                     :id="`${feat.name}-measure-ymin`"
                                     type="number"
@@ -495,7 +495,7 @@ function showAllInPlots() {
                                 class="h-[16rem]" />
                             <div
                                 v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
-                                class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
                                 <input
                                     :id="`${feat.name}-measure-ymin`"
                                     type="number"
