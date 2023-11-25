@@ -261,7 +261,9 @@ function destroyInterpretationPlayer() {
                     </div>
                 </div>
 
-                <div id="audio-container" class="flex h-full w-full flex-row overflow-y-scroll dark:border-gray-700">
+                <div
+                    id="audio-container"
+                    class="flex h-full w-full flex-row overflow-x-hidden overflow-y-scroll dark:border-gray-700">
                     <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 py-8 pl-5">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"

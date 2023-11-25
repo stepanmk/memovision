@@ -67,17 +67,19 @@ function loginUser(data) {
         <p class="mb-5 select-none text-3xl">{{ t('form.login') }}</p>
 
         <input
+            id="username"
             v-model="v$.username.$model"
             type="text"
             class="input-field"
             :placeholder="t('form.username')"
             autocomplete="username" />
         <input
+            id="password"
             v-model="v$.password.$model"
             type="password"
             class="input-field"
             :placeholder="t('form.pswd')"
-            autocomplete="password" />
+            autocomplete="current-password" />
 
         <button @click="loginUser(formData)" type="submit" class="btn btn-blue h-8 text-base font-semibold">
             {{ t('button.signin') }}

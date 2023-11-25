@@ -163,7 +163,7 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
     peaksInstances[activePeaksIdx].player.seek(measureData.selectedMeasures[activePeaksIdx][startMeasure + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        view.enableAutoScroll(false);
+        view.enableAutoScroll(false, {});
         peaksInstances[i].segments.add({
             color: 'blue',
             borderColor: 'blue',

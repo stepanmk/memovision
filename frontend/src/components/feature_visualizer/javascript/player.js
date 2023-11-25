@@ -1,3 +1,4 @@
+import { useDebounceFn } from '@vueuse/core';
 import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
@@ -42,6 +43,7 @@ watch(volume, () => {
 let activePeaksIdx = 0;
 let canRewind = true;
 let endTimes = [];
+let firstResize = true;
 let idxArray = [];
 let peaksInstances = [];
 let prevPeaksIdx = null;
@@ -49,6 +51,7 @@ let selectedIndices = [];
 let startTimes = [];
 
 async function initPlayer() {
+    firstResize = true;
     audioCtx.resume();
     createFadeRamps();
     initPeaksInstances();
@@ -61,6 +64,24 @@ function resetPlayer() {
     selectedIndices = [];
     prevPeaksIdx = null;
 }
+
+const debouncedFit = useDebounceFn(() => {
+    fit();
+}, 200);
+
+function fit() {
+    if (firstResize) {
+        firstResize = false;
+        return;
+    }
+    peaksInstances.forEach((instance) => {
+        const view = instance.views.getView('zoomview');
+        view.fitToContainer();
+        view.setZoom({ seconds: 'auto' });
+    });
+}
+
+const resizeObserver = new ResizeObserver(debouncedFit);
 
 function initPeaksInstances() {
     setTimeout(() => {
@@ -93,7 +114,7 @@ function initPeaks(filename, idx) {
         zoomview: {
             fontFamily: 'Inter',
             segmentOptions: {
-                style: 'overlay',
+                overlay: true,
                 overlayOffset: 0,
                 overlayOpacity: 0.15,
                 overlayCornerRadius: 0,
@@ -119,16 +140,18 @@ function initPeaks(filename, idx) {
         peaksInstances[idx] = peaks;
         const view = peaksInstances[idx].views.getView('zoomview');
         view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
-        view.enableAutoScroll(false);
+        view.enableAutoScroll(false, {});
         setCursorPos(idx, 0);
         addMeasuresToPeaksInstance(idx);
         if (idx === 0) {
             selectPeaks(idx);
+            const featureContent = document.getElementById('feature-content');
+            resizeObserver.observe(featureContent);
         }
         if (filename === tracksFromDb.refTrack.filename) {
             peaksInstances[idx].on('player.timeupdate', (time) => {
                 trackTimes.value[idx] = time;
-                const measureIdx = getStartMeasure(time + 0.001);
+                const measureIdx = getStartMeasure(time + 0.01);
                 currentMeasure.value = measureIdx - 2;
                 setCursorPos(idx, time);
             });

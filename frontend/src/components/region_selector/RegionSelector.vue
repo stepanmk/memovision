@@ -45,7 +45,7 @@ import {
     updateRegion,
 } from './javascript/regions';
 
-import { initPeaks, playPause, rewind, toggleLooping, toggleMeasures, toggleMetronome } from './javascript/player';
+import { initPeaks, peaksInstance, playPause, rewind, toggleLooping, toggleMeasures } from './javascript/player';
 
 import ModuleTemplate from '../ModuleTemplate.vue';
 import MeasureSelector from './subcomponents/MeasureSelector.vue';
@@ -99,6 +99,12 @@ onBeforeUnmount(() => {
     refName.value = '';
     performer.value = '';
 });
+
+function fit() {
+    const view = peaksInstance.views.getView('zoomview');
+    view.setZoom({ seconds: 'auto' });
+    view.fitToContainer();
+}
 </script>
 
 <template>
@@ -187,7 +193,7 @@ onBeforeUnmount(() => {
                     <div class="flex h-8 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200">
                         <button
                             id="metronome-button"
-                            @click="toggleMetronome()"
+                            @click="fit()"
                             class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white"
                             :class="{ 'bg-cyan-700': metronomeActive }">
                             <Icon icon="ph:metronome" width="22" :class="{ 'text-white': metronomeActive }" />

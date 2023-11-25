@@ -75,7 +75,7 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure, regionIdx) {
             seconds: timeSelections.value[i],
         });
         view.setStartTime(measureData.selectedMeasures[i][startMeasure + 1]);
-        view.enableAutoScroll(false);
+        view.enableAutoScroll(false, {});
     }
 }
 

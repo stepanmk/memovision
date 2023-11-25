@@ -99,6 +99,7 @@ function deleteSession(sessionName) {
 
         <input
             v-model="v$.sessionName.$model"
+            id="session-name"
             type="text"
             class="input-field-nomargin"
             placeholder="New session name"
