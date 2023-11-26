@@ -300,6 +300,7 @@ function showAllInPlots() {
                                 class="flex h-3 flex-row items-center justify-center gap-1 rounded-md p-[8px] text-xs"
                                 :class="{
                                     'bg-violet-800 text-white': obj.reference,
+                                    'bg-red-600 text-white': obj.diff,
                                 }">
                                 <p class="font-bold">{{ i + 1 }}</p>
                                 <Popper
