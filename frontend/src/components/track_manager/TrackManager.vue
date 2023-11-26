@@ -53,6 +53,7 @@ import {
 import {
     downloadMeasures,
     getAudioData,
+    getChords,
     getMeasureData,
     getMetronomeClick,
     getRegionData,
@@ -108,6 +109,7 @@ async function getAllData() {
     await getTrackData();
     await getRegionData();
     await getSyncPoints();
+    await getChords();
     preciseSync.value = userInfo.preciseSync;
     numThingsToCompute.value = tracksFromDb.trackObjects.length;
     for (const track of tracksFromDb.trackObjects) {

@@ -4,6 +4,7 @@ import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { findClosestTimeIdx, getStartMeasure, sleep } from '../../../sharedFunctions';
+import { hideAllRegions, zoomOut } from './regions';
 import {
     currentMeasure,
     cursorPositions,
@@ -77,8 +78,10 @@ function fit() {
     peaksInstances.forEach((instance) => {
         const view = instance.views.getView('zoomview');
         view.fitToContainer();
-        view.setZoom({ seconds: 'auto' });
+        // view.setZoom({ seconds: 'auto' });
     });
+    hideAllRegions();
+    zoomOut();
 }
 
 const resizeObserver = new ResizeObserver(debouncedFit);
@@ -116,8 +119,9 @@ function initPeaks(filename, idx) {
             segmentOptions: {
                 overlay: true,
                 overlayOffset: 0,
-                overlayOpacity: 0.15,
+                overlayOpacity: 0.35,
                 overlayCornerRadius: 0,
+                overlayFontSize: 10,
             },
             container: waveformContainer,
             playheadColor: 'rgba(0, 0, 0, 0)',
@@ -237,7 +241,7 @@ async function selectPeaks(idx) {
     if (isPlaying.value) {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
+        if (selectedRegion) {
             const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
@@ -263,7 +267,7 @@ async function playPause() {
     } else {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
+        if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
             fadeIn();
         }

@@ -4,6 +4,7 @@ import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getStartMeasure, sleep } from '../../../sharedFunctions';
+import { hideAllRegions } from './regions';
 import {
     currentMeasure,
     isPlaying,
@@ -12,6 +13,7 @@ import {
     peaksInstancesReady,
     percLoaded,
     playing,
+    regionToSave,
     trackTimes,
     volume,
 } from './variables';
@@ -51,6 +53,8 @@ function fit() {
         view.fitToContainer();
         view.setZoom({ seconds: 'auto' });
     });
+    regionToSave.value = false;
+    hideAllRegions();
 }
 
 const resizeObserver = new ResizeObserver(debouncedFit);
@@ -238,7 +242,7 @@ async function selectPeaks(idx) {
     if (isPlaying.value) {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
+        if (selectedRegion) {
             const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
@@ -264,7 +268,7 @@ async function playPause() {
     } else {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
+        if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
             fadeIn();
         }

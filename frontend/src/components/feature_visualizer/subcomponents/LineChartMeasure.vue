@@ -222,6 +222,7 @@ const option = ref({
         <v-chart class="chart z-50" :option="option" :autoresize="true" :update-options="{ notMerge: true }" />
         <div
             class="absolute top-[30px] h-[calc(100%-50px)] bg-red-600 bg-opacity-10"
+            :class="{ hidden: currentMeasure < 0 }"
             :style="{
                 width: `${indicatorWidth}px`,
                 marginLeft: `${(currentMeasure - startMeasureIdx) * indicatorWidth + 45}px`,

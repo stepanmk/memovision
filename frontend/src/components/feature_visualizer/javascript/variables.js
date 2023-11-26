@@ -13,6 +13,7 @@ const colors = [
     '#17becf',
 ];
 
+const chordsVisible = ref(false);
 const currentMeasure = ref(-1);
 const cursorPositions = ref([]);
 const endMeasureIdx = ref(0);
@@ -40,6 +41,7 @@ const allPeaksReady = computed(() => {
 
 export {
     allPeaksReady,
+    chordsVisible,
     colors,
     currentMeasure,
     cursorPositions,

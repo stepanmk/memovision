@@ -210,4 +210,4 @@ function saveRegion() {
     }
 }
 
-export { saveRegion, selectRegion, zoomOnMeasureSelection };
+export { hideAllRegions, saveRegion, selectRegion, zoomOnMeasureSelection };

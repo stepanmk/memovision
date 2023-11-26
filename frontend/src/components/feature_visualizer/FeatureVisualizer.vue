@@ -15,6 +15,7 @@ import { getEndMeasure, getStartMeasure, getTimeString, truncateFilename } from 
 
 import {
     allPeaksReady,
+    chordsVisible,
     colors,
     currentMeasure,
     cursorPositions,
@@ -53,7 +54,7 @@ import {
 } from './javascript/player';
 
 import { selectRelevanceLabel, setFeatureLists } from './javascript/features';
-import { zoomOnMeasureSelection } from './javascript/regions';
+import { addChordRegions, zoomOnMeasureSelection } from './javascript/regions';
 
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../ModuleTemplate.vue';
@@ -105,7 +106,7 @@ async function initFeatVisualizer() {
         playing.push(false);
         timeSelections.value.push(track.length_sec);
         trackLabels.value.push(undefined);
-        tracksVisible.value.push(true);
+        tracksVisible.value.push(false);
         trackTimes.value.push(0.0);
         waveformsVisible.value.push(true);
 
@@ -262,6 +263,12 @@ function showAllInPlots() {
                     :class="{ 'bg-cyan-700 text-white': scatterVisible }"
                     @click="scatterVisible = !scatterVisible">
                     Regression plot
+                </button>
+                <button
+                    class="btn btn-gray"
+                    :class="{ 'bg-cyan-700 text-white': chordsVisible }"
+                    @click="addChordRegions()">
+                    Show chords
                 </button>
             </div>
             <MeasureSelector
