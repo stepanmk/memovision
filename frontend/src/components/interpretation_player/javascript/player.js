@@ -1,8 +1,10 @@
+import { useDebounceFn } from '@vueuse/core';
 import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getStartMeasure, sleep } from '../../../sharedFunctions';
+import { hideAllRegions } from './regions';
 import {
     currentMeasure,
     isPlaying,
@@ -11,6 +13,7 @@ import {
     peaksInstancesReady,
     percLoaded,
     playing,
+    regionToSave,
     trackTimes,
     volume,
 } from './variables';
@@ -22,6 +25,7 @@ const tracksFromDb = useTracksFromDb(pinia);
 let activePeaksIdx = 0;
 let canRewind = true;
 let prevPeaksIdx = null;
+let firstResize = true;
 
 let idxArray = [];
 let peaksInstances = [];
@@ -34,6 +38,26 @@ gainNode.connect(audioCtx.destination);
 
 const rampUp = new Float32Array(10);
 const rampDown = new Float32Array(10);
+
+const debouncedFit = useDebounceFn(() => {
+    fit();
+}, 200);
+
+function fit() {
+    if (firstResize) {
+        firstResize = false;
+        return;
+    }
+    peaksInstances.forEach((instance) => {
+        const view = instance.views.getView('zoomview');
+        view.fitToContainer();
+        view.setZoom({ seconds: 'auto' });
+    });
+    regionToSave.value = false;
+    hideAllRegions();
+}
+
+const resizeObserver = new ResizeObserver(debouncedFit);
 
 function createFadeRamps() {
     for (let i = 0; i < 10; i++) {
@@ -56,6 +80,7 @@ watch(numPeaksLoaded, () => {
 });
 
 async function initPlayer() {
+    firstResize = true;
     audioCtx.resume();
     createFadeRamps();
     initPeaksInstances();
@@ -97,7 +122,7 @@ function initPeaks(filename, idx) {
     const options = {
         zoomview: {
             segmentOptions: {
-                style: 'overlay',
+                overlay: true,
                 overlayOffset: 0,
                 overlayOpacity: 0.15,
                 overlayCornerRadius: 0,
@@ -123,11 +148,13 @@ function initPeaks(filename, idx) {
         peaksInstances[idx] = peaks;
         if (idx === 0) {
             selectPeaks(idx);
+            const audioContainer = document.getElementById('audio-container');
+            resizeObserver.observe(audioContainer);
         }
         if (filename === tracksFromDb.refTrack.filename) {
             peaksInstances[idx].on('player.timeupdate', (time) => {
                 trackTimes.value[idx] = time;
-                const measureIdx = getStartMeasure(time + 0.001);
+                const measureIdx = getStartMeasure(time + 0.005);
                 currentMeasure.value = measureIdx - 2;
             });
         } else {
@@ -215,7 +242,7 @@ async function selectPeaks(idx) {
     if (isPlaying.value) {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
+        if (selectedRegion) {
             const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
@@ -241,7 +268,7 @@ async function playPause() {
     } else {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
-        if (selectedRegion !== null) {
+        if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
             fadeIn();
         }

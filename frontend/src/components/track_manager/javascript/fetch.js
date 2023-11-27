@@ -92,9 +92,16 @@ async function getSyncPoints() {
     }
 }
 
+async function getChords() {
+    const res = await api.get('/chords', getSecureConfig());
+    const chordsList = res.data.chordsList;
+    regionData.chords = chordsList;
+}
+
 export {
     downloadMeasures,
     getAudioData,
+    getChords,
     getMeasureData,
     getMetronomeClick,
     getRegionData,

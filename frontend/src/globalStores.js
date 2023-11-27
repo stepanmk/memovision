@@ -224,6 +224,7 @@ export const useRegionData = defineStore('regionData', {
         diffRegionsSelected: [],
         timeSignatures: [],
         timeSignaturesSelected: [],
+        chords: [],
     }),
 });
 

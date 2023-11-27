@@ -71,6 +71,7 @@ function registerUser(data) {
         <span class="mb-5 text-3xl">{{ t('form.register') }}</span>
         <input
             v-model="v$.email.$model"
+            id="email"
             type="email"
             class="input-field-nomargin border-2"
             :placeholder="t('form.email')"
@@ -90,6 +91,7 @@ function registerUser(data) {
 
         <input
             v-model="v$.username.$model"
+            id="username"
             type="text"
             class="input-field-nomargin border-2"
             :placeholder="t('form.username')"
@@ -109,6 +111,7 @@ function registerUser(data) {
 
         <input
             v-model="v$.password.$model"
+            id="password-first"
             type="password"
             class="input-field-nomargin border-2"
             :placeholder="t('form.pswd')"
@@ -131,6 +134,7 @@ function registerUser(data) {
 
         <input
             v-model="v$.passwordRepeat.$model"
+            id="password-repeat"
             type="password"
             class="input-field-nomargin border-2"
             :placeholder="t('form.pswdagain')"

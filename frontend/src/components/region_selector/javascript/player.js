@@ -1,3 +1,4 @@
+import { useDebounceFn } from '@vueuse/core';
 import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import {
@@ -35,6 +36,20 @@ const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
 gainNode.connect(audioCtx.destination);
 
+const debouncedFit = useDebounceFn(() => {
+    fit();
+}, 200);
+
+function fit() {
+    const view = peaksInstance.views.getView('zoomview');
+    const overview = peaksInstance.views.getView('overview');
+    view.fitToContainer();
+    overview.fitToContainer();
+    view.setZoom({ seconds: 'auto' });
+}
+
+const resizeObserver = new ResizeObserver(debouncedFit);
+
 function initPeaks() {
     const waveformData = audioStore.getWaveformData(tracksFromDb.refTrack.filename);
     const audioElement = document.getElementById('audio-element');
@@ -64,7 +79,7 @@ function initPeaks() {
             fontFamily: 'Inter',
         },
         segmentOptions: {
-            style: 'overlay',
+            overlay: true,
             overlayOffset: 0,
             overlayOpacity: 0.2,
             overlayCornerRadius: 0,
@@ -107,6 +122,9 @@ function initPeaks() {
         measuresVisible.value = false;
         toggleMeasures();
         peaksInstance.zoom.setZoom(zoomLevels.length - 1);
+        const zoomviewContainer = document.getElementById('zoomview-container');
+        resizeObserver.observe(zoomviewContainer);
+
         setTimeout(() => {
             menuButtonsDisable.stopLoading();
         }, 200);

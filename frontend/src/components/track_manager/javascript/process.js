@@ -9,7 +9,7 @@ import {
 } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getSecureConfig } from '../../../sharedFunctions';
-import { getMeasureData, getSyncPoints } from './fetch';
+import { getChords, getMeasureData, getSyncPoints } from './fetch';
 import { deleteFileFromDb } from './track';
 
 import {
@@ -205,6 +205,7 @@ async function synchronizeTracks() {
     await transferAllMeasures();
     await getMeasureData();
     await getSyncPoints();
+    await getChords();
     isLoading.value = false;
     diffRegions.value = await checkStructure();
     if (diffRegions.value.length > 0) {

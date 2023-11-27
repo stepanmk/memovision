@@ -126,6 +126,65 @@ def transfer_measures():
     return jsonify({'message': 'success'})
 
 
+colors_dict = {
+    'C': '#e6194B',
+    'D': '#3cb44b',
+    'E': '#ffe119',
+    'F': '#4363d8',
+    'G': '#f58231',
+    'A': '#911eb4',
+    'B': '#42d4f4',
+    'C#': '#f032e6',
+    'D#': '#bfef45',
+    'F#': '#fabed4',
+    'G#': '#469990',
+    'A#': '#9A6324'
+}
+
+colors = [
+    '#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4',
+    '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990', '#dcbeff',
+    '#9A6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+    '#000075', '#a9a9a9', '#ffffff', '#000000'
+]
+
+
+def get_chords(path):
+    chords_list = []
+    with open(path) as f:
+        for line in f:
+            split_line = line.rstrip().split(' ')
+            if split_line[-1] != 'N':
+                chords_list.append({
+                    'startTime':
+                    float(split_line[0]),
+                    'endTime':
+                    float(split_line[1]),
+                    'chordName':
+                    split_line[-1],
+                    'color':
+                    colors_dict[split_line[-1].split(':')[0]]
+                })
+    return chords_list
+
+
+@sync_routes.route('/chords', methods=['GET'])
+@jwt_required()
+def chords():
+    session = Session.query.filter_by(name=current_user.selected_session,
+                                      user=current_user).first()
+    ref_track = Track.query.filter_by(reference=True,
+                                      session_id=session.id).first()
+    try:
+        ref_chords = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{ref_track.filename}/features/chords.txt'
+        chords_list = get_chords(ref_chords)
+    except AttributeError:
+        return jsonify({
+            'message': 'no chords found',
+        })
+    return jsonify({'message': 'success', 'chordsList': chords_list})
+
+
 @sync_routes.route('/find-duplicates', methods=['GET'])
 @jwt_required()
 def find_duplicates():
@@ -179,7 +238,6 @@ def check_structure():
                 start_time=diff_region['target'][i][0],
                 end_time=diff_region['target'][i][1],
             ).first()
-            print(existing_reg)
             if not existing_reg:
                 db_diff_region = DiffRegion(
                     start_time_ref=diff_region['ref'][i][0],

@@ -6,11 +6,12 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { showAlert } from '../alerts';
 import { api } from '../axiosInstance';
-import { useTracksFromDb, useUserInfo } from '../globalStores';
+import { useModulesVisible, useTracksFromDb, useUserInfo } from '../globalStores';
 import router from '../router.js';
 import { darkMode, disableDarkMode } from '../sharedFunctions';
 
 const userInfo = useUserInfo();
+const modulesVisible = useModulesVisible();
 const tracksFromDb = useTracksFromDb();
 
 const { t, locale } = useI18n();
@@ -31,7 +32,8 @@ function logoutUser(data) {
         .then(function (response) {
             if (response.data.message === 'logout successful') {
                 // reset track pinia stores
-                tracksFromDb.$reset();
+                // tracksFromDb.$reset();
+                modulesVisible.$reset();
                 userInfo.$reset();
                 showAlert('Successfully logged out.', 1500);
                 // if the logout was successful, redirect user to the sign in page
