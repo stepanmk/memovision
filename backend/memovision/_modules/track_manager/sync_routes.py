@@ -151,20 +151,23 @@ colors = [
 
 def get_chords(path):
     chords_list = []
-    with open(path) as f:
-        for line in f:
-            split_line = line.rstrip().split(' ')
-            if split_line[-1] != 'N':
-                chords_list.append({
-                    'startTime':
-                    float(split_line[0]),
-                    'endTime':
-                    float(split_line[1]),
-                    'chordName':
-                    split_line[-1],
-                    'color':
-                    colors_dict[split_line[-1].split(':')[0]]
-                })
+    try:
+        with open(path) as f:
+            for line in f:
+                split_line = line.rstrip().split(' ')
+                if split_line[-1] != 'N':
+                    chords_list.append({
+                        'startTime':
+                        float(split_line[0]),
+                        'endTime':
+                        float(split_line[1]),
+                        'chordName':
+                        split_line[-1],
+                        'color':
+                        colors_dict[split_line[-1].split(':')[0]]
+                    })
+    except FileNotFoundError:
+        pass
     return chords_list
 
 
@@ -175,13 +178,9 @@ def chords():
                                       user=current_user).first()
     ref_track = Track.query.filter_by(reference=True,
                                       session_id=session.id).first()
-    try:
+    if ref_track:
         ref_chords = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{ref_track.filename}/features/chords.txt'
         chords_list = get_chords(ref_chords)
-    except AttributeError:
-        return jsonify({
-            'message': 'no chords found',
-        })
     return jsonify({'message': 'success', 'chordsList': chords_list})
 
 
