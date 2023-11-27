@@ -30,7 +30,7 @@ def compute_tempo(measures, time_signatures=None):
     tempo = 4 * 60 / duration
     if time_signatures:
         for ts in time_signatures:
-            tempo[ts.start_measure_idx:ts.
-                  end_measure_idx] = ts.note_count * 60 / duration[
-                      ts.start_measure_idx:ts.end_measure_idx]
+            tempo[ts.start_measure_idx:ts.end_measure_idx +
+                  1] = ts.note_count * 60 / duration[ts.start_measure_idx:ts.
+                                                     end_measure_idx + 1]
     return tempo
