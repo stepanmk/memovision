@@ -130,7 +130,7 @@ function getLongestDiffRegion(refIdx, targetIdx) {
 
 function zoomOnDifferenceRegion(peaksIdx, secs) {
     const view = peaksInstances[peaksIdx].views.getView('zoomview');
-    view.enableAutoScroll(false);
+    view.enableAutoScroll(false, {});
     const segment = peaksInstances[peaksIdx].segments.getSegment('selectedRegion');
     regionLengths.value[peaksIdx] = segment.endTime - segment.startTime;
     if (zoomingEnabled.value) {
@@ -145,7 +145,7 @@ function zoomOnSelectedRegion() {
     peaksInstances[activePeaksIdx].player.seek(segment.startTime);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
-        view.enableAutoScroll(false);
+        view.enableAutoScroll(false, {});
         const segment = peaksInstances[i].segments.getSegment('selectedRegion');
         regionLengths.value[i] = segment.endTime - segment.startTime;
         if (zoomingEnabled.value) {
@@ -160,6 +160,14 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
     regionSelected.value = true;
     regionToSave.value = true;
     hideAllRegions();
+    if (startMeasure === -1) {
+        peaksInstances.forEach((peaksInstance, idx) => {
+            const view = peaksInstance.views.getView('zoomview');
+            view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
+        });
+        regionToSave.value = false;
+        return;
+    }
     peaksInstances[activePeaksIdx].player.seek(measureData.selectedMeasures[activePeaksIdx][startMeasure + 1]);
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');

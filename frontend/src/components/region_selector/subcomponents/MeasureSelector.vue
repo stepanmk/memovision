@@ -135,13 +135,18 @@ function relevanceBarMouseDown(event) {
                 <div
                     v-for="(obj, i) in timeSignatures"
                     :id="`ts-${i}`"
-                    class="absolute flex h-full cursor-pointer select-none items-center justify-start bg-teal-600 text-xs font-semibold text-white hover:bg-teal-500"
+                    class="absolute flex h-full cursor-pointer select-none items-center justify-start bg-pink-600 text-xs font-semibold text-white hover:bg-pink-500"
                     :style="{
                         width: (obj.endMeasureIdx - obj.startMeasureIdx + 1) * 16 + 'px',
                         'margin-left': obj.startMeasureIdx * 16 + 'px',
                     }"
                     @click="$emit('deleteTimeSignature', i)">
-                    <p class="flex w-[32px] items-center justify-center bg-teal-900 px-1">
+                    <p
+                        v-if="obj.endMeasureIdx - obj.startMeasureIdx > 0"
+                        class="flex w-[32px] items-center justify-center bg-pink-800 px-1">
+                        {{ obj.noteCount }}/{{ obj.noteValue }}
+                    </p>
+                    <p v-else class="flex h-full w-[16px] items-center justify-center bg-pink-800 text-[9px]">
                         {{ obj.noteCount }}/{{ obj.noteValue }}
                     </p>
                 </div>
