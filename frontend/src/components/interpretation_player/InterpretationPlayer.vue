@@ -79,7 +79,7 @@ const measureSelector = ref(null);
 
 watch(startMeasureIdx, () => {
     if (startMeasureIdx.value === -1) {
-        measureSelector.value.resetRegionOverlay();
+        if (measureSelector.value !== null) measureSelector.value.resetRegionOverlay();
     } else if (startMeasureIdx.value > -1) {
         measureSelector.value.setRegionOverlay(startMeasureIdx.value, endMeasureIdx.value);
     }
