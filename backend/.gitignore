@@ -4,8 +4,4 @@
 # python cache files
 *.pyc
 
-# user uploads folder
-user_uploads
-
-
 metadata
