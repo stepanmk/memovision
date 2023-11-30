@@ -4,7 +4,6 @@ import pickle
 
 import numpy as np
 import pandas as pd
-from flask import jsonify
 from memovision._modules.track_manager.label_routes import get_label_data
 from memovision.features.mrmr_funcs import f_classif
 from sklearn.preprocessing import StandardScaler
@@ -14,18 +13,18 @@ def get_per_measure_feature(feature, fpm, method=None):
     if method == 'var':
         per_measure_feature = []
         for i in range(0, len(feature), fpm):
-            feature_value = np.var(feature[i: i + fpm])
+            feature_value = np.var(feature[i:i + fpm])
             per_measure_feature.append(feature_value)
         return np.array(per_measure_feature)
-    
+
 
 def create_relevance_object(relevance, label_name, label_type):
     relevance_sum = 0
-    measure_relevance = [] 
+    measure_relevance = []
     relevance[relevance < 0] = 0
     for i, rel in enumerate(relevance):
         norm_rel = float(1 - np.exp(0.05 * -rel))
-        measure_relevance.append({ 
+        measure_relevance.append({
             'measureIdx': i,
             'regionName': f'Measure {i + 1}',
             'relevance': norm_rel,
@@ -48,18 +47,27 @@ def compute_one_vs_rest(tracks, relevance_func, X):
         y = np.zeros(X.shape[0], dtype=np.int64)
         y[i] = 1
         relevance = relevance_func(**{'X': pd.DataFrame(X), 'y': pd.Series(y)})
-        one_vs_rest.append(create_relevance_object(relevance, track.filename, 'oneVsRest'))
+        one_vs_rest.append(
+            create_relevance_object(relevance, track.filename, 'oneVsRest'))
     return one_vs_rest
 
 
-def compute_relevance(username, session, feature_name, fpm=None, downsample_method=None, scale=True):
+def compute_relevance(username,
+                      session,
+                      feature_name,
+                      fpm=None,
+                      downsample_method=None,
+                      scale=True):
     feature_list = []
     filenames = []
     for track in session.tracks:
         feature_path = f'./user_uploads/{username}/{session.name}/{track.filename}/features/{feature_name}_measure.npy'
         try:
             feature = np.load(feature_path)
-            if (fpm > 1): feature = get_per_measure_feature(feature, fpm=fpm, method=downsample_method)
+            if (fpm > 1):
+                feature = get_per_measure_feature(feature,
+                                                  fpm=fpm,
+                                                  method=downsample_method)
             feature_list.append(np.round(feature, 4))
             filenames.append(track.filename)
         except FileNotFoundError:
@@ -78,7 +86,8 @@ def compute_relevance(username, session, feature_name, fpm=None, downsample_meth
         if filenames == one_vs_rest_file['filenames']:
             one_vs_rest = one_vs_rest_file['data']
         else:
-            one_vs_rest = compute_one_vs_rest(session.tracks, relevance_func, X)
+            one_vs_rest = compute_one_vs_rest(session.tracks, relevance_func,
+                                              X)
             with open(one_vs_rest_path, 'wb') as f:
                 pickle.dump({'data': one_vs_rest, 'filenames': filenames}, f)
     else:
@@ -89,9 +98,14 @@ def compute_relevance(username, session, feature_name, fpm=None, downsample_meth
     label_data = get_label_data(session)
     custom = []
     for label in label_data:
-        if(X.shape[0] == len(label['labels'])):
-            relevance = relevance_func(**{'X': pd.DataFrame(X), 'y': pd.Series(label['labels'])})
-            relevance_object = create_relevance_object(relevance, label['label_name'], 'custom')
+        if (X.shape[0] == len(label['labels'])):
+            relevance = relevance_func(**{
+                'X': pd.DataFrame(X),
+                'y': pd.Series(label['labels'])
+            })
+            relevance_object = create_relevance_object(relevance,
+                                                       label['label_name'],
+                                                       'custom')
             relevance_object['labels'] = label['labels'].astype(bool).tolist()
             custom.append(relevance_object)
     return {'oneVsRest': one_vs_rest, 'custom': custom}
