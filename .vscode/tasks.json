@@ -2,35 +2,35 @@
     "version": "2.0.0",
     "tasks": [
         {
-        "label": "Flask Dev Server",
-        "type": "shell",
-        "windows": {
-            "command": "cd backend; conda activate memovision; python run.py"
-        },
-        "group": "none",
-        "presentation": {
-            "reveal": "always",
-            "panel": "new"
-        },
-        "runOptions": {
-            "runOn": "folderOpen"
-        }
+            "label": "Flask Dev Server",
+            "type": "shell",
+            "windows": {
+                "command": "cd backend; conda activate memovision; python run.py"
+            },
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
         },
         {
-        "label": "Vite Dev Server",
-        "type": "shell",
-        "command": "cd frontend; pnpm run dev",
-        "windows": {
-            "command": "cd frontend; pnpm run dev"
-        },
-        "group": "none",
-        "presentation": {
-            "reveal": "always",
-            "panel": "new"
-        },
-        "runOptions": {
-            "runOn": "folderOpen"
-        }
+            "label": "Vite Dev Server",
+            "type": "shell",
+            "command": "cd frontend; pnpm run dev",
+            "windows": {
+                "command": "cd frontend; pnpm run dev"
+            },
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
         }
     ]
 }
