@@ -538,7 +538,7 @@ function showAllInPlots() {
                     <button
                         id="pause-button"
                         @click="playPause()"
-                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600"
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
                         :class="{ 'bg-cyan-700 dark:bg-cyan-700': isPlaying }">
                         <Icon v-if="isPlaying" icon="ph:pause" width="20" class="text-white" />
                         <Icon v-else icon="ph:play" width="20" />
@@ -547,14 +547,14 @@ function showAllInPlots() {
                     <button
                         id="back-button"
                         @click="rewind()"
-                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600">
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center">
                         <Icon icon="ph:skip-back" width="20" />
                     </button>
 
                     <button
                         id="measure-button"
                         @click="toggleMeasures()"
-                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400 dark:hover:bg-cyan-600"
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
                         :class="{
                             'bg-cyan-700 dark:bg-cyan-700': measuresVisible,
                         }">

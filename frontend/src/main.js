@@ -1,4 +1,3 @@
-import { autoAnimatePlugin } from '@formkit/auto-animate/vue';
 import { createApp } from 'vue';
 import { createI18n } from 'vue-i18n';
 import { pinia } from './piniaInstance';
@@ -28,4 +27,4 @@ const i18n = createI18n({
 });
 
 // create app
-createApp(App).use(router).use(i18n).use(autoAnimatePlugin).use(pinia).mount('#app');
+createApp(App).use(router).use(i18n).use(pinia).mount('#app');

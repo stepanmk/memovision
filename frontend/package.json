@@ -8,7 +8,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@formkit/auto-animate": "^1.0.0-beta.1",
     "@vuelidate/core": "^2.0.0-alpha.41",
     "@vuelidate/validators": "^2.0.0-alpha.29",
     "@vueuse/components": "^8.8.1",
@@ -18,7 +17,7 @@
     "echarts": "^5.4.0",
     "echarts-stat": "^1.2.0",
     "konva": "^8.3.14",
-    "peaks.js": "3.2.0",
+    "peaks.js": "3.2.1",
     "pinia": "^2.0.13",
     "vue": "^3.2.25",
     "vue-echarts": "^6.2.3",

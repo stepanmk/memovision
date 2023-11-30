@@ -161,20 +161,20 @@ function fit() {
                     <button
                         id="pause-button"
                         @click="playPause()"
-                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400">
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center">
                         <Icon v-if="playing" icon="ph:pause" width="20" />
                         <Icon v-else icon="ph:play" width="20" />
                     </button>
                     <button
                         id="back-button"
                         @click="rewind()"
-                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400">
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center">
                         <Icon icon="ph:skip-back" width="20" />
                     </button>
                     <button
                         id="loop-button"
                         @click="toggleLooping()"
-                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400"
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
                         :class="{
                             'bg-cyan-700 dark:bg-cyan-700': loopingActive,
                         }">
@@ -183,7 +183,7 @@ function fit() {
                     <button
                         id="measure-button"
                         @click="toggleMeasures()"
-                        class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white dark:bg-gray-400"
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
                         :class="{ 'bg-cyan-700': measuresVisible }">
                         <Icon
                             icon="akar-icons:three-line-vertical"
