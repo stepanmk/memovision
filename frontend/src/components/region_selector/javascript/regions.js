@@ -163,7 +163,7 @@ function selectRegion(regionIdx) {
         peaksInstance.segments.add({
             startTime: regionData.selectedRegions[regionIdx].startTime,
             endTime: regionData.selectedRegions[regionIdx].endTime,
-            editable: true,
+            editable: false,
             color: 'blue',
             borderColor: 'blue',
         });

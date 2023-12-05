@@ -48,7 +48,7 @@ function fit() {
     const overview = peaksInstance.views.getView('overview');
     view.fitToContainer();
     overview.fitToContainer();
-    view.setZoom({ seconds: 'auto' });
+    view.setZoom({ seconds: tracksFromDb.refTrack.length_sec });
 }
 
 const resizeObserver = new ResizeObserver(debouncedFit);
@@ -59,14 +59,14 @@ function destroyPeaks() {
     peaksInstance = null;
     maxRMS.value = [-60, -60];
     currentRMS.value = [-60, -60];
+    currentTime.value = '00:00.00';
+    volume.value = 0.0;
+    metronomeVolume.value = -6.0;
 }
 
 async function initPeaks() {
     const audioContext = Tone.context;
-    const audio = audioStore.getAudio(tracksFromDb.refTrack.filename);
-    const arrayBuffer = await audio.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
+    const audioBuffer = audioStore.getAudio(tracksFromDb.refTrack.filename);
     const metronomeAudio = audioStore.metronomeClick;
     const metronomeArrayBuffer = await metronomeAudio.arrayBuffer();
     const metronomeAudioBuffer = await audioContext.decodeAudioData(metronomeArrayBuffer);
@@ -100,10 +100,9 @@ async function initPeaks() {
                 }
             }, 0.05);
             this.volumeWatcher = watch(volume, () => {
-                if (volume.value > -30 && peaksInstance.player !== null) {
+                if (volume.value > -30) {
                     peaksInstance.player._adapter.externalPlayer.volume.value = volume.value;
                 } else {
-                    console.log('-inf dB');
                     peaksInstance.player._adapter.externalPlayer.volume.value = -Infinity;
                 }
             });
@@ -111,7 +110,6 @@ async function initPeaks() {
                 if (metronomeVolume.value > -30) {
                     this.metronome.volume.value = metronomeVolume.value;
                 } else {
-                    console.log('-inf dB');
                     this.metronome.volume.value = -Infinity;
                 }
             });
@@ -182,7 +180,6 @@ async function initPeaks() {
         },
     };
 
-    const waveformData = await audioStore.getWaveformData(tracksFromDb.refTrack.filename).arrayBuffer();
     const zoomviewContainer = document.getElementById('zoomview-container');
     const overviewContainer = document.getElementById('overview-container');
     let seconds = tracksFromDb.refTrack.length_sec;
@@ -201,6 +198,9 @@ async function initPeaks() {
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
+            highlightColor: 'black',
+            highlightOpacity: 0.2,
+            highlightOffset: 5,
             playheadColor: 'red',
             fontFamily: 'Inter',
         },
@@ -211,7 +211,7 @@ async function initPeaks() {
             overlayCornerRadius: 0,
         },
         waveformData: {
-            arraybuffer: waveformData,
+            arraybuffer: audioStore.getWaveformData(tracksFromDb.refTrack.filename),
         },
         player: player,
         showAxisLabels: true,
@@ -243,9 +243,7 @@ async function initPeaks() {
             peaksInstance.player._adapter.playClick();
         });
         const zoomviewContainer = document.getElementById('zoomview-container');
-        resizeObserver.observe(zoomviewContainer);
         measuresVisible.value = false;
-        toggleMeasures();
         const view = peaksInstance.views.getView('zoomview');
         zoomviewContainer.addEventListener('wheel', (event) => {
             if (event.deltaY < 0) {
@@ -256,7 +254,9 @@ async function initPeaks() {
                 view.setZoom({ seconds: seconds });
             }
         });
-        view.setZoom({ seconds: 'auto' });
+        view.setZoom({ seconds: seconds });
+        resizeObserver.observe(zoomviewContainer);
+        toggleMeasures();
         setTimeout(() => {
             menuButtonsDisable.stopLoading();
         }, 200);

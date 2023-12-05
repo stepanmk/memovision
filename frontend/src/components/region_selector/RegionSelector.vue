@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
         <template v-slot:module-content>
             <div
                 v-if="peaksReady"
-                class="flex h-12 w-full items-center justify-center gap-1 border-b text-sm dark:border-gray-700">
+                class="flex h-12 w-full select-none items-center justify-center gap-1 border-b text-sm dark:border-gray-700">
                 <p>Selected reference:</p>
                 <p
                     class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-gray-900">
@@ -148,11 +148,11 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="flex w-[calc(100%-5rem)] flex-col">
                     <div class="flex w-full flex-col items-center pl-2 dark:border-gray-700">
-                        <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-300"></div>
+                        <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-400"></div>
                     </div>
 
                     <div class="flex w-full flex-row items-center justify-end gap-5 pl-2 dark:border-gray-700">
-                        <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-300"></div>
+                        <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-400"></div>
 
                         <div
                             id="zoomview-amplitude"
@@ -189,7 +189,8 @@ onBeforeUnmount(() => {
                         </p>
                     </div>
                     <div class="flex-rows flex h-full items-center">
-                        <div class="flex h-[calc(100%-3px)] w-[2rem] flex-col items-end justify-between text-xs">
+                        <div
+                            class="flex h-[calc(100%-3px)] w-[2rem] select-none flex-col items-end justify-between text-xs">
                             <p>0</p>
                             <p>-10</p>
                             <p>-20</p>
@@ -200,16 +201,18 @@ onBeforeUnmount(() => {
                         </div>
                         <div
                             class="mr-[2rem] flex h-[calc(100%-1rem)] w-[2rem] justify-center gap-[1px] dark:border-gray-700">
-                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200">
+                            <div
+                                class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200 dark:bg-gray-600">
                                 <div
                                     id="meter-rect-l"
-                                    class="w-full bg-neutral-400"
+                                    class="w-full bg-neutral-400 dark:bg-gray-400"
                                     :style="{ height: `calc(${(1 + currentRMS[0] / 60) * 100}%)` }"></div>
                             </div>
-                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200">
+                            <div
+                                class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200 dark:bg-gray-600">
                                 <div
                                     id="meter-rect-r"
-                                    class="w-full bg-neutral-400"
+                                    class="w-full bg-neutral-400 dark:bg-gray-400"
                                     :style="{ height: `calc(${(1 + currentRMS[1] / 60) * 100}%)` }"></div>
                             </div>
                         </div>
@@ -305,14 +308,14 @@ onBeforeUnmount(() => {
                     v-for="(obj, i) in regionData.selectedRegions"
                     :id="`region-${i}`"
                     :key="i"
-                    class="flex h-7 w-full items-center justify-between rounded-md bg-neutral-200 px-2 text-sm hover:bg-neutral-300"
+                    class="flex h-7 w-full items-center justify-between rounded-md bg-neutral-200 px-2 text-sm hover:bg-neutral-300 dark:bg-gray-400 dark:text-gray-900 dark:hover:bg-gray-500"
                     :class="{
-                        'bg-neutral-300 dark:bg-gray-600': regionData.selected[i],
+                        'bg-neutral-300 dark:bg-gray-500': regionData.selected[i],
                     }">
                     <p class="flex h-full w-full cursor-pointer items-center" @click="selectRegion(i)">
                         {{ obj.regionName }}
                     </p>
-                    <div class="flex h-full gap-2 rounded-md py-1 dark:bg-gray-400 dark:hover:bg-gray-700">
+                    <div class="flex h-full gap-2 rounded-md py-1">
                         <p
                             class="flex w-20 select-none items-center justify-center rounded-md bg-green-500 text-xs text-white">
                             {{ getTimeString(obj.startTime, 14, 22) }}
@@ -335,7 +338,7 @@ onBeforeUnmount(() => {
                 <div
                     v-if="regionBeingNamed"
                     id="region-name-overlay"
-                    class="absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-white">
+                    class="absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-white dark:bg-gray-700">
                     <div class="flex flex-row gap-1">
                         <span
                             class="flex h-5 w-20 select-none items-center justify-center rounded-md bg-green-500 text-sm text-white"
@@ -346,7 +349,7 @@ onBeforeUnmount(() => {
                             >{{ endTimeString }}</span
                         >
                         <span
-                            class="flex h-5 w-36 select-none items-center justify-center rounded-md bg-neutral-700 text-sm text-white"
+                            class="flex h-5 w-36 select-none items-center justify-center rounded-md bg-neutral-900 text-sm text-white"
                             >Measures: {{ startMeasureIdx + 1 }}–{{ endMeasureIdx + 1 }}</span
                         >
                     </div>
@@ -359,12 +362,13 @@ onBeforeUnmount(() => {
                         maxlength="256"
                         size="20"
                         autocomplete="off"
-                        class="input-field-nomargin h-7 border"
+                        class="input-field-nomargin h-7 border dark:text-yellow-400"
                         placeholder="Region name"
                         v-model="regionName"
                         v-on:keyup.enter="saveRegion()" />
                     <div v-if="timeSignatureEdit" id="measure-input" class="flex flex-row items-center gap-1">
-                        <div class="flex h-7 select-none items-center rounded-md bg-neutral-200 p-2 text-sm">
+                        <div
+                            class="flex h-7 select-none items-center rounded-md bg-neutral-200 p-2 text-sm dark:bg-gray-400 dark:text-gray-900">
                             Time signature:
                         </div>
                         <input
