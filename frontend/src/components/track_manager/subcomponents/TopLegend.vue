@@ -13,7 +13,7 @@
             </div>
             <div class="flex flex-row items-center gap-2 text-sm">
                 <p class="flex w-16 justify-center">Year</p>
-                <p class="flex w-32 justify-center">Peformer</p>
+                <p class="flex w-32 justify-center">Performer</p>
                 <p class="flex w-28 justify-center"></p>
                 <p class="flex w-[1.5rem] justify-center"></p>
             </div>

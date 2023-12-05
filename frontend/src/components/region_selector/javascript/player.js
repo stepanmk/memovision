@@ -57,8 +57,6 @@ function destroyPeaks() {
     resizeObserver.disconnect();
     peaksInstance.destroy();
     peaksInstance = null;
-    maxRMS.value = -60;
-    currentRMS.value = [-60, -60];
 }
 
 async function initPeaks() {
@@ -84,7 +82,14 @@ async function initPeaks() {
             this.externalPlayer.fadeOut = 0.05;
             this.externalPlayer.volume.value = volume.value;
             this.metronome.volume.value = metronomeVolume.value;
-            this.meterScheduleId = null;
+            this.meterInterval = setInterval(() => {
+                currentRMS.value = this.meter.getValue();
+            }, 40);
+            this.meterIntervalMax = setInterval(() => {
+                const currValue = this.meter.getValue();
+                if (currValue[0] > maxRMS.value[0]) maxRMS.value[0] = currValue[0];
+                if (currValue[1] > maxRMS.value[1]) maxRMS.value[1] = currValue[1];
+            }, 250);
             Tone.Transport.scheduleRepeat(() => {
                 const time = this.getCurrentTime();
                 eventEmitter.emit('player.timeupdate', time);
@@ -92,11 +97,6 @@ async function initPeaks() {
                     Tone.Transport.stop();
                 }
             }, 0.05);
-            // this.meterScheduleId = Tone.Transport.scheduleRepeat(() => {
-            setInterval(() => {
-                currentRMS.value = this.meter.getValue();
-            }, 33);
-            // }, 1 / 30);
             watch(volume, () => {
                 if (volume.value > -30) {
                     this.externalPlayer.volume.value = volume.value;
@@ -119,10 +119,11 @@ async function initPeaks() {
         destroy: function () {
             Tone.Transport.stop();
             Tone.Transport.cancel();
-            this.externalPlayer.stop();
             this.externalPlayer.dispose();
-            this.metronome.stop();
             this.metronome.dispose();
+            clearInterval(this.meterInterval);
+            clearInterval(this.meterIntervalMax);
+            this.meter.dispose();
             this.externalPlayer = null;
             this.eventEmitter = null;
         },
@@ -138,7 +139,6 @@ async function initPeaks() {
         play: async function () {
             return Tone.start().then(() => {
                 Tone.Transport.start();
-                // this.externalPlayer.connect(this.peakMeter);
                 this.externalPlayer.connect(this.meter);
                 this.eventEmitter.emit('player.playing', this.getCurrentTime());
             });
@@ -151,7 +151,6 @@ async function initPeaks() {
         },
 
         pause: function () {
-            // this.meter.disconnect();
             Tone.Transport.pause();
             this.eventEmitter.emit('player.pause', this.getCurrentTime());
         },

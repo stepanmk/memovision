@@ -12,6 +12,7 @@ import {
     endMeasureIdx,
     endTimeString,
     loopingActive,
+    maxRMS,
     measuresVisible,
     metronomeActive,
     metronomeVolume,
@@ -95,6 +96,8 @@ function destroyRegionSelector() {
     measureSelector.value.destroy();
     performer.value = '';
     destroyPeaks();
+    maxRMS.value = [-60, -60];
+    currentRMS.value = [-60, -60];
     regionSelectorOpened.value = false;
 }
 
@@ -115,32 +118,37 @@ onBeforeUnmount(() => {
         <template v-slot:module-content>
             <div class="flex h-12 w-full items-center justify-center gap-1 border-b text-sm dark:border-gray-700">
                 <p>Selected reference:</p>
-                <p class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
+                <p
+                    class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-gray-900">
                     {{ refName }}
                 </p>
                 <p v-if="performer">Performer:</p>
-                <p v-if="performer" class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
+                <p
+                    v-if="performer"
+                    class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-gray-900">
                     {{ performer }}
                 </p>
                 <p v-if="year">Year:</p>
-                <p v-if="year" class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
+                <p
+                    v-if="year"
+                    class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-gray-900">
                     {{ year }}
                 </p>
             </div>
-            <div class="flex w-full flex-row border-b pr-5">
-                <div class="flex w-[calc(100%-2rem)] flex-col">
-                    <div class="flex w-full flex-col items-center pl-5 dark:border-gray-700">
-                        <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-400"></div>
+            <div class="flex w-full flex-row border-b dark:border-b-gray-700">
+                <div class="flex w-[calc(100%-5rem)] flex-col">
+                    <div class="flex w-full flex-col items-center pl-2 dark:border-gray-700">
+                        <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-300"></div>
                     </div>
 
-                    <div class="flex w-full flex-row items-center justify-end gap-5 pl-5 dark:border-gray-700">
-                        <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-400"></div>
+                    <div class="flex w-full flex-row items-center justify-end gap-5 pl-2 dark:border-gray-700">
+                        <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-300"></div>
 
                         <div
                             id="zoomview-amplitude"
                             class="absolute flex h-32 w-7 flex-col items-center justify-center">
                             <div
-                                class="flex h-full w-full flex-col items-center justify-between rounded-md bg-neutral-200">
+                                class="flex h-full w-full flex-col items-center justify-between rounded-md bg-neutral-200 dark:bg-gray-800">
                                 <Icon icon="ic:baseline-plus" width="18" />
                                 <input
                                     type="range"
@@ -155,15 +163,46 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
                 </div>
-                <div class="flex h-full w-[2rem] flex-row items-end gap-[1px] border-l px-1 dark:border-gray-700">
-                    <div
-                        id="meter-rect-l"
-                        class="w-[calc(50%)] bg-cyan-700"
-                        :style="{ height: `calc(${(1 + currentRMS[0] / 60) * 100}%)` }"></div>
-                    <div
-                        id="meter-rect-r"
-                        class="w-[calc(50%)] bg-cyan-700"
-                        :style="{ height: `calc(${(1 + currentRMS[1] / 60) * 100}%)` }"></div>
+                <div
+                    class="flex w-[5rem] flex-col items-center justify-center gap-1 border-l px-[3px] dark:border-l-gray-700"
+                    @click="
+                        maxRMS[0] = -60;
+                        maxRMS[1] = -60;
+                    ">
+                    <div class="flex h-[1rem] w-full select-none rounded-md text-xs">
+                        <p class="flex w-[calc(50%)] items-center justify-center">
+                            {{ maxRMS[0] > -60 ? maxRMS[0].toFixed(1) : '-inf' }}
+                        </p>
+                        <p class="flex w-[calc(50%)] items-center justify-center">
+                            {{ maxRMS[1] > -60 ? maxRMS[1].toFixed(1) : '-inf' }}
+                        </p>
+                    </div>
+                    <div class="flex-rows flex h-full items-center">
+                        <div class="flex h-[calc(100%-3px)] w-[2rem] flex-col items-end justify-between text-xs">
+                            <p>0</p>
+                            <p>-10</p>
+                            <p>-20</p>
+                            <p>-30</p>
+                            <p>-40</p>
+                            <p>-50</p>
+                            <p>-60</p>
+                        </div>
+                        <div
+                            class="mr-[2rem] flex h-[calc(100%-1rem)] w-[2rem] justify-center gap-[1px] dark:border-gray-700">
+                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-300">
+                                <div
+                                    id="meter-rect-l"
+                                    class="w-full bg-cyan-700"
+                                    :style="{ height: `calc(${(1 + currentRMS[0] / 60) * 100}%)` }"></div>
+                            </div>
+                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-300">
+                                <div
+                                    id="meter-rect-r"
+                                    class="w-full bg-cyan-700"
+                                    :style="{ height: `calc(${(1 + currentRMS[1] / 60) * 100}%)` }"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -355,7 +394,7 @@ onBeforeUnmount(() => {
                 <button
                     @click="regionBeingNamed ? null : (timeSignatureEdit = !timeSignatureEdit)"
                     class="btn btn-gray"
-                    :class="{ 'bg-cyan-700 text-white': timeSignatureEdit }">
+                    :class="{ 'bg-cyan-700 text-white dark:bg-cyan-700 dark:text-white': timeSignatureEdit }">
                     <span>Edit time signatures</span>
                 </button>
                 <button
