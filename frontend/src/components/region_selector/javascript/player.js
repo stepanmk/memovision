@@ -1,5 +1,6 @@
 import { useDebounceFn } from '@vueuse/core';
 import Peaks from 'peaks.js';
+import * as Tone from 'tone';
 import { watch } from 'vue';
 import {
     useAudioStore,
@@ -9,20 +10,25 @@ import {
     useTracksFromDb,
 } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
+
 import { createZoomLevels, getTimeString } from '../../../sharedFunctions';
 
 import {
     amplitudeZoom,
+    currentRMS,
     currentTime,
     loopingActive,
+    maxRMS,
     measuresVisible,
     metronomeActive,
+    metronomeVolume,
     peaksReady,
     performer,
     playing,
     refName,
     regionBeingAdded,
     volume,
+    year,
 } from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);
@@ -32,9 +38,6 @@ const regionData = useRegionData(pinia);
 const menuButtonsDisable = useMenuButtonsDisable(pinia);
 
 let peaksInstance = null;
-const audioCtx = new AudioContext();
-const gainNode = audioCtx.createGain();
-gainNode.connect(audioCtx.destination);
 
 const debouncedFit = useDebounceFn(() => {
     fit();
@@ -50,17 +53,137 @@ function fit() {
 
 const resizeObserver = new ResizeObserver(debouncedFit);
 
-function initPeaks() {
-    const waveformData = audioStore.getWaveformData(tracksFromDb.refTrack.filename);
-    const audioElement = document.getElementById('audio-element');
+function destroyPeaks() {
+    resizeObserver.disconnect();
+    peaksInstance.destroy();
+    peaksInstance = null;
+    maxRMS.value = -60;
+    currentRMS.value = [-60, -60];
+}
+
+async function initPeaks() {
+    const audioContext = Tone.context;
     const audio = audioStore.getAudio(tracksFromDb.refTrack.filename);
-    audioElement.src = URL.createObjectURL(audio);
-    const audioSource = audioCtx.createMediaElementSource(audioElement);
+    const arrayBuffer = await audio.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    const metronomeAudio = audioStore.metronomeClick;
+    const metronomeArrayBuffer = await metronomeAudio.arrayBuffer();
+    const metronomeAudioBuffer = await audioContext.decodeAudioData(metronomeArrayBuffer);
+
+    const player = {
+        externalPlayer: new Tone.Player(audioBuffer).toDestination(),
+        metronome: new Tone.Player(metronomeAudioBuffer).toDestination(),
+        meter: new Tone.Meter({ channels: 2, smoothing: 0.5 }),
+        eventEmitter: null,
+        init: function (eventEmitter) {
+            this.eventEmitter = eventEmitter;
+            this.externalPlayer.sync();
+            this.externalPlayer.start();
+            this.externalPlayer.fadeIn = 0.05;
+            this.externalPlayer.fadeOut = 0.05;
+            this.externalPlayer.volume.value = volume.value;
+            this.metronome.volume.value = metronomeVolume.value;
+            this.meterScheduleId = null;
+            Tone.Transport.scheduleRepeat(() => {
+                const time = this.getCurrentTime();
+                eventEmitter.emit('player.timeupdate', time);
+                if (time >= this.getDuration()) {
+                    Tone.Transport.stop();
+                }
+            }, 0.05);
+            // this.meterScheduleId = Tone.Transport.scheduleRepeat(() => {
+            setInterval(() => {
+                currentRMS.value = this.meter.getValue();
+            }, 30);
+            // }, 1 / 30);
+            watch(volume, () => {
+                if (volume.value > -30) {
+                    this.externalPlayer.volume.value = volume.value;
+                } else {
+                    console.log('-inf dB');
+                    this.externalPlayer.volume.value = -Infinity;
+                }
+            });
+            watch(metronomeVolume, () => {
+                if (metronomeVolume.value > -30) {
+                    this.metronome.volume.value = metronomeVolume.value;
+                } else {
+                    console.log('-inf dB');
+                    this.metronome.volume.value = -Infinity;
+                }
+            });
+            return Promise.resolve();
+        },
+
+        destroy: function () {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            this.externalPlayer.stop();
+            this.externalPlayer.dispose();
+            this.metronome.stop();
+            this.metronome.dispose();
+            this.externalPlayer = null;
+            this.eventEmitter = null;
+        },
+
+        setSource: function (opts) {
+            if (this.isPlaying()) {
+                this.pause();
+            }
+            this.externalPlayer.buffer.set(opts.webAudio.audioBuffer);
+            return Promise.resolve();
+        },
+
+        play: async function () {
+            return Tone.start().then(() => {
+                Tone.Transport.start();
+                // this.externalPlayer.connect(this.peakMeter);
+                this.externalPlayer.connect(this.meter);
+                this.eventEmitter.emit('player.playing', this.getCurrentTime());
+            });
+        },
+
+        playClick: function () {
+            if (this.metronome.state === 'stopped' && metronomeActive.value) {
+                this.metronome.start();
+            }
+        },
+
+        pause: function () {
+            // this.meter.disconnect();
+            Tone.Transport.pause();
+            this.eventEmitter.emit('player.pause', this.getCurrentTime());
+        },
+
+        isPlaying: function () {
+            return Tone.Transport.state === 'started';
+        },
+
+        seek: function (time) {
+            Tone.Transport.seconds = time;
+            this.eventEmitter.emit('player.seeked', this.getCurrentTime());
+            this.eventEmitter.emit('player.timeupdate', this.getCurrentTime());
+        },
+
+        isSeeking: function () {
+            return false;
+        },
+
+        getCurrentTime: function () {
+            return Tone.Transport.seconds;
+        },
+
+        getDuration: function () {
+            return this.externalPlayer.buffer.duration;
+        },
+    };
+
+    const waveformData = await audioStore.getWaveformData(tracksFromDb.refTrack.filename).arrayBuffer();
     const zoomviewContainer = document.getElementById('zoomview-container');
     const overviewContainer = document.getElementById('overview-container');
     const zoomLevels = createZoomLevels(zoomviewContainer.offsetWidth, tracksFromDb.refTrack.length_sec);
-    audioSource.connect(gainNode);
-    audioCtx.resume();
+
     const options = {
         zoomview: {
             container: zoomviewContainer,
@@ -84,10 +207,10 @@ function initPeaks() {
             overlayOpacity: 0.2,
             overlayCornerRadius: 0,
         },
-        mediaElement: audioElement,
-        dataUri: {
-            arraybuffer: URL.createObjectURL(waveformData),
+        waveformData: {
+            arraybuffer: waveformData,
         },
+        player: player,
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
@@ -105,26 +228,28 @@ function initPeaks() {
         peaksReady.value = true;
         refName.value = tracksFromDb.refTrack.filename;
         if (tracksFromDb.refTrack.performer) {
-            performer.value += tracksFromDb.refTrack.performer;
+            performer.value = tracksFromDb.refTrack.performer;
         }
         if (tracksFromDb.refTrack.year) {
-            performer.value += '; ' + tracksFromDb.refTrack.year;
+            year.value = tracksFromDb.refTrack.year;
         }
-        peaks.on('player.timeupdate', (time) => {
-            currentTime.value = getTimeString(time, 14, 19);
+        peaksInstance.on('player.timeupdate', (time) => {
+            currentTime.value = getTimeString(time, 14, 22);
         });
-        peaks.on('player.playing', () => {
+        peaksInstance.on('player.playing', () => {
             playing.value = true;
         });
-        peaks.on('player.pause', () => {
+        peaksInstance.on('player.pause', () => {
             playing.value = false;
         });
+        peaksInstance.on('points.enter', (event) => {
+            peaksInstance.player._adapter.playClick();
+        });
+        const zoomviewContainer = document.getElementById('zoomview-container');
+        resizeObserver.observe(zoomviewContainer);
         measuresVisible.value = false;
         toggleMeasures();
         peaksInstance.zoom.setZoom(zoomLevels.length - 1);
-        const zoomviewContainer = document.getElementById('zoomview-container');
-        resizeObserver.observe(zoomviewContainer);
-
         setTimeout(() => {
             menuButtonsDisable.stopLoading();
         }, 200);
@@ -180,8 +305,4 @@ watch(amplitudeZoom, () => {
     view.setAmplitudeScale(Number(amplitudeZoom.value));
 });
 
-watch(volume, () => {
-    gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
-});
-
-export { initPeaks, peaksInstance, playPause, rewind, toggleLooping, toggleMeasures, toggleMetronome };
+export { destroyPeaks, initPeaks, peaksInstance, playPause, rewind, toggleLooping, toggleMeasures, toggleMetronome };

@@ -1,24 +1,20 @@
 <script setup>
 import { Icon } from '@iconify/vue';
 import { onBeforeUnmount, ref, watch } from 'vue';
-import {
-    useMeasureData,
-    useMenuButtonsDisable,
-    useModulesVisible,
-    useRegionData,
-    useTracksFromDb,
-} from '../../globalStores';
+import { useMeasureData, useMenuButtonsDisable, useModulesVisible, useRegionData } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getEndMeasure, getStartMeasure, getTimeString } from '../../sharedFunctions';
 
 import {
     amplitudeZoom,
+    currentRMS,
     currentTime,
     endMeasureIdx,
     endTimeString,
     loopingActive,
     measuresVisible,
     metronomeActive,
+    metronomeVolume,
     noteCount,
     noteValue,
     performer,
@@ -31,6 +27,7 @@ import {
     startTimeString,
     timeSignatureEdit,
     volume,
+    year,
 } from './javascript/variables';
 
 import {
@@ -45,16 +42,22 @@ import {
     updateRegion,
 } from './javascript/regions';
 
-import { initPeaks, peaksInstance, playPause, rewind, toggleLooping, toggleMeasures } from './javascript/player';
+import {
+    destroyPeaks,
+    initPeaks,
+    playPause,
+    rewind,
+    toggleLooping,
+    toggleMeasures,
+    toggleMetronome,
+} from './javascript/player';
 
 import ModuleTemplate from '../ModuleTemplate.vue';
 import MeasureSelector from './subcomponents/MeasureSelector.vue';
 
 // pinia stores
 const modulesVisible = useModulesVisible(pinia);
-const tracksFromDb = useTracksFromDb(pinia);
 const menuButtonsDisable = useMenuButtonsDisable(pinia);
-
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
 const measureSelector = ref(null);
@@ -91,6 +94,7 @@ function destroyRegionSelector() {
     if (regionIdx !== -1) updateRegion(regionIdx);
     measureSelector.value.destroy();
     performer.value = '';
+    destroyPeaks();
     regionSelectorOpened.value = false;
 }
 
@@ -98,13 +102,8 @@ onBeforeUnmount(() => {
     if (measureSelector.value !== null) measureSelector.value.destroy();
     refName.value = '';
     performer.value = '';
+    volume.value = 0.0;
 });
-
-function fit() {
-    const view = peaksInstance.views.getView('zoomview');
-    view.setZoom({ seconds: 'auto' });
-    view.fitToContainer();
-}
 </script>
 
 <template>
@@ -123,30 +122,51 @@ function fit() {
                 <p v-if="performer" class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
                     {{ performer }}
                 </p>
+                <p v-if="year">Year:</p>
+                <p v-if="year" class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2">
+                    {{ year }}
+                </p>
             </div>
-            <div class="flex w-full flex-col items-center border-b px-5 dark:border-gray-700">
-                <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-400"></div>
-            </div>
+            <div class="flex w-full flex-row">
+                <div class="flex w-[calc(100%-2rem)] flex-col">
+                    <div class="flex w-full flex-col items-center border-b px-5 dark:border-gray-700">
+                        <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-400"></div>
+                    </div>
 
-            <div class="flex w-full flex-row items-center justify-end gap-5 border-b px-5 dark:border-gray-700">
-                <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-400"></div>
+                    <div class="flex w-full flex-row items-center justify-end gap-5 border-b px-5 dark:border-gray-700">
+                        <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-400"></div>
 
-                <div id="zoomview-amplitude" class="absolute flex h-32 w-7 flex-col items-center justify-center">
-                    <div class="flex h-full w-full flex-col items-center justify-between rounded-md bg-neutral-200">
-                        <Icon icon="ic:baseline-plus" width="18" />
-                        <input
-                            type="range"
-                            min="1"
-                            max="4"
-                            step="0.01"
-                            class="h-1 w-20 accent-cyan-600"
-                            id="amplitude-zoom"
-                            v-model="amplitudeZoom" />
-                        <Icon icon="ic:baseline-minus" width="18" />
+                        <div
+                            id="zoomview-amplitude"
+                            class="absolute flex h-32 w-7 flex-col items-center justify-center">
+                            <div
+                                class="flex h-full w-full flex-col items-center justify-between rounded-md bg-neutral-200">
+                                <Icon icon="ic:baseline-plus" width="18" />
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="4"
+                                    step="0.01"
+                                    class="h-1 w-20 accent-cyan-600"
+                                    id="amplitude-zoom"
+                                    v-model="amplitudeZoom" />
+                                <Icon icon="ic:baseline-minus" width="18" />
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <div
+                    class="flex h-full w-[2rem] flex-row items-end gap-[1px] border-b border-l px-1 dark:border-gray-700">
+                    <div
+                        id="meter-rect-l"
+                        class="w-[calc(50%)] bg-cyan-700"
+                        :style="{ height: `calc(${(1 - Math.abs(currentRMS[0]) / 60) * 100}%)` }"></div>
+                    <div
+                        id="meter-rect-r"
+                        class="w-[calc(50%)] bg-cyan-700"
+                        :style="{ height: `calc(${(1 - Math.abs(currentRMS[1]) / 60) * 100}%)` }"></div>
+                </div>
             </div>
-            <audio id="audio-element" class="w-full"></audio>
 
             <MeasureSelector
                 :measure-count="measureData.measureCount"
@@ -161,7 +181,8 @@ function fit() {
                     <button
                         id="pause-button"
                         @click="playPause()"
-                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center">
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
+                        :class="{ 'bg-cyan-700 text-white dark:bg-cyan-700': playing }">
                         <Icon v-if="playing" icon="ph:pause" width="20" />
                         <Icon v-else icon="ph:play" width="20" />
                     </button>
@@ -184,42 +205,45 @@ function fit() {
                         id="measure-button"
                         @click="toggleMeasures()"
                         class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
-                        :class="{ 'bg-cyan-700': measuresVisible }">
+                        :class="{ 'bg-cyan-700 dark:bg-cyan-700': measuresVisible }">
                         <Icon
                             icon="akar-icons:three-line-vertical"
                             width="20"
                             :class="{ 'text-white': measuresVisible }" />
                     </button>
-                    <div class="flex h-8 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200">
+                    <div
+                        class="flex h-8 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200 dark:bg-gray-400">
                         <button
                             id="metronome-button"
-                            @click="fit()"
-                            class="btn btn-blue flex h-[2rem] w-[2.5rem] items-center justify-center bg-neutral-200 text-black duration-100 hover:bg-cyan-600 hover:text-white"
-                            :class="{ 'bg-cyan-700': metronomeActive }">
+                            @click="toggleMetronome()"
+                            class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
+                            :class="{ 'bg-cyan-700 dark:bg-cyan-700': metronomeActive }">
                             <Icon icon="ph:metronome" width="22" :class="{ 'text-white': metronomeActive }" />
                         </button>
-                        <!-- <input
+                        <input
                             type="range"
-                            min="0.0"
-                            max="0.5"
-                            step="0.01"
+                            min="-30"
+                            max="0"
+                            step="0.1"
                             v-model="metronomeVolume"
                             class="mr-2 h-1 w-24 accent-cyan-600"
-                            id="metronome-volume" /> -->
+                            id="metronome-volume"
+                            @dblclick="metronomeVolume = -6.0" />
                     </div>
                 </div>
-                <div class="flex flex-row items-center justify-center gap-1">
+                <div class="flex flex-row items-center justify-center gap-2">
                     <Icon icon="material-symbols:volume-up-outline" width="24" />
                     <input
                         type="range"
-                        min="0.0"
-                        max="1.0"
-                        step="0.01"
+                        min="-30"
+                        max="0"
+                        step="0.1"
                         v-model="volume"
                         class="h-1 w-24 accent-cyan-600"
-                        id="volume" />
-                    <div class="flex w-20 items-center justify-start rounded-md pl-[18px] text-sm">
-                        <p class="dark:text-white">{{ currentTime }}</p>
+                        id="volume"
+                        @dblclick="volume = 0.0" />
+                    <div class="flex w-24 items-center justify-start rounded-md bg-yellow-400 pl-[18px] text-sm">
+                        <p class="select-none text-black dark:text-black">{{ currentTime }}</p>
                     </div>
                 </div>
             </div>

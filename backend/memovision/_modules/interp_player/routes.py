@@ -20,7 +20,7 @@ def get_warping_path():
     all_tracks = Track.query.filter_by(session_id=session.id).order_by(
         Track.filename.asc())
     measures = load_measures(current_user.username, session.name,
-                             ref_track.filename, True)
+                             ref_track.filename, ref_track.gt_measures)
     step = 0.05
     ref_steps = floor(ref_track.length_sec / step)
     ref_positions = [0] + list(np.linspace(step, ref_steps * step, ref_steps))
