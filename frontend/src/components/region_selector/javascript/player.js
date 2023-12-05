@@ -95,7 +95,7 @@ async function initPeaks() {
             // this.meterScheduleId = Tone.Transport.scheduleRepeat(() => {
             setInterval(() => {
                 currentRMS.value = this.meter.getValue();
-            }, 30);
+            }, 33);
             // }, 1 / 30);
             watch(volume, () => {
                 if (volume.value > -30) {

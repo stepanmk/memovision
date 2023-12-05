@@ -159,11 +159,11 @@ onBeforeUnmount(() => {
                     <div
                         id="meter-rect-l"
                         class="w-[calc(50%)] bg-cyan-700"
-                        :style="{ height: `calc(${(1 - Math.abs(currentRMS[0]) / 60) * 100}%)` }"></div>
+                        :style="{ height: `calc(${(1 + currentRMS[0] / 60) * 100}%)` }"></div>
                     <div
                         id="meter-rect-r"
                         class="w-[calc(50%)] bg-cyan-700"
-                        :style="{ height: `calc(${(1 - Math.abs(currentRMS[1]) / 60) * 100}%)` }"></div>
+                        :style="{ height: `calc(${(1 + currentRMS[1] / 60) * 100}%)` }"></div>
                 </div>
             </div>
 
