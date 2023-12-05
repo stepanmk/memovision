@@ -11,7 +11,7 @@ import {
 } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 
-import { createZoomLevels, getTimeString } from '../../../sharedFunctions';
+import { getTimeString } from '../../../sharedFunctions';
 
 import {
     amplitudeZoom,
@@ -57,6 +57,8 @@ function destroyPeaks() {
     resizeObserver.disconnect();
     peaksInstance.destroy();
     peaksInstance = null;
+    maxRMS.value = [-60, -60];
+    currentRMS.value = [-60, -60];
 }
 
 async function initPeaks() {
@@ -77,7 +79,7 @@ async function initPeaks() {
         init: function (eventEmitter) {
             this.eventEmitter = eventEmitter;
             this.externalPlayer.sync();
-            this.externalPlayer.start();
+            this.externalPlayer.start(0);
             this.externalPlayer.fadeIn = 0.05;
             this.externalPlayer.fadeOut = 0.05;
             this.externalPlayer.volume.value = volume.value;
@@ -97,15 +99,15 @@ async function initPeaks() {
                     Tone.Transport.stop();
                 }
             }, 0.05);
-            watch(volume, () => {
-                if (volume.value > -30) {
-                    this.externalPlayer.volume.value = volume.value;
+            this.volumeWatcher = watch(volume, () => {
+                if (volume.value > -30 && peaksInstance.player !== null) {
+                    peaksInstance.player._adapter.externalPlayer.volume.value = volume.value;
                 } else {
                     console.log('-inf dB');
-                    this.externalPlayer.volume.value = -Infinity;
+                    peaksInstance.player._adapter.externalPlayer.volume.value = -Infinity;
                 }
             });
-            watch(metronomeVolume, () => {
+            this.metronomeWatcher = watch(metronomeVolume, () => {
                 if (metronomeVolume.value > -30) {
                     this.metronome.volume.value = metronomeVolume.value;
                 } else {
@@ -126,6 +128,8 @@ async function initPeaks() {
             this.meter.dispose();
             this.externalPlayer = null;
             this.eventEmitter = null;
+            this.volumeWatcher();
+            this.metronomeWatcher();
         },
 
         setSource: function (opts) {
@@ -181,7 +185,7 @@ async function initPeaks() {
     const waveformData = await audioStore.getWaveformData(tracksFromDb.refTrack.filename).arrayBuffer();
     const zoomviewContainer = document.getElementById('zoomview-container');
     const overviewContainer = document.getElementById('overview-container');
-    const zoomLevels = createZoomLevels(zoomviewContainer.offsetWidth, tracksFromDb.refTrack.length_sec);
+    let seconds = tracksFromDb.refTrack.length_sec;
 
     const options = {
         zoomview: {
@@ -213,15 +217,9 @@ async function initPeaks() {
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
-        zoomLevels: zoomLevels,
+        zoomLevels: [1024],
     };
-    zoomviewContainer.addEventListener('mousewheel', (event) => {
-        if (event.deltaY < 0) {
-            peaksInstance.zoom.zoomIn();
-        } else {
-            peaksInstance.zoom.zoomOut();
-        }
-    });
+
     Peaks.init(options, (err, peaks) => {
         peaksInstance = peaks;
         peaksReady.value = true;
@@ -248,7 +246,17 @@ async function initPeaks() {
         resizeObserver.observe(zoomviewContainer);
         measuresVisible.value = false;
         toggleMeasures();
-        peaksInstance.zoom.setZoom(zoomLevels.length - 1);
+        const view = peaksInstance.views.getView('zoomview');
+        zoomviewContainer.addEventListener('wheel', (event) => {
+            if (event.deltaY < 0) {
+                if (seconds > 10) seconds -= 5;
+                view.setZoom({ seconds: seconds });
+            } else {
+                if (seconds < tracksFromDb.refTrack.length_sec) seconds += 5;
+                view.setZoom({ seconds: seconds });
+            }
+        });
+        view.setZoom({ seconds: 'auto' });
         setTimeout(() => {
             menuButtonsDisable.stopLoading();
         }, 200);

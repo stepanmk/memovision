@@ -433,8 +433,4 @@ function destroyInterpretationPlayer() {
 .regions-transition-leave-to {
     opacity: 0;
 }
-
-input:focus {
-    outline: 2px solid rgba(255, 255, 255, 0.2);
-}
 </style>

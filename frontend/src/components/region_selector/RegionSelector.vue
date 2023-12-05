@@ -18,6 +18,7 @@ import {
     metronomeVolume,
     noteCount,
     noteValue,
+    peaksReady,
     performer,
     playing,
     refName,
@@ -94,10 +95,9 @@ function destroyRegionSelector() {
     const regionIdx = regionData.selected.indexOf(true);
     if (regionIdx !== -1) updateRegion(regionIdx);
     measureSelector.value.destroy();
-    performer.value = '';
+
     destroyPeaks();
-    maxRMS.value = [-60, -60];
-    currentRMS.value = [-60, -60];
+    peaksReady.value = false;
     regionSelectorOpened.value = false;
 }
 
@@ -116,7 +116,9 @@ onBeforeUnmount(() => {
         :module-title="'Region selection'"
         :module-identifier="'region-selector'">
         <template v-slot:module-content>
-            <div class="flex h-12 w-full items-center justify-center gap-1 border-b text-sm dark:border-gray-700">
+            <div
+                v-if="peaksReady"
+                class="flex h-12 w-full items-center justify-center gap-1 border-b text-sm dark:border-gray-700">
                 <p>Selected reference:</p>
                 <p
                     class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-gray-900">
@@ -135,7 +137,15 @@ onBeforeUnmount(() => {
                     {{ year }}
                 </p>
             </div>
-            <div class="flex w-full flex-row border-b dark:border-b-gray-700">
+            <div
+                v-else
+                class="flex h-12 w-full items-center justify-center gap-1 border-b text-sm dark:border-gray-700"></div>
+            <div class="relative flex w-full flex-row border-b dark:border-b-gray-700">
+                <div
+                    v-if="!peaksReady"
+                    class="absolute top-0 z-50 flex h-full w-full items-center justify-center dark:bg-gray-800">
+                    <Icon icon="eos-icons:loading" width="35" :inline="true" />
+                </div>
                 <div class="flex w-[calc(100%-5rem)] flex-col">
                     <div class="flex w-full flex-col items-center pl-2 dark:border-gray-700">
                         <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-300"></div>
@@ -164,12 +174,13 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
                 <div
-                    class="flex w-[5rem] flex-col items-center justify-center gap-1 border-l px-[3px] dark:border-l-gray-700"
+                    class="flex w-[5rem] flex-col items-center justify-center gap-1 border-l px-[3px] pt-2 dark:border-l-gray-700"
                     @click="
                         maxRMS[0] = -60;
                         maxRMS[1] = -60;
                     ">
-                    <div class="flex h-[1rem] w-full select-none rounded-md text-xs">
+                    <div
+                        class="flex h-[1rem] w-full select-none rounded-md bg-neutral-200 text-xs dark:bg-gray-400 dark:text-gray-900">
                         <p class="flex w-[calc(50%)] items-center justify-center">
                             {{ maxRMS[0] > -60 ? maxRMS[0].toFixed(1) : '-inf' }}
                         </p>
@@ -189,16 +200,16 @@ onBeforeUnmount(() => {
                         </div>
                         <div
                             class="mr-[2rem] flex h-[calc(100%-1rem)] w-[2rem] justify-center gap-[1px] dark:border-gray-700">
-                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-300">
+                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200">
                                 <div
                                     id="meter-rect-l"
-                                    class="w-full bg-cyan-700"
+                                    class="w-full bg-neutral-400"
                                     :style="{ height: `calc(${(1 + currentRMS[0] / 60) * 100}%)` }"></div>
                             </div>
-                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-300">
+                            <div class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200">
                                 <div
                                     id="meter-rect-r"
-                                    class="w-full bg-cyan-700"
+                                    class="w-full bg-neutral-400"
                                     :style="{ height: `calc(${(1 + currentRMS[1] / 60) * 100}%)` }"></div>
                             </div>
                         </div>
@@ -249,8 +260,7 @@ onBeforeUnmount(() => {
                             width="20"
                             :class="{ 'text-white': measuresVisible }" />
                     </button>
-                    <div
-                        class="flex h-8 flex-row items-center justify-center gap-1 rounded-md bg-neutral-200 dark:bg-gray-400">
+                    <div class="flex h-8 flex-row items-center justify-center gap-1 rounded-md">
                         <button
                             id="metronome-button"
                             @click="toggleMetronome()"
@@ -264,7 +274,7 @@ onBeforeUnmount(() => {
                             max="0"
                             step="0.1"
                             v-model="metronomeVolume"
-                            class="mr-2 h-1 w-24 accent-cyan-600"
+                            class="mr-2 h-1 w-24"
                             id="metronome-volume"
                             @dblclick="metronomeVolume = -6.0" />
                     </div>
