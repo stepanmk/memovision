@@ -127,13 +127,13 @@ onBeforeUnmount(() => {
                     {{ year }}
                 </p>
             </div>
-            <div class="flex w-full flex-row">
+            <div class="flex w-full flex-row border-b pr-5">
                 <div class="flex w-[calc(100%-2rem)] flex-col">
-                    <div class="flex w-full flex-col items-center border-b px-5 dark:border-gray-700">
+                    <div class="flex w-full flex-col items-center pl-5 dark:border-gray-700">
                         <div id="overview-container" class="h-16 w-full cursor-text dark:bg-gray-400"></div>
                     </div>
 
-                    <div class="flex w-full flex-row items-center justify-end gap-5 border-b px-5 dark:border-gray-700">
+                    <div class="flex w-full flex-row items-center justify-end gap-5 pl-5 dark:border-gray-700">
                         <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-400"></div>
 
                         <div
@@ -155,8 +155,7 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
                 </div>
-                <div
-                    class="flex h-full w-[2rem] flex-row items-end gap-[1px] border-b border-l px-1 dark:border-gray-700">
+                <div class="flex h-full w-[2rem] flex-row items-end gap-[1px] border-l px-1 dark:border-gray-700">
                     <div
                         id="meter-rect-l"
                         class="w-[calc(50%)] bg-cyan-700"

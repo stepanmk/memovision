@@ -74,7 +74,7 @@ async function initPeaks() {
     const player = {
         externalPlayer: new Tone.Player(audioBuffer).toDestination(),
         metronome: new Tone.Player(metronomeAudioBuffer).toDestination(),
-        meter: new Tone.Meter({ channels: 2, smoothing: 0.5 }),
+        meter: new Tone.Meter({ channels: 2, smoothing: 0.8 }),
         eventEmitter: null,
         init: function (eventEmitter) {
             this.eventEmitter = eventEmitter;
