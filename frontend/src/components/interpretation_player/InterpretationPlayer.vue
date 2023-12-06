@@ -151,12 +151,9 @@ function destroyInterpretationPlayer() {
         :module-title="'Interpretation player'"
         :module-identifier="'interp-player'"
         :visible="modulesVisible.interpretationPlayer"
-        :is-disabled="!allPeaksReady">
+        :is-disabled="false">
         <template v-slot:window>
-            <LoadingWindow
-                :visible="!allPeaksReady"
-                :loading-message="'Loading tracks...'"
-                :progress-bar-perc="percLoaded" />
+            <LoadingWindow :visible="false" :loading-message="'Loading tracks...'" :progress-bar-perc="percLoaded" />
         </template>
         <template v-slot:module-content>
             <div

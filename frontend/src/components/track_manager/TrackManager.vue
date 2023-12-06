@@ -4,6 +4,7 @@ import { useDropZone } from '@vueuse/core';
 import { onMounted, ref } from 'vue';
 import Popper from 'vue3-popper';
 import {
+    useAudioStore,
     useFeatureLists,
     useMenuButtonsDisable,
     useModulesVisible,
@@ -81,6 +82,7 @@ const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 const userInfo = useUserInfo(pinia);
+const audioStore = useAudioStore(pinia);
 
 /* dropzone variables */
 const dropzone = ref();
@@ -117,6 +119,7 @@ async function getAllData() {
         audioData.push(getAudioData(track.filename));
     }
     await Promise.all(audioData);
+    audioStore.sortByName();
     await getMetronomeClick();
     await getMeasureData();
     await getFeatureNames();

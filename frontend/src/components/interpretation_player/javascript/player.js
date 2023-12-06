@@ -1,9 +1,10 @@
 import { useDebounceFn } from '@vueuse/core';
 import Peaks from 'peaks.js';
-import { watch } from 'vue';
+import * as Tone from 'tone';
+import { ref, watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getStartMeasure, sleep } from '../../../sharedFunctions';
+import { getStartMeasure } from '../../../sharedFunctions';
 import { hideAllRegions } from './regions';
 import {
     currentMeasure,
@@ -15,7 +16,6 @@ import {
     playing,
     regionToSave,
     trackTimes,
-    volume,
 } from './variables';
 
 const audioStore = useAudioStore(pinia);
@@ -23,21 +23,11 @@ const measureData = useMeasureData(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 
 let activePeaksIdx = 0;
-let canRewind = true;
 let prevPeaksIdx = null;
 let firstResize = true;
-
 let idxArray = [];
 let peaksInstances = [];
 let selectedIndices = [];
-
-const audioCtx = new AudioContext();
-const gainNode = audioCtx.createGain();
-gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-gainNode.connect(audioCtx.destination);
-
-const rampUp = new Float32Array(10);
-const rampDown = new Float32Array(10);
 
 const debouncedFit = useDebounceFn(() => {
     fit();
@@ -59,35 +49,16 @@ function fit() {
 
 const resizeObserver = new ResizeObserver(debouncedFit);
 
-function createFadeRamps() {
-    for (let i = 0; i < 10; i++) {
-        rampUp[i] = Math.pow(i / 9, 3) * volume.value;
-        rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
-    }
-}
-
-// 10 ms fade in and fade out to prevent clicking when switching recordings
-const fadeIn = () => gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
-const fadeOut = () => gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
-
-watch(volume, () => {
-    gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
-    createFadeRamps();
-});
-
 watch(numPeaksLoaded, () => {
     percLoaded.value = Math.round((numPeaksLoaded.value / tracksFromDb.syncTracks.length) * 100);
 });
 
 async function initPlayer() {
     firstResize = true;
-    audioCtx.resume();
-    createFadeRamps();
     initPeaksInstances();
 }
 
 function resetPlayer() {
-    audioCtx.suspend();
     isPlaying.value = false;
     numPeaksLoaded.value = 0;
     percLoaded.value = 0;
@@ -109,15 +80,94 @@ function initPeaksInstances() {
     }, 50);
 }
 
+const switchSecs = ref(0);
+
 function initPeaks(filename, idx) {
-    const audioElement = document.getElementById(`audio-${idx}`);
-    const audio = audioStore.getAudio(filename);
-    audioElement.src = URL.createObjectURL(audio);
+    const audioBuffer = audioStore.getAudio(filename);
+    const player = {
+        externalPlayer: new Tone.Player(audioBuffer).toDestination(Tone.getContext().destination),
+        eventEmitter: null,
+        scheduleRepeater: null,
+        playerIdx: idx,
+        init: function (eventEmitter) {
+            this.eventEmitter = eventEmitter;
+            this.externalPlayer.fadeIn = 0.02;
+            this.externalPlayer.fadeOut = 0.02;
+            this.scheduleRepeater = Tone.Transport.scheduleRepeat(() => {
+                const time = this.getCurrentTime();
+                this.eventEmitter.emit('player.timeupdate', time);
+            }, 0.15);
+            return Promise.resolve();
+        },
+
+        destroy: function () {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            this.externalPlayer.dispose();
+            this.externalPlayer = null;
+            this.eventEmitter = null;
+        },
+
+        setSource: function (opts) {
+            if (this.isPlaying()) {
+                this.pause();
+            }
+            this.externalPlayer.buffer.set(opts.webAudio.audioBuffer);
+            return Promise.resolve();
+        },
+
+        play: async function () {
+            Tone.Transport.seconds = switchSecs.value;
+            return Tone.start().then(() => {
+                this.externalPlayer.sync();
+                this.externalPlayer.start(0);
+                Tone.Transport.start();
+                this.eventEmitter.emit('player.playing', this.getCurrentTime());
+            });
+        },
+
+        pause: function () {
+            this.externalPlayer.unsync();
+            this.externalPlayer.stop(0);
+            Tone.Transport.pause();
+            this.eventEmitter.emit('player.pause', this.getCurrentTime());
+        },
+
+        isPlaying: function () {
+            return Tone.Transport.state === 'started';
+        },
+
+        seek: function (time) {
+            if (this.playerIdx === activePeaksIdx) {
+                Tone.Transport.seconds = time;
+                switchSecs.value = time;
+            } else {
+                this.externalPlayer.seconds = time;
+            }
+
+            this.eventEmitter.emit('player.seeked', this.getCurrentTime());
+            this.eventEmitter.emit('player.timeupdate', this.getCurrentTime());
+        },
+
+        isSeeking: function () {
+            return false;
+        },
+
+        getCurrentTime: function () {
+            if (this.playerIdx === activePeaksIdx) {
+                return Tone.Transport.seconds;
+            } else {
+                return this.externalPlayer.seconds;
+            }
+        },
+
+        getDuration: function () {
+            return this.externalPlayer.buffer.duration;
+        },
+    };
+
     const waveformContainer = document.getElementById(`track-div-${idx}`);
     waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
-    const audioSource = audioCtx.createMediaElementSource(audioElement);
-    audioSource.connect(gainNode);
-    const waveformData = audioStore.getWaveformData(filename);
     const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
     const options = {
         zoomview: {
@@ -135,10 +185,10 @@ function initPeaks(filename, idx) {
             axisGridlineColor: 'rgb(17 24 39)',
             fontFamily: 'Inter',
         },
-        mediaElement: audioElement,
-        dataUri: {
-            arraybuffer: URL.createObjectURL(waveformData),
+        waveformData: {
+            arraybuffer: audioStore.getWaveformData(filename),
         },
+        player: player,
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
@@ -162,11 +212,13 @@ function initPeaks(filename, idx) {
                 trackTimes.value[idx] = time;
             });
         }
+
         addMeasuresToPeaksInstance(idx);
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
         view.setZoom({ seconds: trackLengthSec });
+        view.enableAutoScroll(false, {});
     });
 }
 
@@ -196,16 +248,9 @@ function addMeasuresToPeaksInstance(idx) {
     }
 }
 
-async function goToMeasure(measureIdx) {
-    if (canRewind) {
-        canRewind = false;
-        fadeOut();
-        await sleep(20);
-        const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
-        peaksInstances[activePeaksIdx].player.seek(seekTime);
-        fadeIn();
-        canRewind = true;
-    }
+function goToMeasure(measureIdx) {
+    const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
+    peaksInstances[activePeaksIdx].player.seek(seekTime);
 }
 
 function findClosestTimeIdx(peaksIdx, time) {
@@ -222,16 +267,15 @@ function seekCallback(time) {
     });
 }
 
-async function selectPeaks(idx) {
+function selectPeaks(idx) {
     selectedIndices = idxArray.slice();
     selectedIndices.splice(idx, 1);
     if (prevPeaksIdx !== null) {
         playing[prevPeaksIdx] = false;
         if (isPlaying.value) {
-            fadeOut();
-            await sleep(10);
             peaksInstances[prevPeaksIdx].player.pause();
         }
+        switchSecs.value = trackTimes.value[idx];
         peaksInstances[prevPeaksIdx].off('player.timeupdate', seekCallback);
     }
     // add seekCallback to peaks instance specified by idx
@@ -246,52 +290,40 @@ async function selectPeaks(idx) {
             const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
-            await sleep(10);
-            fadeIn();
         }
         // otherwise just continue playing at the current cursor position
         else {
             peaksInstances[idx].player.play();
-            await sleep(10);
-            fadeIn();
         }
     }
     prevPeaksIdx = idx;
 }
 
-async function playPause() {
+function playPause() {
     // pause playing if it is active
     if (isPlaying.value) {
-        fadeOut();
-        await sleep(10);
         peaksInstances[activePeaksIdx].player.pause();
+        switchSecs.value = trackTimes.value[activePeaksIdx];
     } else {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
         if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
-            fadeIn();
         }
         // otherwise just continue playing at the current cursor position
         else {
             peaksInstances[activePeaksIdx].player.play();
-            fadeIn();
         }
     }
     isPlaying.value = !isPlaying.value;
 }
 
 async function rewind() {
-    fadeOut();
-    await sleep(20);
     peaksInstances[activePeaksIdx].player.seek(0);
-    fadeIn();
 }
 
 export {
     activePeaksIdx,
-    fadeIn,
-    fadeOut,
     findClosestTimeIdx,
     goToMeasure,
     idxArray,
@@ -301,5 +333,6 @@ export {
     resetPlayer,
     rewind,
     selectPeaks,
+    switchSecs,
     toggleMeasures,
 };

@@ -72,8 +72,8 @@ async function initPeaks() {
     const metronomeAudioBuffer = await audioContext.decodeAudioData(metronomeArrayBuffer);
 
     const player = {
-        externalPlayer: new Tone.Player(audioBuffer).toDestination(),
-        metronome: new Tone.Player(metronomeAudioBuffer).toDestination(),
+        externalPlayer: new Tone.Player(audioBuffer).toDestination(Tone.getContext().destination),
+        metronome: new Tone.Player(metronomeAudioBuffer).toDestination(Tone.getContext().destination),
         meter: new Tone.Meter({ channels: 2, smoothing: 0.8 }),
         eventEmitter: null,
         init: function (eventEmitter) {
@@ -255,6 +255,7 @@ async function initPeaks() {
             }
         });
         view.setZoom({ seconds: seconds });
+
         resizeObserver.observe(zoomviewContainer);
         toggleMeasures();
         setTimeout(() => {

@@ -2,10 +2,10 @@ import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
 import { useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getEndMeasure, getSecureConfig, getStartMeasure, sleep } from '../../../sharedFunctions';
+import { getEndMeasure, getSecureConfig, getStartMeasure } from '../../../sharedFunctions';
 import { getRegionData } from '../../track_manager/javascript/fetch';
 
-import { activePeaksIdx, fadeOut, findClosestTimeIdx, peaksInstances, playPause, selectPeaks } from './player';
+import { activePeaksIdx, findClosestTimeIdx, peaksInstances, playPause, selectPeaks, switchSecs } from './player';
 
 import {
     endMeasureIdx,
@@ -26,8 +26,6 @@ async function selectRegion(regionIdx, obj) {
     regionToSave.value = false;
     const referenceName = tracksFromDb.refTrack.filename;
     const refIdx = tracksFromDb.getIdx(referenceName);
-    fadeOut();
-    await sleep(10);
     peaksInstances[activePeaksIdx].player.pause();
     isPlaying.value = false;
     const startIdx = findClosestTimeIdx(refIdx, obj.startTime);
@@ -143,6 +141,7 @@ function zoomOnSelectedRegion() {
     const segment = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
     const secs = getLongestRegion();
     peaksInstances[activePeaksIdx].player.seek(segment.startTime);
+    switchSecs.value = segment.startTime;
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
         view.enableAutoScroll(false, {});
@@ -156,7 +155,7 @@ function zoomOnSelectedRegion() {
 }
 
 async function zoomOnMeasureSelection(startMeasure, endMeasure) {
-    if (isPlaying.value) await playPause();
+    if (isPlaying.value) playPause();
     regionSelected.value = true;
     regionToSave.value = true;
     hideAllRegions();
@@ -169,6 +168,7 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
         return;
     }
     peaksInstances[activePeaksIdx].player.seek(measureData.selectedMeasures[activePeaksIdx][startMeasure + 1]);
+    switchSecs.value = measureData.selectedMeasures[activePeaksIdx][startMeasure + 1];
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
         view.enableAutoScroll(false, {});
