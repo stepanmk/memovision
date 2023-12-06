@@ -15,7 +15,7 @@ import { pinia } from '../../piniaInstance';
 import { getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
 import DialogWindow from '../DialogWindow.vue';
 import LoadingWindow from '../LoadingWindow.vue';
-import ModuleTemplate from '../ModuleTemplate.vue';
+import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import BottomLegend from './subcomponents/BottomLegend.vue';
 import LabelAssignment from './subcomponents/LabelAssignment.vue';
 import ProgressBar from './subcomponents/ProgressBar.vue';

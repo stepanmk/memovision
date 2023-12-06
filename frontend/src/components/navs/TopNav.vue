@@ -4,15 +4,14 @@ import { onClickOutside } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { showAlert } from '../alerts';
-import { api } from '../axiosInstance';
-import { useModulesVisible, useTracksFromDb, useUserInfo } from '../globalStores';
-import router from '../router.js';
-import { darkMode, disableDarkMode } from '../sharedFunctions';
+import { showAlert } from '../../alerts';
+import { api } from '../../axiosInstance';
+import { useModulesVisible, useUserInfo } from '../../globalStores';
+import router from '../../router.js';
+import { darkMode, disableDarkMode } from '../../sharedFunctions';
 
 const userInfo = useUserInfo();
 const modulesVisible = useModulesVisible();
-const tracksFromDb = useTracksFromDb();
 
 const { t, locale } = useI18n();
 const { username, darkModeEnabled } = storeToRefs(userInfo);
@@ -89,20 +88,20 @@ function logoutUser(data) {
     <div
         v-if="menuOpen"
         id="user-menu"
-        class="absolute right-0 top-0 z-20 mt-14 mr-12 flex w-60 flex-col rounded-md border bg-white pt-3 pb-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+        class="absolute right-0 top-0 z-20 mr-12 mt-14 flex w-60 flex-col rounded-md border bg-white pb-3 pt-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
         ref="target">
-        <div class="flex gap-1 pl-5 pr-5 pt-1 pb-1 text-base font-semibold">User: {{ username }}</div>
+        <div class="flex gap-1 pb-1 pl-5 pr-5 pt-1 text-base font-semibold">User: {{ username }}</div>
 
         <div
             @click="changeSession()"
-            class="flex cursor-pointer gap-1 pl-5 pr-5 pt-1 pb-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
+            class="flex cursor-pointer gap-1 pb-1 pl-5 pr-5 pt-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
             <Icon icon="material-symbols:swap-horiz-rounded" :inline="true" width="20" />
             Change session
         </div>
 
         <div
             @click="logoutUser()"
-            class="flex cursor-pointer gap-1 pl-5 pr-5 pt-1 pb-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
+            class="flex cursor-pointer gap-1 pb-1 pl-5 pr-5 pt-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
             <Icon icon="clarity:sign-out-line" :inline="true" width="20" />
             {{ t('button.signout') }}
         </div>

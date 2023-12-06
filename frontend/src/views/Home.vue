@@ -4,8 +4,8 @@ import InterpretationPlayer from '../components/interpretation_player/Interpreta
 import RegionSelector from '../components/region_selector/RegionSelector.vue';
 import TrackManager from '../components/track_manager/TrackManager.vue';
 
-import TopNav from '../components/TopNav.vue';
-import SideNav from '../components/sidenav/SideNav.vue';
+import SideNav from '../components/navs/SideNav.vue';
+import TopNav from '../components/navs/TopNav.vue';
 </script>
 
 <template>

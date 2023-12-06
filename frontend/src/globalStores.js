@@ -44,17 +44,14 @@ export const useMenuButtonsDisable = defineStore('menuButtonsDisable', {
     }),
     actions: {
         startLoading(moduleName) {
-            // console.log('started');
             this.isLoading = true;
             this.trackManager = true;
             this.regionSelector = true;
             this.interpretationPlayer = true;
             this.featureVisualizer = true;
-
             this[moduleName] = false;
         },
         stopLoading() {
-            // console.log('finished');
             this.isLoading = false;
             this.trackManager = false;
             this.regionSelector = false;

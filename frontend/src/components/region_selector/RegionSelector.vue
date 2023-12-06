@@ -54,7 +54,7 @@ import {
     toggleMetronome,
 } from './javascript/player';
 
-import ModuleTemplate from '../ModuleTemplate.vue';
+import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import MeasureSelector from './subcomponents/MeasureSelector.vue';
 
 // pinia stores

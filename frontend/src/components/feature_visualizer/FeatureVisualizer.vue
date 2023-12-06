@@ -57,7 +57,7 @@ import { selectRelevanceLabel, setFeatureLists } from './javascript/features';
 import { addChordRegions, zoomOnMeasureSelection } from './javascript/regions';
 
 import LoadingWindow from '../LoadingWindow.vue';
-import ModuleTemplate from '../ModuleTemplate.vue';
+import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import SelectedRegion from '../shared_components/SelectedRegion.vue';
 import SubMenu from '../shared_components/SubMenu.vue';
 import FeatureName from './subcomponents/FeatureName.vue';
