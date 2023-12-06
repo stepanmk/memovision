@@ -332,7 +332,7 @@ function showAllInPlots() {
                                     class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md"
                                     :class="{
                                         'bg-cyan-700 text-white': playing[i],
-                                        'btn-disabled cursor-default': !waveformsVisible[i],
+                                        'cursor-default dark:text-gray-500': !waveformsVisible[i],
                                         'hover:bg-cyan-600 hover:text-white': waveformsVisible[i],
                                     }"
                                     @click="waveformsVisible[i] ? selectPeaks(i) : null">

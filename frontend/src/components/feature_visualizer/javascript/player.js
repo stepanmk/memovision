@@ -3,7 +3,7 @@ import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { findClosestTimeIdx, sleep } from '../../../sharedFunctions';
+import { findClosestTimeIdx } from '../../../sharedFunctions';
 import { hideAllRegions, zoomOut } from './regions';
 import {
     cursorPositions,
@@ -22,27 +22,13 @@ const measureData = useMeasureData(pinia);
 
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
-gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
 gainNode.connect(audioCtx.destination);
-
-const rampUp = new Float32Array(10);
-const rampDown = new Float32Array(10);
-function createFadeRamps() {
-    for (let i = 0; i < 10; i++) {
-        rampUp[i] = Math.pow(i / 9, 3) * volume.value;
-        rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
-    }
-}
-const fadeIn = () => gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
-const fadeOut = () => gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
 
 watch(volume, () => {
     gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
-    createFadeRamps();
 });
 
 let activePeaksIdx = 0;
-let canRewind = true;
 let endTimes = [];
 let firstResize = true;
 let idxArray = [];
@@ -54,16 +40,23 @@ let startTimes = [];
 async function initPlayer() {
     firstResize = true;
     audioCtx.resume();
-    createFadeRamps();
     initPeaksInstances();
 }
 
 function resetPlayer() {
-    // numPeaksLoaded.value = 0;
-    // percLoaded.value = 0;
-    audioCtx.suspend();
-    selectedIndices = [];
+    peaksInstances[activePeaksIdx].player.pause();
+
+    peaksInstances.forEach((instance) => {
+        instance.destroy();
+    });
+
+    isPlaying.value = false;
     prevPeaksIdx = null;
+    selectedIndices = [];
+    peaksInstances = [];
+    idxArray = [];
+    audioCtx.suspend();
+    resizeObserver.disconnect();
 }
 
 const debouncedFit = useDebounceFn(() => {
@@ -198,15 +191,8 @@ function addMeasuresToPeaksInstance(idx) {
 }
 
 async function goToMeasure(measureIdx) {
-    if (canRewind) {
-        canRewind = false;
-        fadeOut();
-        await sleep(20);
-        const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
-        peaksInstances[activePeaksIdx].player.seek(seekTime);
-        fadeIn();
-        canRewind = true;
-    }
+    const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
+    peaksInstances[activePeaksIdx].player.seek(seekTime);
 }
 
 function seekCallback(time) {
@@ -222,8 +208,6 @@ async function selectPeaks(idx) {
     if (prevPeaksIdx !== null) {
         playing[prevPeaksIdx] = false;
         if (isPlaying.value) {
-            fadeOut();
-            await sleep(10);
             peaksInstances[prevPeaksIdx].player.pause();
         }
         peaksInstances[prevPeaksIdx].off('player.timeupdate', seekCallback);
@@ -240,14 +224,10 @@ async function selectPeaks(idx) {
             const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
-            await sleep(10);
-            fadeIn();
         }
         // otherwise just continue playing at the current cursor position
         else {
             peaksInstances[idx].player.play();
-            await sleep(10);
-            fadeIn();
         }
     }
     prevPeaksIdx = idx;
@@ -256,37 +236,28 @@ async function selectPeaks(idx) {
 async function playPause() {
     // pause playing if it is active
     if (isPlaying.value) {
-        fadeOut();
-        await sleep(10);
         peaksInstances[activePeaksIdx].player.pause();
     } else {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
         if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
-            fadeIn();
         }
         // otherwise just continue playing at the current cursor position
         else {
             peaksInstances[activePeaksIdx].player.play();
-            fadeIn();
         }
     }
     isPlaying.value = !isPlaying.value;
 }
 
 async function rewind() {
-    fadeOut();
-    await sleep(20);
     peaksInstances[activePeaksIdx].player.seek(0);
-    fadeIn();
 }
 
 export {
     activePeaksIdx,
     endTimes,
-    fadeIn,
-    fadeOut,
     goToMeasure,
     idxArray,
     initPlayer,
