@@ -10,7 +10,7 @@
     }
 
     .input-field-nomargin {
-        @apply h-8 rounded-md p-2 text-sm text-black dark:border-hidden dark:bg-gray-300;
+        @apply h-8 rounded-md p-2 text-sm text-black dark:border-hidden;
     }
 
     .btn {

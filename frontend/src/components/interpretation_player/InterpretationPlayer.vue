@@ -135,10 +135,6 @@ function destroyInterpretationPlayer() {
     trackLabels.value = [];
     trackTimes.value = [];
 
-    // player
-    idxArray.splice(0);
-    peaksInstances.splice(0);
-
     resetPlayer();
     measureSelector.value.destroy();
     measuresVisible.value = false;
@@ -151,9 +147,12 @@ function destroyInterpretationPlayer() {
         :module-title="'Interpretation player'"
         :module-identifier="'interp-player'"
         :visible="modulesVisible.interpretationPlayer"
-        :is-disabled="false">
+        :is-disabled="!allPeaksReady">
         <template v-slot:window>
-            <LoadingWindow :visible="false" :loading-message="'Loading tracks...'" :progress-bar-perc="percLoaded" />
+            <LoadingWindow
+                :visible="!allPeaksReady"
+                :loading-message="'Loading tracks...'"
+                :progress-bar-perc="percLoaded" />
         </template>
         <template v-slot:module-content>
             <div
@@ -163,7 +162,7 @@ function destroyInterpretationPlayer() {
                     <SubMenu :name="'Feature'" :num-entries="measureData.relevanceFeatures.length">
                         <p
                             v-for="(obj, i) in measureData.relevanceFeatures"
-                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
+                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-300"
                             @click="selectRelevanceFeature(obj.id, obj.name)">
                             {{ obj.name }}
                         </p>
@@ -338,7 +337,7 @@ function destroyInterpretationPlayer() {
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             class="flex h-16 w-full shrink-0 flex-row gap-2">
                             <div
-                                class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-300"
+                                class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-400"
                                 :id="`track-div-${i}`"></div>
                             <div
                                 class="flex h-full w-[7.5rem] flex-col items-center justify-center rounded-md bg-neutral-200 text-sm text-black dark:bg-gray-400">

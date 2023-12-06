@@ -1,7 +1,6 @@
 import { useDebounceFn } from '@vueuse/core';
 import Peaks from 'peaks.js';
-import * as Tone from 'tone';
-import { ref, watch } from 'vue';
+import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getStartMeasure } from '../../../sharedFunctions';
@@ -16,6 +15,7 @@ import {
     playing,
     regionToSave,
     trackTimes,
+    volume,
 } from './variables';
 
 const audioStore = useAudioStore(pinia);
@@ -25,9 +25,14 @@ const tracksFromDb = useTracksFromDb(pinia);
 let activePeaksIdx = 0;
 let prevPeaksIdx = null;
 let firstResize = true;
+
 let idxArray = [];
 let peaksInstances = [];
 let selectedIndices = [];
+
+const audioCtx = new AudioContext();
+const gainNode = audioCtx.createGain();
+gainNode.connect(audioCtx.destination);
 
 const debouncedFit = useDebounceFn(() => {
     fit();
@@ -49,21 +54,36 @@ function fit() {
 
 const resizeObserver = new ResizeObserver(debouncedFit);
 
+watch(volume, () => {
+    gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
+});
+
 watch(numPeaksLoaded, () => {
     percLoaded.value = Math.round((numPeaksLoaded.value / tracksFromDb.syncTracks.length) * 100);
 });
 
 async function initPlayer() {
     firstResize = true;
+    audioCtx.resume();
     initPeaksInstances();
 }
 
 function resetPlayer() {
+    peaksInstances[activePeaksIdx].player.pause();
+
+    peaksInstances.forEach((instance) => {
+        instance.destroy();
+    });
+
     isPlaying.value = false;
     numPeaksLoaded.value = 0;
     percLoaded.value = 0;
     prevPeaksIdx = null;
     selectedIndices = [];
+    peaksInstances = [];
+    idxArray = [];
+    audioCtx.suspend();
+    resizeObserver.disconnect();
 }
 
 function waveformListener(idx, event) {
@@ -80,96 +100,15 @@ function initPeaksInstances() {
     }, 50);
 }
 
-const switchSecs = ref(0);
-
-async function initPeaks(filename, idx) {
-    const audioContext = Tone.context;
-    const audioArrayBuffer = await audioStore.getAudio(filename).arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(audioArrayBuffer);
-    const player = {
-        externalPlayer: new Tone.Player(audioBuffer).toDestination(Tone.getContext().destination),
-        eventEmitter: null,
-        scheduleRepeater: null,
-        playerIdx: idx,
-        init: function (eventEmitter) {
-            this.eventEmitter = eventEmitter;
-            this.externalPlayer.fadeIn = 0.01;
-            this.externalPlayer.fadeOut = 0.01;
-            this.scheduleRepeater = Tone.Transport.scheduleRepeat(() => {
-                const time = this.getCurrentTime();
-                this.eventEmitter.emit('player.timeupdate', time);
-            }, 0.15);
-            return Promise.resolve();
-        },
-
-        destroy: function () {
-            Tone.Transport.stop();
-            Tone.Transport.cancel();
-            this.externalPlayer.dispose();
-            this.externalPlayer = null;
-            this.eventEmitter = null;
-        },
-
-        setSource: function (opts) {
-            if (this.isPlaying()) {
-                this.pause();
-            }
-            this.externalPlayer.buffer.set(opts.webAudio.audioBuffer);
-            return Promise.resolve();
-        },
-
-        play: async function () {
-            Tone.Transport.seconds = switchSecs.value;
-            return Tone.start().then(() => {
-                this.externalPlayer.sync();
-                this.externalPlayer.start(0);
-                Tone.Transport.start();
-                this.eventEmitter.emit('player.playing', this.getCurrentTime());
-            });
-        },
-
-        pause: function () {
-            this.externalPlayer.unsync();
-            this.externalPlayer.stop(0);
-            Tone.Transport.pause();
-            this.eventEmitter.emit('player.pause', this.getCurrentTime());
-        },
-
-        isPlaying: function () {
-            return Tone.Transport.state === 'started';
-        },
-
-        seek: function (time) {
-            if (this.playerIdx === activePeaksIdx) {
-                Tone.Transport.seconds = time;
-                switchSecs.value = time;
-            } else {
-                this.externalPlayer.seconds = time;
-            }
-
-            this.eventEmitter.emit('player.seeked', this.getCurrentTime());
-            this.eventEmitter.emit('player.timeupdate', this.getCurrentTime());
-        },
-
-        isSeeking: function () {
-            return false;
-        },
-
-        getCurrentTime: function () {
-            if (this.playerIdx === activePeaksIdx) {
-                return Tone.Transport.seconds;
-            } else {
-                return this.externalPlayer.seconds;
-            }
-        },
-
-        getDuration: function () {
-            return this.externalPlayer.buffer.duration;
-        },
-    };
-
+function initPeaks(filename, idx) {
+    const audioElement = document.getElementById(`audio-${idx}`);
+    const audio = audioStore.getAudio(filename);
+    audioElement.src = URL.createObjectURL(audio);
     const waveformContainer = document.getElementById(`track-div-${idx}`);
     waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
+    const audioSource = audioCtx.createMediaElementSource(audioElement);
+    audioSource.connect(gainNode);
+    const waveformData = audioStore.getWaveformData(filename);
     const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
     const options = {
         zoomview: {
@@ -187,10 +126,10 @@ async function initPeaks(filename, idx) {
             axisGridlineColor: 'rgb(17 24 39)',
             fontFamily: 'Inter',
         },
+        mediaElement: audioElement,
         waveformData: {
-            arraybuffer: audioStore.getWaveformData(filename),
+            arraybuffer: waveformData,
         },
-        player: player,
         showAxisLabels: true,
         emitCueEvents: true,
         fontSize: 12,
@@ -214,13 +153,11 @@ async function initPeaks(filename, idx) {
                 trackTimes.value[idx] = time;
             });
         }
-
         addMeasuresToPeaksInstance(idx);
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
         view.setZoom({ seconds: trackLengthSec });
-        view.enableAutoScroll(false, {});
     });
 }
 
@@ -250,7 +187,7 @@ function addMeasuresToPeaksInstance(idx) {
     }
 }
 
-function goToMeasure(measureIdx) {
+async function goToMeasure(measureIdx) {
     const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
     peaksInstances[activePeaksIdx].player.seek(seekTime);
 }
@@ -264,12 +201,13 @@ function findClosestTimeIdx(peaksIdx, time) {
 
 function seekCallback(time) {
     const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
-    selectedIndices.forEach((idx) => {
+    for (let i = 0; i < selectedIndices.length; i++) {
+        const idx = selectedIndices[i];
         peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
-    });
+    }
 }
 
-function selectPeaks(idx) {
+async function selectPeaks(idx) {
     selectedIndices = idxArray.slice();
     selectedIndices.splice(idx, 1);
     if (prevPeaksIdx !== null) {
@@ -277,7 +215,6 @@ function selectPeaks(idx) {
         if (isPlaying.value) {
             peaksInstances[prevPeaksIdx].player.pause();
         }
-        switchSecs.value = trackTimes.value[idx];
         peaksInstances[prevPeaksIdx].off('player.timeupdate', seekCallback);
     }
     // add seekCallback to peaks instance specified by idx
@@ -301,11 +238,10 @@ function selectPeaks(idx) {
     prevPeaksIdx = idx;
 }
 
-function playPause() {
+async function playPause() {
     // pause playing if it is active
     if (isPlaying.value) {
         peaksInstances[activePeaksIdx].player.pause();
-        switchSecs.value = trackTimes.value[activePeaksIdx];
     } else {
         // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
@@ -321,7 +257,12 @@ function playPause() {
 }
 
 async function rewind() {
-    peaksInstances[activePeaksIdx].player.seek(0);
+    const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+    if (selectedRegion) {
+        peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
+    } else {
+        peaksInstances[activePeaksIdx].player.seek(0);
+    }
 }
 
 export {
@@ -335,6 +276,5 @@ export {
     resetPlayer,
     rewind,
     selectPeaks,
-    switchSecs,
     toggleMeasures,
 };

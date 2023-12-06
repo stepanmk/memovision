@@ -362,7 +362,7 @@ onBeforeUnmount(() => {
                         maxlength="256"
                         size="20"
                         autocomplete="off"
-                        class="input-field-nomargin h-7 border dark:text-yellow-400"
+                        class="input-field-nomargin h-7 border placeholder-black dark:bg-gray-300"
                         placeholder="Region name"
                         v-model="regionName"
                         v-on:keyup.enter="saveRegion()" />
@@ -380,7 +380,7 @@ onBeforeUnmount(() => {
                             min="1"
                             placeholder="1"
                             v-model="noteCount"
-                            class="input-field-nomargin h-7 w-12 border" />
+                            class="input-field-nomargin h-7 w-12 border dark:bg-gray-300" />
                         <p>/</p>
                         <input
                             type="number"
@@ -391,7 +391,7 @@ onBeforeUnmount(() => {
                             min="1"
                             placeholder="1"
                             v-model="noteValue"
-                            class="input-field-nomargin h-7 w-12 border" />
+                            class="input-field-nomargin h-7 w-12 border dark:bg-gray-300" />
                     </div>
                     <div id="region-adding-buttons" class="flex flex-row items-center justify-center gap-2">
                         <button @click="timeSignatureEdit ? saveTimeSignature() : saveRegion()" class="btn btn-blue">

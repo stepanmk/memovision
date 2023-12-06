@@ -131,8 +131,9 @@ function initPeaks(filename, idx) {
             axisGridlineColor: 'rgb(17 24 39)',
         },
         mediaElement: audioElement,
-        dataUri: {
-            arraybuffer: URL.createObjectURL(waveformData),
+
+        waveformData: {
+            arraybuffer: waveformData,
         },
         showAxisLabels: true,
         emitCueEvents: true,
