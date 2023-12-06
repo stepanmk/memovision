@@ -66,7 +66,9 @@ function destroyPeaks() {
 
 async function initPeaks() {
     const audioContext = Tone.context;
-    const audioBuffer = audioStore.getAudio(tracksFromDb.refTrack.filename);
+    const audioArrayBuffer = await audioStore.getAudio(tracksFromDb.refTrack.filename).arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(audioArrayBuffer);
+
     const metronomeAudio = audioStore.metronomeClick;
     const metronomeArrayBuffer = await metronomeAudio.arrayBuffer();
     const metronomeAudioBuffer = await audioContext.decodeAudioData(metronomeArrayBuffer);
@@ -80,8 +82,8 @@ async function initPeaks() {
             this.eventEmitter = eventEmitter;
             this.externalPlayer.sync();
             this.externalPlayer.start(0);
-            this.externalPlayer.fadeIn = 0.05;
-            this.externalPlayer.fadeOut = 0.05;
+            this.externalPlayer.fadeIn = 0.01;
+            this.externalPlayer.fadeOut = 0.01;
             this.externalPlayer.volume.value = volume.value;
             this.metronome.volume.value = metronomeVolume.value;
             this.meterInterval = setInterval(() => {
@@ -242,6 +244,7 @@ async function initPeaks() {
         peaksInstance.on('points.enter', (event) => {
             peaksInstance.player._adapter.playClick();
         });
+
         const zoomviewContainer = document.getElementById('zoomview-container');
         measuresVisible.value = false;
         const view = peaksInstance.views.getView('zoomview');
@@ -258,6 +261,7 @@ async function initPeaks() {
 
         resizeObserver.observe(zoomviewContainer);
         toggleMeasures();
+
         setTimeout(() => {
             menuButtonsDisable.stopLoading();
         }, 200);

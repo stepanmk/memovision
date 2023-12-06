@@ -82,8 +82,10 @@ function initPeaksInstances() {
 
 const switchSecs = ref(0);
 
-function initPeaks(filename, idx) {
-    const audioBuffer = audioStore.getAudio(filename);
+async function initPeaks(filename, idx) {
+    const audioContext = Tone.context;
+    const audioArrayBuffer = await audioStore.getAudio(filename).arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(audioArrayBuffer);
     const player = {
         externalPlayer: new Tone.Player(audioBuffer).toDestination(Tone.getContext().destination),
         eventEmitter: null,
@@ -91,8 +93,8 @@ function initPeaks(filename, idx) {
         playerIdx: idx,
         init: function (eventEmitter) {
             this.eventEmitter = eventEmitter;
-            this.externalPlayer.fadeIn = 0.02;
-            this.externalPlayer.fadeOut = 0.02;
+            this.externalPlayer.fadeIn = 0.01;
+            this.externalPlayer.fadeOut = 0.01;
             this.scheduleRepeater = Tone.Transport.scheduleRepeat(() => {
                 const time = this.getCurrentTime();
                 this.eventEmitter.emit('player.timeupdate', time);

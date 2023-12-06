@@ -119,7 +119,6 @@ async function getAllData() {
         audioData.push(getAudioData(track.filename));
     }
     await Promise.all(audioData);
-    audioStore.sortByName();
     await getMetronomeClick();
     await getMeasureData();
     await getFeatureNames();

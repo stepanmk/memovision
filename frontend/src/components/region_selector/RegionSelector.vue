@@ -200,7 +200,7 @@ onBeforeUnmount(() => {
                             <p>-60</p>
                         </div>
                         <div
-                            class="mr-[2rem] flex h-[calc(100%-1rem)] w-[2rem] justify-center gap-[1px] dark:border-gray-700">
+                            class="mr-[2rem] flex h-[calc(100%-1rem)] w-[2rem] justify-center gap-[2px] dark:border-gray-700">
                             <div
                                 class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200 dark:bg-gray-600">
                                 <div

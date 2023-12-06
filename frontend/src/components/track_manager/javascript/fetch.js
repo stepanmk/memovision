@@ -1,4 +1,3 @@
-import * as Tone from 'tone';
 import { api } from '../../../axiosInstance';
 import { useAudioStore, useMeasureData, useRegionData, useTracksFromDb, useUserInfo } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
@@ -32,13 +31,11 @@ async function getTrackData() {
 }
 
 async function getAudioData(filename) {
-    const audioContext = Tone.context;
-    const audioRes = await api.get(`/get-audio/${filename}`, getSecureConfig('arraybuffer'));
-    const audioBuffer = await audioContext.decodeAudioData(audioRes.data);
+    const audioRes = await api.get(`/get-audio/${filename}`, getSecureConfig('blob'));
     const waveformRes = await api.get(`/get-waveform-data/${filename}`, getSecureConfig('arraybuffer'));
     audioStore.audioObjects.push({
         filename: filename,
-        audio: audioBuffer,
+        audio: audioRes.data,
         waveformData: waveformRes.data,
     });
     audioStore.sortByName();
