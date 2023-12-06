@@ -1,0 +1,29 @@
+-- dependencies --
+
+vueuse – MIT
+vuealidate – MIT
+axios – MIT
+colormap – MIT
+echarts – Apache License 2.0
+konva – MIT
+peaks.js – GNU Lesser General Public License v3.0
+pinia – MIT
+tone.js – MIT
+vue – MIT
+vue-echarts – MIT
+vue-i18n – MIT
+vue-router – MIT
+vue3-popper – MIT
+waveform-data – GNU Lesser General Public License v3.0
+
+-- dev dependencies --
+
+iconify/vue – MIT
+intlify/vite-plugin-vue-i18n – MIT
+types/colormap – MIT
+vitejs/plugin-vue – MIT
+vue/typescript – MIT
+autoprefixer – MIT
+postcss – MIT
+tailwindcss – MIT
+vite – MIT
