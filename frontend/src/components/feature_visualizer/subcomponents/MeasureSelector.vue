@@ -158,10 +158,10 @@ function relevanceBarMouseDown(event) {
             <div id="overview-2" class="flex h-[1rem] flex-row">
                 <div v-for="(obj, i) in regionOverlay" :id="`meas-${i}`" class="h-full w-4 shrink-0">
                     <div
-                        class="h-full w-full hover:cursor-pointer hover:bg-red-600"
+                        class="h-full w-full hover:cursor-pointer hover:bg-red-600 dark:hover:bg-red-600"
                         :class="{
-                            'bg-neutral-400': i % 2 !== 0,
-                            'bg-neutral-300': i % 2 == 0,
+                            'bg-neutral-400 dark:bg-gray-500': i % 2 !== 0,
+                            'bg-neutral-300 dark:bg-gray-400': i % 2 == 0,
                         }"
                         @click="$emit('goToMeasure', i)"
                         @mouseover="logMeasure(i)"
@@ -169,7 +169,7 @@ function relevanceBarMouseDown(event) {
                         <div
                             class="z-50 h-full w-full"
                             :class="{
-                                'border-t border-b border-cyan-600 bg-neutral-900 bg-opacity-70 hover:bg-red-600  dark:border-gray-400':
+                                'border-b border-t border-cyan-600 bg-neutral-900 bg-opacity-70 hover:bg-red-600  dark:border-gray-400':
                                     regionOverlay[i],
                             }">
                             <div

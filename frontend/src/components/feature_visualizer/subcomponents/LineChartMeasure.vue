@@ -6,6 +6,8 @@ import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { computed, ref } from 'vue';
 import VChart from 'vue-echarts';
+import { useUserInfo } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
 
 use([CanvasRenderer, LineChart, TitleComponent, TooltipComponent, GridComponent]);
 
@@ -25,6 +27,8 @@ const props = defineProps({
     yMax: [Number, String],
     yMin: [Number, String],
 });
+
+const userInfo = useUserInfo(pinia);
 
 let data = [];
 for (let i = 0; i < props.data[0].featDataMeasure.length; i++) {
@@ -65,7 +69,7 @@ const compAxis = computed(() => {
         },
         axisLabel: {
             show: true,
-            color: 'black',
+            // color: 'black',
             interval: numMeasures > 60 ? 6 : 0,
         },
     };
@@ -154,16 +158,6 @@ const compSeries = computed(() => {
     return series;
 });
 
-const compColors = computed(() => {
-    let colors = [];
-    props.data.forEach((featObject, i) => {
-        if (props.visible[i]) {
-            colors.push(props.colors[i % 10]);
-        }
-    });
-    return colors;
-});
-
 const compYAxis = computed(() => {
     const axis = {
         min: props.yMin,
@@ -175,7 +169,7 @@ const compYAxis = computed(() => {
             onZero: true,
         },
         axisLabel: {
-            color: 'black',
+            // color: 'black',
         },
     };
     return axis;
@@ -191,7 +185,7 @@ const option = ref({
         left: 'center',
         textStyle: {
             fontSize: 13,
-            color: 'black',
+            // color: 'black',
         },
     },
     animation: false,
@@ -214,12 +208,18 @@ const option = ref({
             fontWeight: 'normal',
         },
     },
+    backgroundColor: 'transparent',
 });
 </script>
 
 <template>
     <div class="relative">
-        <v-chart class="chart z-50" :option="option" :autoresize="true" :update-options="{ notMerge: true }" />
+        <v-chart
+            class="chart z-50"
+            :option="option"
+            :autoresize="true"
+            :update-options="{ notMerge: true }"
+            :theme="userInfo.chartsTheme" />
         <div
             class="absolute top-[30px] h-[calc(100%-50px)] bg-red-600 bg-opacity-10"
             :class="{ hidden: currentMeasure < 0 }"

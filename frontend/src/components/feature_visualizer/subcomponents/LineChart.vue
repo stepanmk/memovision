@@ -11,6 +11,8 @@ import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { computed, ref } from 'vue';
 import VChart from 'vue-echarts';
+import { useUserInfo } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
 
 use([
     CanvasRenderer,
@@ -22,6 +24,8 @@ use([
     GridComponent,
     MarkLineComponent,
 ]);
+
+const userInfo = useUserInfo(pinia);
 
 const props = defineProps({
     showAxis: Boolean,
@@ -60,7 +64,7 @@ const compAxis = computed(() => {
         axisTick: {
             alignWithLabel: true,
             lineStyle: {
-                color: 'black',
+                // color: 'black',
             },
         },
     };
@@ -78,7 +82,7 @@ const compYAxis = computed(() => {
             onZero: true,
         },
         axisLabel: {
-            color: 'black',
+            // color: 'black',
         },
     };
     return axis;
@@ -94,7 +98,7 @@ const option = ref({
         left: 'center',
         textStyle: {
             fontSize: 13,
-            color: 'black',
+            // color: 'black',
         },
     },
     xAxis: compAxis,
@@ -117,11 +121,17 @@ const option = ref({
         top: 30,
         bottom: 20,
     },
+    backgroundColor: 'transparent',
 });
 </script>
 
 <template>
-    <v-chart class="chart" :option="option" autoresize :update-options="{ notMerge: true }" />
+    <v-chart
+        class="chart"
+        :option="option"
+        autoresize
+        :update-options="{ notMerge: true }"
+        :theme="userInfo.chartsTheme" />
 </template>
 
 <style scoped></style>

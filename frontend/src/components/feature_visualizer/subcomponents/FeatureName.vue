@@ -9,7 +9,7 @@ defineProps({
     <div
         :id="`feat-${idx}`"
         :key="idx"
-        class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md px-2 text-sm hover:bg-neutral-200">
+        class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md px-2 text-sm hover:bg-neutral-200 dark:hover:bg-gray-300">
         <p class="mr-5 flex h-full w-full items-center">
             {{ featName }}
         </p>

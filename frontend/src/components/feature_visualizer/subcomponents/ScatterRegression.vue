@@ -12,6 +12,8 @@ import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { computed, ref } from 'vue';
 import VChart from 'vue-echarts';
+import { useUserInfo } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
 import { getTimeString } from '../../../sharedFunctions';
 
 use([
@@ -33,6 +35,8 @@ const props = defineProps({
     labels: Array,
     labelNames: String,
 });
+
+const userInfo = useUserInfo(pinia);
 
 const compSeries = computed(() => {
     let series = [];
@@ -116,7 +120,7 @@ const option = ref({
     textStyle: {
         fontFamily: 'Inter',
         fontSize: 13,
-        color: 'black',
+        // color: 'black',
     },
     animation: false,
     xAxis: {
@@ -160,7 +164,7 @@ const option = ref({
             let outString = '';
             params.forEach((param) => {
                 if (param.componentSubType === 'scatter') {
-                    outString += `<b>${param.seriesName}</b><br/> Duration: ${getTimeString(
+                    outString += `${param.seriesName}<br/> Duration: ${getTimeString(
                         param.value[1].toFixed(2),
                         14,
                         22
@@ -172,7 +176,7 @@ const option = ref({
         textStyle: {
             fontSize: 13,
             fontWeight: 'normal',
-            color: 'black',
+            // color: 'black',
         },
     },
     legend: {
@@ -180,11 +184,17 @@ const option = ref({
         top: 'top',
         data: compLegendData,
     },
+    backgroundColor: 'transparent',
 });
 </script>
 
 <template>
-    <v-chart class="chart" :option="option" :autoresize="true" :update-options="{ notMerge: true }" />
+    <v-chart
+        class="chart"
+        :option="option"
+        :autoresize="true"
+        :update-options="{ notMerge: true }"
+        :theme="userInfo.chartsTheme" />
 </template>
 
 <style scoped></style>

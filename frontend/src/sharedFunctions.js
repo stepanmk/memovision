@@ -56,9 +56,11 @@ function darkMode() {
     if (userInfo.darkModeEnabled) {
         document.documentElement.classList.remove('dark');
         userInfo.darkModeEnabled = false;
+        userInfo.chartsTheme = 'default';
     } else {
         document.documentElement.classList.add('dark');
         userInfo.darkModeEnabled = true;
+        userInfo.chartsTheme = 'dark';
     }
 }
 

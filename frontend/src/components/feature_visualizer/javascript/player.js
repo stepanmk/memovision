@@ -3,10 +3,9 @@ import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { findClosestTimeIdx, getStartMeasure, sleep } from '../../../sharedFunctions';
+import { findClosestTimeIdx, sleep } from '../../../sharedFunctions';
 import { hideAllRegions, zoomOut } from './regions';
 import {
-    currentMeasure,
     cursorPositions,
     isPlaying,
     measuresVisible,
@@ -14,6 +13,7 @@ import {
     playing,
     trackTimes,
     volume,
+    waveformsVisible,
 } from './variables';
 
 const audioStore = useAudioStore(pinia);
@@ -106,12 +106,9 @@ function initPeaks(filename, idx) {
     audioElement.src = URL.createObjectURL(audio);
     const audioSource = audioCtx.createMediaElementSource(audioElement);
     audioSource.connect(gainNode);
-    // get waveform data
     const waveformData = audioStore.getWaveformData(filename);
     const waveformContainer = document.getElementById(`track-div-${idx}`);
     waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
-    // const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
-    // const zoomLevels = createZoomLevels(waveformContainer.offsetWidth, trackLengthSec);
     // peaks.js options
     const options = {
         zoomview: {
@@ -153,19 +150,16 @@ function initPeaks(filename, idx) {
             const featureContent = document.getElementById('feature-content');
             resizeObserver.observe(featureContent);
         }
-        if (filename === tracksFromDb.refTrack.filename) {
-            peaksInstances[idx].on('player.timeupdate', (time) => {
-                trackTimes.value[idx] = time;
-                const measureIdx = getStartMeasure(time + 0.01);
-                currentMeasure.value = measureIdx - 2;
-                setCursorPos(idx, time);
-            });
-        } else {
-            peaksInstances[idx].on('player.timeupdate', (time) => {
-                trackTimes.value[idx] = time;
-                setCursorPos(idx, time);
-            });
-        }
+
+        peaksInstances[idx].on('player.timeupdate', (time) => {
+            trackTimes.value[idx] = time;
+            setCursorPos(idx, time);
+            // if (idx === activePeaksIdx) {
+            //     const measureIdx = getStartMeasure(time + 0.01);
+            //     currentMeasure.value = measureIdx - 2;
+            // }
+        });
+
         peaksInstancesReady.value[idx] = true;
     });
 }
@@ -218,7 +212,7 @@ async function goToMeasure(measureIdx) {
 function seekCallback(time) {
     const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
     selectedIndices.forEach((idx) => {
-        peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
+        if (waveformsVisible.value[idx]) peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
     });
 }
 

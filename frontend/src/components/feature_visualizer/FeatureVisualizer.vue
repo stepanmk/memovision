@@ -185,12 +185,12 @@ function showAllInPlots() {
             <LoadingWindow :visible="!allPeaksReady" :loading-message="'Loading tracks...'" :progress-bar-perc="0" />
         </template>
         <template v-slot:module-content>
-            <div class="flex h-[3rem] w-full items-center gap-2 border-b px-5">
+            <div class="flex h-[3rem] w-full items-center gap-2 border-b px-5 dark:border-gray-700">
                 <SubMenu
                     :name="'Features'"
                     :num-entries="selectedFeatureLists.dynamicsTime.length + selectedFeatureLists.rhythmTime.length">
                     <FeatureName
-                        :class="{ 'bg-neutral-200': selectedFeatureLists.dynamicsTimeVisible[i] }"
+                        :class="{ 'bg-neutral-200 dark:bg-gray-300': selectedFeatureLists.dynamicsTimeVisible[i] }"
                         v-for="(obj, i) in selectedFeatureLists.dynamicsTime"
                         :feat-name="obj.name"
                         :idx="i"
@@ -198,7 +198,7 @@ function showAllInPlots() {
                             selectedFeatureLists.dynamicsTimeVisible[i] = !selectedFeatureLists.dynamicsTimeVisible[i]
                         " />
                     <FeatureName
-                        :class="{ 'bg-neutral-200': selectedFeatureLists.rhythmTimeVisible[i] }"
+                        :class="{ 'bg-neutral-200 dark:bg-gray-300': selectedFeatureLists.rhythmTimeVisible[i] }"
                         v-for="(obj, i) in selectedFeatureLists.rhythmTime"
                         :feat-name="obj.name"
                         :idx="i"
@@ -209,8 +209,8 @@ function showAllInPlots() {
                 <SubMenu :name="'Label'" :num-entries="measureData.labels.length">
                     <p
                         v-for="(obj, i) in measureData.labels"
-                        :class="{ 'bg-neutral-200': labelSelectors[i] }"
-                        class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
+                        :class="{ 'bg-neutral-200 dark:bg-gray-300': labelSelectors[i] }"
+                        class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-400"
                         @click="selectRelevanceLabel(i)">
                         {{ obj }}
                     </p>
@@ -221,7 +221,7 @@ function showAllInPlots() {
                         selectedFeatureLists.dynamicsMeasure.length + selectedFeatureLists.rhythmMeasure.length
                     ">
                     <FeatureName
-                        :class="{ 'bg-neutral-200': selectedFeatureLists.dynamicsMeasureVisible[i] }"
+                        :class="{ 'bg-neutral-200 dark:bg-gray-300': selectedFeatureLists.dynamicsMeasureVisible[i] }"
                         v-for="(obj, i) in selectedFeatureLists.dynamicsMeasure"
                         :feat-name="obj.name"
                         :idx="i"
@@ -260,13 +260,13 @@ function showAllInPlots() {
                 </SubMenu>
                 <button
                     class="btn btn-gray"
-                    :class="{ 'bg-cyan-700 text-white': scatterVisible }"
+                    :class="{ 'bg-cyan-700 text-white dark:bg-cyan-700': scatterVisible }"
                     @click="scatterVisible = !scatterVisible">
                     Regression plot
                 </button>
                 <button
                     class="btn btn-gray"
-                    :class="{ 'bg-cyan-700 text-white': chordsVisible }"
+                    :class="{ 'bg-cyan-700 text-white dark:bg-cyan-700': chordsVisible }"
                     @click="addChordRegions()">
                     Show chords
                 </button>
@@ -278,10 +278,10 @@ function showAllInPlots() {
                 @select-region="zoomOnMeasureSelection"
                 @go-to-measure="goToMeasure"
                 ref="measureSelector" />
-            <div class="flex h-[calc(100%-11.5rem)] w-full flex-row border-b">
+            <div class="flex h-[calc(100%-11.5rem)] w-full flex-row border-b dark:border-gray-700">
                 <div
                     id="tracklist"
-                    class="flex h-full w-[12rem] flex-col items-center justify-start gap-2 overflow-y-scroll border-r p-2">
+                    class="flex h-full w-[12rem] flex-col items-center justify-start gap-2 overflow-y-scroll border-r p-2 dark:border-gray-700">
                     <div
                         v-for="(obj, i) in tracksFromDb.syncTracks"
                         :id="`audio-controls-${i}`"
@@ -292,7 +292,7 @@ function showAllInPlots() {
                             :class="{
                                 'bg-red-600': trackLabels[i] === false,
                                 'bg-blue-600': trackLabels[i],
-                                'bg-neutral-400': trackLabels[i] === undefined,
+                                'bg-transparent': trackLabels[i] === undefined,
                             }"></div>
                         <div
                             class="flex h-full w-[calc(100%-1rem)] flex-col items-center justify-center gap-2 rounded-l-md py-2">
@@ -329,11 +329,13 @@ function showAllInPlots() {
 
                             <div class="flex flex-row gap-1">
                                 <div
-                                    class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md hover:bg-cyan-600 hover:text-white"
+                                    class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md"
                                     :class="{
                                         'bg-cyan-700 text-white': playing[i],
+                                        'btn-disabled cursor-default': !waveformsVisible[i],
+                                        'hover:bg-cyan-600 hover:text-white': waveformsVisible[i],
                                     }"
-                                    @click="selectPeaks(i)">
+                                    @click="waveformsVisible[i] ? selectPeaks(i) : null">
                                     <Icon icon="material-symbols:volume-up-outline" width="20" />
                                 </div>
                                 <div
@@ -366,18 +368,18 @@ function showAllInPlots() {
                 <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-x-hidden overflow-y-scroll">
                     <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
                         <div
-                            class="border"
+                            class=""
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :class="{
                                 hidden: !waveformsVisible[i],
                             }">
-                            <div class="relative" :class="{ 'bg-blue-50 ': playing[i] }">
+                            <div class="relative">
                                 <div class="z-50 pl-[45px]">
                                     <div
-                                        class="z-50 h-16 w-full shrink-0 dark:border-gray-500 dark:bg-gray-400"
+                                        class="z-50 h-16 w-full shrink-0 border dark:border-gray-700 dark:bg-gray-400"
                                         :id="`track-div-${i}`"></div>
                                 </div>
-                                <div class="">
+                                <div>
                                     <div
                                         v-for="(feat, j) in selectedFeatureLists.dynamicsTime"
                                         class="relative flex flex-col gap-2">
@@ -395,18 +397,18 @@ function showAllInPlots() {
                                             class="h-[10rem]" />
                                         <div
                                             v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
-                                            class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                            class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
                                             <input
                                                 :id="`${feat.name}-time-ymin-${i}`"
                                                 type="number"
                                                 v-model="feat.yMin"
-                                                class="h-5 w-16 rounded-md"
+                                                class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
                                                 step="0.1" />
                                             <input
                                                 :id="`${feat.name}-time-ymax-${i}`"
                                                 type="number"
                                                 v-model="feat.yMax"
-                                                class="h-5 w-16 rounded-md"
+                                                class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
                                                 step="0.1" />
                                         </div>
                                     </div>
@@ -427,18 +429,18 @@ function showAllInPlots() {
                                             class="h-[10rem]" />
                                         <div
                                             v-if="selectedFeatureLists.rhythmTimeVisible[j]"
-                                            class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                            class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
                                             <input
                                                 :id="`${feat.name}-time-ymin-${i}`"
                                                 type="number"
                                                 v-model="feat.yMin"
-                                                class="h-5 w-16 rounded-md"
+                                                class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
                                                 step="0.1" />
                                             <input
                                                 :id="`${feat.name}-time-ymax-${i}`"
                                                 type="number"
                                                 v-model="feat.yMax"
-                                                class="h-5 w-16 rounded-md"
+                                                class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
                                                 step="0.1" />
                                         </div>
                                     </div>
@@ -468,18 +470,18 @@ function showAllInPlots() {
                                 class="h-[16rem]" />
                             <div
                                 v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
-                                class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md border bg-neutral-200 px-1 text-sm">
+                                class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
                                 <input
                                     :id="`${feat.name}-measure-ymin`"
                                     type="number"
                                     v-model="feat.yMin"
-                                    class="h-5 w-16 rounded-md"
+                                    class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
                                     step="0.1" />
                                 <input
                                     :id="`${feat.name}-measure-ymax`"
                                     type="number"
                                     v-model="feat.yMax"
-                                    class="h-5 w-16 rounded-md"
+                                    class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
                                     step="0.1" />
                             </div>
                         </div>

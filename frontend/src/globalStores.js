@@ -7,6 +7,7 @@ export const useUserInfo = defineStore('userInfo', {
         preciseSync: null,
         selectedSession: null,
         darkModeEnabled: false,
+        chartsTheme: 'default',
     }),
 });
 
