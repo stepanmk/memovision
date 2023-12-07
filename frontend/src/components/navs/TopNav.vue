@@ -6,12 +6,14 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { showAlert } from '../../alerts';
 import { api } from '../../axiosInstance';
-import { useModulesVisible, useUserInfo } from '../../globalStores';
+import { useAudioStore, useModulesVisible, useUserInfo } from '../../globalStores';
+import { pinia } from '../../piniaInstance';
 import router from '../../router.js';
 import { darkMode, disableDarkMode } from '../../sharedFunctions';
 
-const userInfo = useUserInfo();
-const modulesVisible = useModulesVisible();
+const userInfo = useUserInfo(pinia);
+const modulesVisible = useModulesVisible(pinia);
+const audioStore = useAudioStore(pinia);
 
 const { t, locale } = useI18n();
 const { username, darkModeEnabled } = storeToRefs(userInfo);
@@ -34,6 +36,7 @@ function logoutUser(data) {
                 // tracksFromDb.$reset();
                 modulesVisible.$reset();
                 userInfo.$reset();
+                audioStore.$reset();
                 showAlert('Successfully logged out.', 1500);
                 // if the logout was successful, redirect user to the sign in page
                 router.push('/signin');
