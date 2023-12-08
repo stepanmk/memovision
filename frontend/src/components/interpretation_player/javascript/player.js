@@ -43,10 +43,15 @@ function fit() {
         firstResize = false;
         return;
     }
-    peaksInstances.forEach((instance) => {
+    peaksInstances.forEach((instance, idx) => {
         const view = instance.views.getView('zoomview');
+
+        // const container = document.getElementById(`tr-div-${idx}`);
+        // container.style.height = '150px';
+
         view.fitToContainer();
         view.setZoom({ seconds: 'auto' });
+        // instance.views._zoomview._height = 64;
     });
     regionToSave.value = false;
     hideAllRegions();
@@ -127,8 +132,8 @@ function initPeaks(filename, idx) {
             fontFamily: 'Inter',
         },
         mediaElement: audioElement,
-        waveformData: {
-            arraybuffer: waveformData,
+        dataUri: {
+            arraybuffer: URL.createObjectURL(waveformData),
         },
         showAxisLabels: true,
         emitCueEvents: true,
@@ -137,6 +142,9 @@ function initPeaks(filename, idx) {
     };
     Peaks.init(options, (err, peaks) => {
         peaksInstances[idx] = peaks;
+        peaksInstances[idx].views._zoomview._height = 64;
+
+        // peaksInstances[idx].views._zoomview._playheadLayer._playheadLayer.canvas.height = 160;
         if (idx === 0) {
             selectPeaks(idx);
             const audioContainer = document.getElementById('audio-container');
@@ -144,15 +152,16 @@ function initPeaks(filename, idx) {
         }
         if (filename === tracksFromDb.refTrack.filename) {
             peaksInstances[idx].on('player.timeupdate', (time) => {
-                trackTimes.value[idx] = time;
+                // trackTimes.value[idx] = time;
                 const measureIdx = getStartMeasure(time + 0.005);
                 currentMeasure.value = measureIdx - 2;
             });
-        } else {
-            peaksInstances[idx].on('player.timeupdate', (time) => {
-                trackTimes.value[idx] = time;
-            });
         }
+        // else {
+        //     peaksInstances[idx].on('player.timeupdate', (time) => {
+        //         trackTimes.value[idx] = time;
+        //     });
+        // }
         addMeasuresToPeaksInstance(idx);
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
@@ -200,11 +209,29 @@ function findClosestTimeIdx(peaksIdx, time) {
 }
 
 function seekCallback(time) {
-    const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
-    for (let i = 0; i < selectedIndices.length; i++) {
-        const idx = selectedIndices[i];
-        peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
-    }
+    let startTime = performance.now();
+    // const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
+    const closestTimeIdx = Math.floor(
+        (time / tracksFromDb.syncTracks[activePeaksIdx].length_sec) * tracksFromDb.syncPoints[activePeaksIdx].length
+    );
+    // trackTimes.value[activePeaksIdx] = time;
+    selectedIndices.forEach((idx) => {
+        peaksInstances[idx].views._zoomview._playheadLayer.updatePlayheadTime(
+            tracksFromDb.syncPoints[idx][closestTimeIdx]
+        );
+        // peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
+    });
+
+    // for (let i = 0; i < selectedIndices.length; i++) {
+    //     peaksInstances[selectedIndices[i]].player.seek(tracksFromDb.syncPoints[selectedIndices[i]][closestTimeIdx]);
+    //     //trackTimes.value[selectedIndices[i]] = tracksFromDb.syncPoints[selectedIndices[i]][closestTimeIdx];
+    // }
+    let endTime = performance.now();
+    // console.log(endTime - startTime);
+    console.log(
+        peaksInstances[activePeaksIdx].views._zoomview._playheadLayer._playheadPixel /
+            peaksInstances[activePeaksIdx].views._zoomview._pixelLength
+    );
 }
 
 async function selectPeaks(idx) {

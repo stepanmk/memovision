@@ -65,17 +65,18 @@ function destroyPeaks() {
 }
 
 async function initPeaks() {
-    const audioContext = Tone.context;
-    const audioArrayBuffer = await audioStore.getAudio(tracksFromDb.refTrack.filename).arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(audioArrayBuffer);
-
-    const metronomeAudio = audioStore.metronomeClick;
-    const metronomeArrayBuffer = await metronomeAudio.arrayBuffer();
-    const metronomeAudioBuffer = await audioContext.decodeAudioData(metronomeArrayBuffer);
+    let ctx = new AudioContext();
+    // let audioBuffer = await ctx.decodeAudioData(
+    //     await audioStore.getAudio(tracksFromDb.refTrack.filename).arrayBuffer()
+    // );
+    // let arrayBuff = await audioStore.getAudio(tracksFromDb.refTrack.filename);
+    let metronomeAudioBuffer = await ctx.decodeAudioData(await audioStore.metronomeClick.arrayBuffer());
 
     const player = {
-        externalPlayer: new Tone.Player(audioBuffer).toDestination(Tone.getContext().destination),
-        metronome: new Tone.Player(metronomeAudioBuffer).toDestination(Tone.getContext().destination),
+        externalPlayer: new Tone.Player(
+            URL.createObjectURL(audioStore.getAudio(tracksFromDb.refTrack.filename))
+        ).toDestination(),
+        metronome: new Tone.Player(metronomeAudioBuffer).toDestination(),
         meter: new Tone.Meter({ channels: 2, smoothing: 0.8 }),
         eventEmitter: null,
         init: function (eventEmitter) {
@@ -212,8 +213,8 @@ async function initPeaks() {
             overlayOpacity: 0.2,
             overlayCornerRadius: 0,
         },
-        waveformData: {
-            arraybuffer: audioStore.getWaveformData(tracksFromDb.refTrack.filename),
+        dataUri: {
+            arraybuffer: URL.createObjectURL(audioStore.getWaveformData(tracksFromDb.refTrack.filename)),
         },
         player: player,
         showAxisLabels: true,
@@ -224,6 +225,9 @@ async function initPeaks() {
 
     Peaks.init(options, (err, peaks) => {
         peaksInstance = peaks;
+        console.log(peaksInstance);
+        peaksInstance.views._overview._playheadLayer.updatePlayheadTime(10);
+        // console.log(peaksInstance);
         peaksReady.value = true;
         refName.value = tracksFromDb.refTrack.filename;
         if (tracksFromDb.refTrack.performer) {
