@@ -2,10 +2,10 @@ import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
 import { useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getEndMeasure, getSecureConfig, getStartMeasure } from '../../../sharedFunctions';
+import { findClosestTimeIdx, getEndMeasure, getSecureConfig, getStartMeasure } from '../../../sharedFunctions';
 import { getRegionData } from '../../track_manager/javascript/fetch';
 
-import { activePeaksIdx, findClosestTimeIdx, peaksInstances, playPause, selectPeaks } from './player';
+import { activePeaksIdx, peaksInstances, playPause, selectPeaks } from './player';
 
 import {
     endMeasureIdx,

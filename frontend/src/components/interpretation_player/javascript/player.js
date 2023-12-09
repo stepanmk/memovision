@@ -270,7 +270,6 @@ async function rewind() {
 
 export {
     activePeaksIdx,
-    findClosestTimeIdx,
     goToMeasure,
     idxArray,
     initPlayer,
