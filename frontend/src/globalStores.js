@@ -66,6 +66,7 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
     state: () => ({
         trackObjects: [],
         syncPoints: [],
+        linAxes: [],
         selected: [],
     }),
     getters: {

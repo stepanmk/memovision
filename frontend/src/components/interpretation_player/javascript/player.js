@@ -3,10 +3,8 @@ import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getStartMeasure } from '../../../sharedFunctions';
 import { hideAllRegions } from './regions';
 import {
-    currentMeasure,
     isPlaying,
     measuresVisible,
     numPeaksLoaded,
@@ -22,7 +20,10 @@ const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 
+let reciprocalDurations = [];
+let reciprocalDurationRef = [];
 let activePeaksIdx = 0;
+let refIdx = null;
 let prevPeaksIdx = null;
 let firstResize = true;
 
@@ -43,17 +44,20 @@ function fit() {
         firstResize = false;
         return;
     }
+    // toggleMeasures();
     peaksInstances.forEach((instance, idx) => {
         const view = instance.views.getView('zoomview');
 
         // const container = document.getElementById(`tr-div-${idx}`);
-        // container.style.height = '150px';
+        // container.style.height = '250px';
 
         view.fitToContainer();
         view.setZoom({ seconds: 'auto' });
+
         // instance.views._zoomview._height = 64;
     });
     regionToSave.value = false;
+    // toggleMeasures();
     hideAllRegions();
 }
 
@@ -87,6 +91,7 @@ function resetPlayer() {
     selectedIndices = [];
     peaksInstances = [];
     idxArray = [];
+    reciprocalDurations = [];
     audioCtx.suspend();
     resizeObserver.disconnect();
 }
@@ -115,6 +120,7 @@ function initPeaks(filename, idx) {
     audioSource.connect(gainNode);
     const waveformData = audioStore.getWaveformData(filename);
     const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
+    reciprocalDurations[idx] = 1 / trackLengthSec;
     const options = {
         zoomview: {
             segmentOptions: {
@@ -142,8 +148,7 @@ function initPeaks(filename, idx) {
     };
     Peaks.init(options, (err, peaks) => {
         peaksInstances[idx] = peaks;
-        peaksInstances[idx].views._zoomview._height = 64;
-
+        // peaksInstances[idx].views._zoomview._height = 64;
         // peaksInstances[idx].views._zoomview._playheadLayer._playheadLayer.canvas.height = 160;
         if (idx === 0) {
             selectPeaks(idx);
@@ -151,18 +156,11 @@ function initPeaks(filename, idx) {
             resizeObserver.observe(audioContainer);
         }
         if (filename === tracksFromDb.refTrack.filename) {
-            peaksInstances[idx].on('player.timeupdate', (time) => {
-                // trackTimes.value[idx] = time;
-                const measureIdx = getStartMeasure(time + 0.005);
-                currentMeasure.value = measureIdx - 2;
-            });
+            reciprocalDurationRef = 1 / tracksFromDb.refTrack.length_sec;
+            refIdx = idx;
+            //  const measureIdx = getStartMeasure(time + 0.005);
+            //  currentMeasure.value = measureIdx - 2;
         }
-        // else {
-        //     peaksInstances[idx].on('player.timeupdate', (time) => {
-        //         trackTimes.value[idx] = time;
-        //     });
-        // }
-        addMeasuresToPeaksInstance(idx);
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
@@ -201,37 +199,20 @@ async function goToMeasure(measureIdx) {
     peaksInstances[activePeaksIdx].player.seek(seekTime);
 }
 
-function findClosestTimeIdx(peaksIdx, time) {
-    const closestTime = tracksFromDb.syncPoints[peaksIdx].reduce((prev, curr) =>
-        Math.abs(curr - time) < Math.abs(prev - time) ? curr : prev
+function updatePlayheads(time) {
+    const currentLinIdx = Math.round(
+        reciprocalDurations[activePeaksIdx] * time * tracksFromDb.linAxes[activePeaksIdx][0].length
     );
-    return tracksFromDb.syncPoints[peaksIdx].indexOf(closestTime);
-}
-
-function seekCallback(time) {
-    let startTime = performance.now();
-    // const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
-    const closestTimeIdx = Math.floor(
-        (time / tracksFromDb.syncTracks[activePeaksIdx].length_sec) * tracksFromDb.syncPoints[activePeaksIdx].length
+    const currentRefTime = tracksFromDb.linAxes[activePeaksIdx][1][currentLinIdx];
+    const closestTimeIdx = Math.round(
+        reciprocalDurationRef * currentRefTime * tracksFromDb.syncPoints[activePeaksIdx].length
     );
-    // trackTimes.value[activePeaksIdx] = time;
+    trackTimes.value[activePeaksIdx] = time;
     selectedIndices.forEach((idx) => {
-        peaksInstances[idx].views._zoomview._playheadLayer.updatePlayheadTime(
-            tracksFromDb.syncPoints[idx][closestTimeIdx]
-        );
-        // peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
+        const syncTime = tracksFromDb.syncPoints[idx][closestTimeIdx];
+        peaksInstances[idx].views._zoomview._playheadLayer.updatePlayheadTime(syncTime);
+        trackTimes.value[idx] = syncTime;
     });
-
-    // for (let i = 0; i < selectedIndices.length; i++) {
-    //     peaksInstances[selectedIndices[i]].player.seek(tracksFromDb.syncPoints[selectedIndices[i]][closestTimeIdx]);
-    //     //trackTimes.value[selectedIndices[i]] = tracksFromDb.syncPoints[selectedIndices[i]][closestTimeIdx];
-    // }
-    let endTime = performance.now();
-    // console.log(endTime - startTime);
-    console.log(
-        peaksInstances[activePeaksIdx].views._zoomview._playheadLayer._playheadPixel /
-            peaksInstances[activePeaksIdx].views._zoomview._pixelLength
-    );
 }
 
 async function selectPeaks(idx) {
@@ -242,24 +223,19 @@ async function selectPeaks(idx) {
         if (isPlaying.value) {
             peaksInstances[prevPeaksIdx].player.pause();
         }
-        peaksInstances[prevPeaksIdx].off('player.timeupdate', seekCallback);
+        peaksInstances[prevPeaksIdx].off('player.timeupdate', updatePlayheads);
     }
-    // add seekCallback to peaks instance specified by idx
     playing[idx] = true;
     activePeaksIdx = idx;
-    peaksInstances[idx].on('player.timeupdate', seekCallback);
-    // if playing is active
+    peaksInstances[idx].on('player.timeupdate', updatePlayheads);
     if (isPlaying.value) {
-        // play currently selected region if it is not null
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
         if (selectedRegion) {
-            const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
-            peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
-        }
-        // otherwise just continue playing at the current cursor position
-        else {
+            peaksInstances[idx].player.seek(trackTimes.value[idx]);
+        } else {
             peaksInstances[idx].player.play();
+            peaksInstances[idx].player.seek(trackTimes.value[idx]);
         }
     }
     prevPeaksIdx = idx;
@@ -300,6 +276,7 @@ export {
     initPlayer,
     peaksInstances,
     playPause,
+    reciprocalDurations,
     resetPlayer,
     rewind,
     selectPeaks,

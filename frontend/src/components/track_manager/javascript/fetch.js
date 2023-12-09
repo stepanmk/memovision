@@ -90,7 +90,8 @@ async function getRegionData() {
 async function getSyncPoints() {
     if (tracksFromDb.syncTracks.length > 0) {
         const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
-        tracksFromDb.syncPoints = syncPointsRes.data;
+        tracksFromDb.syncPoints = syncPointsRes.data.syncPoints;
+        tracksFromDb.linAxes = syncPointsRes.data.linAxes;
     }
 }
 

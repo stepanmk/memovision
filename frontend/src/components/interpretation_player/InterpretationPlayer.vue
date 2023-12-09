@@ -43,6 +43,7 @@ import {
     initPlayer,
     peaksInstances,
     playPause,
+    reciprocalDurations,
     resetPlayer,
     rewind,
     selectPeaks,
@@ -118,6 +119,7 @@ async function initInterpretationPlayer() {
         // from player
         idxArray.push(idx);
         peaksInstances.push(null);
+        reciprocalDurations.push(0.0);
     });
     selectDefaultRelevanceFeature();
     await initPlayer();
@@ -335,7 +337,7 @@ function destroyInterpretationPlayer() {
                         class="flex w-[calc(100%-10rem)] flex-col gap-2 px-2 py-8 dark:border-gray-700">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
-                            class="flex h-32 w-full shrink-0 flex-row gap-2"
+                            class="flex h-16 w-full shrink-0 flex-row gap-2"
                             :id="`tr-div-${i}`">
                             <div
                                 class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-400"

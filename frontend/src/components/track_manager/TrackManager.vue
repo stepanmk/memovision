@@ -110,7 +110,6 @@ async function getAllData() {
     isDisabled.value = true;
     await getTrackData();
     await getRegionData();
-    await getSyncPoints();
     await getChords();
     preciseSync.value = userInfo.preciseSync;
     numThingsToCompute.value = tracksFromDb.trackObjects.length;
@@ -123,6 +122,7 @@ async function getAllData() {
     await getMeasureData();
     await getFeatureNames();
     loadingMessage.value = 'Retrieving audio features...';
+    await getSyncPoints();
     await getAllFeatures();
     isDisabled.value = false;
     isLoading.value = false;
