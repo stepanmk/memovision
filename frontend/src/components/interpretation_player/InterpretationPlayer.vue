@@ -124,7 +124,6 @@ async function initInterpretationPlayer() {
     selectDefaultRelevanceFeature();
     await initPlayer();
     measureSelector.value.init();
-    measuresVisible.value = true;
     interpretationPlayerOpened.value = true;
 }
 

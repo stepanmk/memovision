@@ -2,7 +2,15 @@ import { onKeyStroke } from '@vueuse/core';
 import { useMeasureData, useModulesVisible } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { activePeaksIdx, goToMeasure, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
-import { currentMeasure, endMeasureIdx, isPlaying, regionLengths, regionToSave, startMeasureIdx } from './variables';
+import {
+    currentMeasure,
+    endMeasureIdx,
+    isPlaying,
+    regionLengths,
+    regionToSave,
+    startMeasureIdx,
+    trackTimes,
+} from './variables';
 
 const modulesVisible = useModulesVisible(pinia);
 const measureData = useMeasureData(pinia);
@@ -74,6 +82,7 @@ function addControls() {
                 peaksInstance.segments.removeAll();
                 regionLengths.value[i] = 0;
                 const view = peaksInstance.views.getView('zoomview');
+                peaksInstance.player.seek(trackTimes.value[i]);
                 view.setZoom({ seconds: 'auto' });
             });
             startMeasureIdx.value = -1;
