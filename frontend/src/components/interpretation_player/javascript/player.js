@@ -48,8 +48,8 @@ function fit() {
     peaksInstances.forEach((instance, idx) => {
         const view = instance.views.getView('zoomview');
 
-        // const container = document.getElementById(`tr-div-${idx}`);
-        // container.style.height = '250px';
+        // const container = document.getElementById(`track-div-${idx}`);
+        // container.style.height = '544px';
 
         view.fitToContainer();
         view.setZoom({ seconds: 'auto' });
@@ -164,7 +164,7 @@ function initPeaks(filename, idx) {
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
-        view.setZoom({ seconds: trackLengthSec });
+        view.setZoom({ seconds: 'auto' });
     });
 }
 
@@ -262,7 +262,7 @@ async function playPause() {
 async function rewind() {
     const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
     if (selectedRegion) {
-        peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
+        if (isPlaying.value) peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
     } else {
         peaksInstances[activePeaksIdx].player.seek(0);
     }

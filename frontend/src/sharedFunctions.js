@@ -112,7 +112,7 @@ function getEndMeasure(end) {
 }
 
 function getTimeString(seconds, start, end) {
-    return new Date(seconds * 1000).toISOString().slice(start, end);
+    return new Date(seconds * 1000).toISOString().substring(start, end);
 }
 
 function sleep(ms) {

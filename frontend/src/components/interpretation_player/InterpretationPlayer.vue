@@ -329,15 +329,14 @@ function destroyInterpretationPlayer() {
                                     'bg-blue-600': trackLabels[i],
                                 }"></div>
                         </div>
-                        <div id="audio-controls-pb" class="h-3 w-full shrink-0"></div>
+                        <div id="audio-controls-pb" class="h-1 w-full shrink-0"></div>
                     </div>
                     <div
                         id="audio-tracks"
                         class="flex w-[calc(100%-10rem)] flex-col gap-2 px-2 py-8 dark:border-gray-700">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
-                            class="flex h-16 w-full shrink-0 flex-row gap-2"
-                            :id="`tr-div-${i}`">
+                            class="flex h-16 w-full shrink-0 flex-row gap-2">
                             <div
                                 class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-400"
                                 :id="`track-div-${i}`"></div>

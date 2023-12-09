@@ -226,7 +226,7 @@ async function initPeaks() {
     Peaks.init(options, (err, peaks) => {
         peaksInstance = peaks;
         console.log(peaksInstance);
-        peaksInstance.views._overview._playheadLayer.updatePlayheadTime(10);
+        // peaksInstance.views._overview._playheadLayer.updatePlayheadTime(10);
         // console.log(peaksInstance);
         peaksReady.value = true;
         refName.value = tracksFromDb.refTrack.filename;
@@ -264,7 +264,7 @@ async function initPeaks() {
         view.setZoom({ seconds: seconds });
 
         resizeObserver.observe(zoomviewContainer);
-        toggleMeasures();
+        // toggleMeasures();
 
         setTimeout(() => {
             menuButtonsDisable.stopLoading();
