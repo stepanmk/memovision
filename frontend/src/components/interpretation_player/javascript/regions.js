@@ -158,15 +158,16 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
     regionSelected.value = true;
     regionToSave.value = true;
     hideAllRegions();
-    if (startMeasure === -1) {
-        peaksInstances.forEach((peaksInstance, idx) => {
-            const view = peaksInstance.views.getView('zoomview');
-            view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
-        });
-        regionToSave.value = false;
-        return;
-    }
-    peaksInstances[activePeaksIdx].player.seek(measureData.selectedMeasures[activePeaksIdx][startMeasure + 1]);
+    // console.log('zooming');
+    // if (startMeasure === -1) {
+    //     peaksInstances.forEach((peaksInstance, idx) => {
+    //         const view = peaksInstance.views.getView('zoomview');
+    //         view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
+    //     });
+    //     regionToSave.value = false;
+    //     return;
+    // }
+
     for (let i = 0; i < peaksInstances.length; i++) {
         const view = peaksInstances[i].views.getView('zoomview');
         view.enableAutoScroll(false, {});
@@ -188,6 +189,7 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
             view.setStartTime(measureData.selectedMeasures[i][startMeasure + 1]);
         }
     }
+    peaksInstances[activePeaksIdx].player.seek(measureData.selectedMeasures[activePeaksIdx][startMeasure + 1]);
     startMeasureIdx.value = startMeasure;
     endMeasureIdx.value = endMeasure;
 }

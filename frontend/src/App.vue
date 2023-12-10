@@ -56,7 +56,7 @@ input[type='range']::-webkit-slider-thumb {
 
 /* firefox */
 input[type='range']::-moz-range-track {
-    background-color: #a5f3fc;
+    background-color: #10b981;
     margin-top: -0.25rem;
     border-radius: 0.5rem;
     height: 0.5rem;
@@ -65,7 +65,7 @@ input[type='range']::-moz-range-track {
 input[type='range']::-moz-range-thumb {
     border: none;
     border-radius: 0.5rem;
-    background-color: #22d3ee;
+    background-color: #065f46;
     height: 1rem;
     width: 1rem;
 }

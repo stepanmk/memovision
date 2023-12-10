@@ -65,18 +65,11 @@ function destroyPeaks() {
 }
 
 async function initPeaks() {
-    let ctx = new AudioContext();
-    // let audioBuffer = await ctx.decodeAudioData(
-    //     await audioStore.getAudio(tracksFromDb.refTrack.filename).arrayBuffer()
-    // );
-    // let arrayBuff = await audioStore.getAudio(tracksFromDb.refTrack.filename);
-    let metronomeAudioBuffer = await ctx.decodeAudioData(await audioStore.metronomeClick.arrayBuffer());
-
     const player = {
         externalPlayer: new Tone.Player(
             URL.createObjectURL(audioStore.getAudio(tracksFromDb.refTrack.filename))
         ).toDestination(),
-        metronome: new Tone.Player(metronomeAudioBuffer).toDestination(),
+        metronome: new Tone.Player(URL.createObjectURL(audioStore.metronomeClick)).toDestination(),
         meter: new Tone.Meter({ channels: 2, smoothing: 0.8 }),
         eventEmitter: null,
         init: function (eventEmitter) {

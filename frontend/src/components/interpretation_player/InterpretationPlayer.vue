@@ -357,7 +357,7 @@ function destroyInterpretationPlayer() {
                             </div>
                         </div>
 
-                        <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio>
+                        <!-- <audio v-for="(obj, i) in tracksFromDb.syncTracks" :id="`audio-${i}`"></audio> -->
                     </div>
                 </div>
             </div>
