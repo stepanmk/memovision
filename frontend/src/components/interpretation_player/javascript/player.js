@@ -147,8 +147,6 @@ function initPeaks(filename, idx) {
     };
     Peaks.init(options, (err, peaks) => {
         peaksInstances[idx] = peaks;
-        // peaksInstances[idx].views._zoomview._height = 64;
-        // peaksInstances[idx].views._zoomview._playheadLayer._playheadLayer.canvas.height = 160;
         if (idx === 0) {
             selectPeaks(idx);
             const audioContainer = document.getElementById('audio-container');
@@ -156,9 +154,6 @@ function initPeaks(filename, idx) {
         }
         if (filename === tracksFromDb.refTrack.filename) {
             reciprocalDurationRef = 1 / tracksFromDb.refTrack.length_sec;
-            refIdx = idx;
-            //  const measureIdx = getStartMeasure(time + 0.005);
-            //  currentMeasure.value = measureIdx - 2;
         }
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
