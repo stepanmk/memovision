@@ -308,7 +308,7 @@ function destroyInterpretationPlayer() {
                                         :class="{
                                             'bg-cyan-700 text-white': playing[i],
                                         }"
-                                        @click="selectPeaks(i)">
+                                        @click="selectPeaks(i, true)">
                                         <Icon icon="material-symbols:volume-up-outline" width="20" />
                                     </div>
                                     <div

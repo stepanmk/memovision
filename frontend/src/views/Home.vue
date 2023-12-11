@@ -6,6 +6,16 @@ import TrackManager from '../components/track_manager/TrackManager.vue';
 
 import SideNav from '../components/navs/SideNav.vue';
 import TopNav from '../components/navs/TopNav.vue';
+
+window.addEventListener(
+    'keydown',
+    function (event) {
+        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(event.code) > -1) {
+            event.preventDefault();
+        }
+    },
+    false
+);
 </script>
 
 <template>

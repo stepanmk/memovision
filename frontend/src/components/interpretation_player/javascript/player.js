@@ -20,45 +20,40 @@ const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 
-let reciprocalDurations = [];
-let reciprocalDurationRef = [];
 let activePeaksIdx = 0;
-let prevPeaksIdx = null;
 let firstResize = true;
+let prevPeaksIdx = null;
 
 let idxArray = [];
 let peaksInstances = [];
+let reciprocalDurationRef = [];
+let reciprocalDurations = [];
 let selectedIndices = [];
 
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
 gainNode.connect(audioCtx.destination);
 
-const debouncedFit = useDebounceFn(() => {
-    fit();
-}, 200);
-
 function fit() {
     if (firstResize) {
         firstResize = false;
         return;
     }
-    // toggleMeasures();
     peaksInstances.forEach((instance, idx) => {
         const view = instance.views.getView('zoomview');
-
         // const container = document.getElementById(`track-div-${idx}`);
         // container.style.height = '544px';
-
         view.fitToContainer();
         view.setZoom({ seconds: 'auto' });
-
         // instance.views._zoomview._height = 64;
     });
     regionToSave.value = false;
-    // toggleMeasures();
     hideAllRegions();
 }
+
+const debouncedFit = useDebounceFn(() => {
+    fit();
+}, 200);
 
 const resizeObserver = new ResizeObserver(debouncedFit);
 
@@ -77,27 +72,25 @@ async function initPlayer() {
 }
 
 function resetPlayer() {
+    isPlaying.value = false;
     peaksInstances[activePeaksIdx].player.pause();
-
     peaksInstances.forEach((instance) => {
         instance.destroy();
     });
-
-    isPlaying.value = false;
+    idxArray = [];
+    peaksInstances = [];
+    prevPeaksIdx = null;
+    reciprocalDurations = [];
+    selectedIndices = [];
     numPeaksLoaded.value = 0;
     percLoaded.value = 0;
-    prevPeaksIdx = null;
-    selectedIndices = [];
-    peaksInstances = [];
-    idxArray = [];
-    reciprocalDurations = [];
     audioCtx.suspend();
     resizeObserver.disconnect();
 }
 
 function waveformListener(idx, event) {
     if (idx !== activePeaksIdx) {
-        selectPeaks(idx);
+        selectPeaks(idx, false);
     }
 }
 
@@ -158,7 +151,11 @@ function initPeaks(filename, idx) {
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
+        view.enableAutoScroll(false, {});
         view.setZoom({ seconds: 'auto' });
+        // peaksInstances[idx].on('player.seeked', (time) => {
+        //     console.log('pl', idx, 'seeked to:', time);
+        // });
     });
 }
 
@@ -215,7 +212,7 @@ function movePlayheads(time) {
     });
 }
 
-async function selectPeaks(idx) {
+async function selectPeaks(idx, key) {
     selectedIndices = idxArray.slice();
     selectedIndices.splice(idx, 1);
     if (prevPeaksIdx !== null) {
@@ -234,8 +231,8 @@ async function selectPeaks(idx) {
             peaksInstances[idx].player.playSegment(selectedRegion, true);
             peaksInstances[idx].player.seek(currentTime);
         } else {
+            if (key) peaksInstances[idx].player.seek(currentTime);
             peaksInstances[idx].player.play();
-            peaksInstances[idx].player.seek(currentTime);
         }
     } else {
         peaksInstances[idx].on('player.timeupdate', movePlayheads);

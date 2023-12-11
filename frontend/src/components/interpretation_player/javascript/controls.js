@@ -1,16 +1,8 @@
 import { onKeyStroke } from '@vueuse/core';
 import { useMeasureData, useModulesVisible } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { activePeaksIdx, goToMeasure, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
-import {
-    currentMeasure,
-    endMeasureIdx,
-    isPlaying,
-    regionLengths,
-    regionToSave,
-    startMeasureIdx,
-    trackTimes,
-} from './variables';
+import { activePeaksIdx, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
+import { endMeasureIdx, isPlaying, regionLengths, regionToSave, startMeasureIdx, trackTimes } from './variables';
 
 const modulesVisible = useModulesVisible(pinia);
 const measureData = useMeasureData(pinia);
@@ -31,7 +23,7 @@ function addControls() {
             e.preventDefault();
             if (modulesVisible.interpretationPlayer) {
                 const switchIdx = activePeaksIdx - 1;
-                if (switchIdx >= 0) selectPeaks(switchIdx);
+                if (switchIdx >= 0) selectPeaks(switchIdx, true);
             }
         },
         { eventName: 'keyup' }
@@ -43,33 +35,33 @@ function addControls() {
             e.preventDefault();
             if (modulesVisible.interpretationPlayer) {
                 const switchIdx = activePeaksIdx + 1;
-                if (switchIdx < peaksInstances.length) selectPeaks(switchIdx);
+                if (switchIdx < peaksInstances.length) selectPeaks(switchIdx, true);
             }
         },
         { eventName: 'keyup' }
     );
 
-    onKeyStroke(
-        'ArrowLeft',
-        (e) => {
-            if (modulesVisible.interpretationPlayer) {
-                const newMeasure = currentMeasure.value - 1;
-                if (newMeasure > -1) goToMeasure(newMeasure);
-            }
-        },
-        { eventName: 'keyup' }
-    );
+    // onKeyStroke(
+    //     'ArrowLeft',
+    //     (e) => {
+    //         if (modulesVisible.interpretationPlayer) {
+    //             const newMeasure = currentMeasure.value - 1;
+    //             if (newMeasure > -1) goToMeasure(newMeasure);
+    //         }
+    //     },
+    //     { eventName: 'keyup' }
+    // );
 
-    onKeyStroke(
-        'ArrowRight',
-        (e) => {
-            if (modulesVisible.interpretationPlayer) {
-                const newMeasure = currentMeasure.value + 1;
-                if (newMeasure < measureData.measureCount) goToMeasure(newMeasure);
-            }
-        },
-        { eventName: 'keyup' }
-    );
+    // onKeyStroke(
+    //     'ArrowRight',
+    //     (e) => {
+    //         if (modulesVisible.interpretationPlayer) {
+    //             const newMeasure = currentMeasure.value + 1;
+    //             if (newMeasure < measureData.measureCount) goToMeasure(newMeasure);
+    //         }
+    //     },
+    //     { eventName: 'keyup' }
+    // );
 
     onKeyStroke('m', (e) => {
         if (modulesVisible.interpretationPlayer) toggleMeasures();
