@@ -75,4 +75,8 @@ body {
     overflow-x: hidden;
     font-family: 'Inter', sans-serif;
 }
+
+.mono {
+    font-family: 'Chivo Mono', monospace;
+}
 </style>

@@ -342,14 +342,14 @@ function destroyInterpretationPlayer() {
                                 :id="`track-div-${i}`"></div>
                             <div
                                 class="flex h-full w-[7.5rem] flex-col items-center justify-center rounded-md bg-neutral-200 text-sm text-black dark:bg-gray-400">
-                                <div class="flex items-center justify-center text-xs font-semibold">
-                                    <p class="w-9">
-                                        {{ getTimeString(trackTimes[i], 14, 19) }}
+                                <div class="mono flex items-center justify-center text-xs">
+                                    <p>
+                                        {{ getTimeString(trackTimes[i], 14, 22) }}
                                     </p>
                                 </div>
                                 <div
                                     v-show="regionLengths[i] > 0"
-                                    class="flex flex-row items-center justify-center gap-1 text-xs font-semibold">
+                                    class="mono flex flex-row items-center justify-center gap-1 text-xs">
                                     <p class="w-full rounded-md bg-neutral-900 px-[0.2rem] text-white">
                                         {{ getTimeString(regionLengths[i], 14, 22) }}
                                     </p>
