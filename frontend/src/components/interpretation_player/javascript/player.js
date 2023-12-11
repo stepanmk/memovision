@@ -3,6 +3,7 @@ import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
+import { sleep } from '../../../sharedFunctions';
 import { hideAllRegions } from './regions';
 import {
     isPlaying,
@@ -113,6 +114,9 @@ function initPeaks(filename, idx) {
     const waveformData = audioStore.getWaveformData(filename);
     const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
     reciprocalDurations[idx] = 1 / trackLengthSec;
+    if (filename === tracksFromDb.refTrack.filename) {
+        reciprocalDurationRef = 1 / tracksFromDb.refTrack.length_sec;
+    }
     const options = {
         zoomview: {
             segmentOptions: {
@@ -145,17 +149,11 @@ function initPeaks(filename, idx) {
             const audioContainer = document.getElementById('audio-container');
             resizeObserver.observe(audioContainer);
         }
-        if (filename === tracksFromDb.refTrack.filename) {
-            reciprocalDurationRef = 1 / tracksFromDb.refTrack.length_sec;
-        }
         peaksInstancesReady.value[idx] = true;
         numPeaksLoaded.value += 1;
         const view = peaksInstances[idx].views.getView('zoomview');
         view.enableAutoScroll(false, {});
         view.setZoom({ seconds: 'auto' });
-        // peaksInstances[idx].on('player.seeked', (time) => {
-        //     console.log('pl', idx, 'seeked to:', time);
-        // });
     });
 }
 
@@ -212,34 +210,6 @@ function movePlayheads(time) {
     });
 }
 
-async function selectPeaks(idx, key) {
-    selectedIndices = idxArray.slice();
-    selectedIndices.splice(idx, 1);
-    if (prevPeaksIdx !== null) {
-        playing[prevPeaksIdx] = false;
-        if (isPlaying.value) {
-            peaksInstances[prevPeaksIdx].player.pause();
-        }
-        peaksInstances[prevPeaksIdx].off('player.timeupdate', movePlayheads);
-    }
-    playing[idx] = true;
-    activePeaksIdx = idx;
-    if (isPlaying.value) {
-        const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
-        const currentTime = trackTimes.value[idx];
-        if (selectedRegion) {
-            peaksInstances[idx].player.playSegment(selectedRegion, true);
-            peaksInstances[idx].player.seek(currentTime);
-        } else {
-            if (key) peaksInstances[idx].player.seek(currentTime);
-            peaksInstances[idx].player.play();
-        }
-    } else {
-        peaksInstances[idx].on('player.timeupdate', movePlayheads);
-    }
-    prevPeaksIdx = idx;
-}
-
 async function animatePlayheads() {
     const interval = 1000 / 30;
     let then = performance.now();
@@ -255,8 +225,44 @@ async function animatePlayheads() {
     }
 }
 
+async function selectPeaks(idx, key) {
+    selectedIndices = idxArray.slice();
+    selectedIndices.splice(idx, 1);
+    if (prevPeaksIdx !== null) {
+        playing[prevPeaksIdx] = false;
+        if (isPlaying.value) {
+            gainNode.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.02);
+            await sleep(50);
+            peaksInstances[prevPeaksIdx].player.pause();
+        }
+        peaksInstances[prevPeaksIdx].off('player.timeupdate', movePlayheads);
+    }
+    playing[idx] = true;
+    activePeaksIdx = idx;
+    if (isPlaying.value) {
+        const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
+        const currentTime = trackTimes.value[idx];
+        if (selectedRegion) {
+            peaksInstances[idx].player.playSegment(selectedRegion, true);
+            peaksInstances[idx].player.seek(currentTime);
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
+        } else {
+            if (key) peaksInstances[idx].player.seek(currentTime);
+            peaksInstances[idx].player.play();
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
+        }
+    } else {
+        peaksInstances[idx].on('player.timeupdate', movePlayheads);
+    }
+    prevPeaksIdx = idx;
+}
+
 async function playPause() {
     if (isPlaying.value) {
+        gainNode.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.02);
+        await sleep(50);
         peaksInstances[activePeaksIdx].player.pause();
         peaksInstances[activePeaksIdx].on('player.timeupdate', movePlayheads);
     } else {
@@ -264,8 +270,12 @@ async function playPause() {
         peaksInstances[activePeaksIdx].off('player.timeupdate', movePlayheads);
         if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
         } else {
             peaksInstances[activePeaksIdx].player.play();
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
         }
     }
     isPlaying.value = !isPlaying.value;
