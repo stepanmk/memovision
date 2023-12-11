@@ -23,7 +23,6 @@ const tracksFromDb = useTracksFromDb(pinia);
 let reciprocalDurations = [];
 let reciprocalDurationRef = [];
 let activePeaksIdx = 0;
-let refIdx = null;
 let prevPeaksIdx = null;
 let firstResize = true;
 
@@ -199,7 +198,13 @@ async function goToMeasure(measureIdx) {
     peaksInstances[activePeaksIdx].player.seek(seekTime);
 }
 
-function updatePlayheads(time) {
+function updatePlayheads() {
+    const audioElement = document.getElementById(`audio-${activePeaksIdx}`);
+    const time = audioElement.currentTime;
+    movePlayheads(time);
+}
+
+function movePlayheads(time) {
     const currentLinIdx = Math.round(
         reciprocalDurations[activePeaksIdx] * time * tracksFromDb.linAxes[activePeaksIdx][0].length
     );
@@ -223,40 +228,56 @@ async function selectPeaks(idx) {
         if (isPlaying.value) {
             peaksInstances[prevPeaksIdx].player.pause();
         }
-        peaksInstances[prevPeaksIdx].off('player.timeupdate', updatePlayheads);
+        peaksInstances[prevPeaksIdx].off('player.timeupdate', movePlayheads);
     }
     playing[idx] = true;
     activePeaksIdx = idx;
-    peaksInstances[idx].on('player.timeupdate', updatePlayheads);
     if (isPlaying.value) {
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
+        const currentTime = trackTimes.value[idx];
         if (selectedRegion) {
             peaksInstances[idx].player.playSegment(selectedRegion, true);
-            peaksInstances[idx].player.seek(trackTimes.value[idx]);
+            peaksInstances[idx].player.seek(currentTime);
         } else {
             peaksInstances[idx].player.play();
-            peaksInstances[idx].player.seek(trackTimes.value[idx]);
+            peaksInstances[idx].player.seek(currentTime);
         }
+    } else {
+        peaksInstances[idx].on('player.timeupdate', movePlayheads);
     }
     prevPeaksIdx = idx;
 }
 
+async function animatePlayheads() {
+    const interval = 1000 / 30;
+    let then = performance.now();
+    let delta = 0;
+    while (isPlaying.value) {
+        let now = await new Promise(requestAnimationFrame);
+        if (now - then < interval - delta) {
+            continue;
+        }
+        delta = Math.min(interval, delta + now - then - interval);
+        then = now;
+        updatePlayheads();
+    }
+}
+
 async function playPause() {
-    // pause playing if it is active
     if (isPlaying.value) {
         peaksInstances[activePeaksIdx].player.pause();
+        peaksInstances[activePeaksIdx].on('player.timeupdate', movePlayheads);
     } else {
-        // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+        peaksInstances[activePeaksIdx].off('player.timeupdate', movePlayheads);
         if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
-        }
-        // otherwise just continue playing at the current cursor position
-        else {
+        } else {
             peaksInstances[activePeaksIdx].player.play();
         }
     }
     isPlaying.value = !isPlaying.value;
+    animatePlayheads();
 }
 
 async function rewind() {
