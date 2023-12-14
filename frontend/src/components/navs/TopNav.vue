@@ -91,7 +91,7 @@ function logoutUser(data) {
     <div
         v-if="menuOpen"
         id="user-menu"
-        class="absolute right-0 top-0 z-20 mr-12 mt-14 flex w-60 flex-col rounded-md border bg-white pb-3 pt-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+        class="absolute right-0 top-0 z-50 mr-12 mt-14 flex w-60 flex-col rounded-md border bg-white pb-3 pt-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
         ref="target">
         <div class="flex gap-1 pb-1 pl-5 pr-5 pt-1 text-base font-semibold">User: {{ username }}</div>
 

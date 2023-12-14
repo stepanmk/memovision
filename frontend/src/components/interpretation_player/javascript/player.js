@@ -22,6 +22,7 @@ const measureData = useMeasureData(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 
 let activePeaksIdx = 0;
+let canSwitch = true;
 let firstResize = true;
 let prevPeaksIdx = null;
 
@@ -91,7 +92,7 @@ function resetPlayer() {
 
 function waveformListener(idx, event) {
     if (idx !== activePeaksIdx) {
-        selectPeaks(idx, false);
+        if (canSwitch) selectPeaks(idx, false);
     }
 }
 
@@ -226,6 +227,7 @@ async function animatePlayheads() {
 }
 
 async function selectPeaks(idx, key) {
+    canSwitch = false;
     selectedIndices = idxArray.slice();
     selectedIndices.splice(idx, 1);
     if (prevPeaksIdx !== null) {
@@ -257,6 +259,7 @@ async function selectPeaks(idx, key) {
         peaksInstances[idx].on('player.timeupdate', movePlayheads);
     }
     prevPeaksIdx = idx;
+    canSwitch = true;
 }
 
 async function playPause() {
@@ -293,6 +296,7 @@ async function rewind() {
 
 export {
     activePeaksIdx,
+    canSwitch,
     goToMeasure,
     idxArray,
     initPlayer,

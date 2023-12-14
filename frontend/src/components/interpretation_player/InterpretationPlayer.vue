@@ -238,30 +238,29 @@ function destroyInterpretationPlayer() {
                 @select-region="zoomOnMeasureSelection"
                 ref="measureSelector" />
             <div
-                id="container"
-                class="relative flex h-[calc(100%-11.5rem)] w-full flex-row items-end border-b dark:border-gray-700">
-                <div
-                    id="label-feature"
-                    class="-100 absolute top-0 z-10 flex w-full justify-center gap-2 border-b bg-white py-1 text-sm dark:border-gray-700 dark:bg-gray-800">
-                    <div class="flex flex-row gap-1 text-xs">
-                        <p>Selected feature:</p>
-                        <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
-                            {{ selectedRelevanceFeatureName }}
-                        </p>
-                    </div>
-
-                    <div class="flex flex-row gap-1 text-xs">
-                        <p>Selected label:</p>
-                        <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
-                            {{ selectedLabel }}
-                        </p>
-                    </div>
+                id="label-feature"
+                class="z-10 flex h-[1.5rem] w-full items-center justify-center gap-2 border-b bg-white py-1 text-sm dark:border-gray-700 dark:bg-gray-800">
+                <div class="flex flex-row gap-1 text-xs">
+                    <p>Selected feature:</p>
+                    <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
+                        {{ selectedRelevanceFeatureName }}
+                    </p>
                 </div>
 
+                <div class="flex flex-row gap-1 text-xs">
+                    <p>Selected label:</p>
+                    <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
+                        {{ selectedLabel }}
+                    </p>
+                </div>
+            </div>
+            <div
+                id="container"
+                class="relative flex h-[calc(100%-13rem)] w-full flex-row items-end border-b dark:border-gray-700">
                 <div
                     id="audio-container"
-                    class="flex h-full w-full flex-row overflow-x-hidden overflow-y-scroll dark:border-gray-700">
-                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 py-8 pl-5">
+                    class="flex h-full w-full flex-row overflow-x-hidden overflow-y-scroll pt-3 dark:border-gray-700">
+                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-between gap-2 pl-5">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :id="`audio-controls-${i}`"
@@ -331,9 +330,7 @@ function destroyInterpretationPlayer() {
                         </div>
                         <div id="audio-controls-pb" class="h-1 w-full shrink-0"></div>
                     </div>
-                    <div
-                        id="audio-tracks"
-                        class="flex w-[calc(100%-10rem)] flex-col gap-2 px-2 py-8 dark:border-gray-700">
+                    <div id="audio-tracks" class="flex w-[calc(100%-10rem)] flex-col gap-2 px-2 dark:border-gray-700">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             class="flex h-16 w-full shrink-0 flex-row gap-2">

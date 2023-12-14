@@ -1,7 +1,7 @@
 import { onKeyStroke } from '@vueuse/core';
 import { useMeasureData, useModulesVisible } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { activePeaksIdx, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
+import { activePeaksIdx, canSwitch, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
 import { endMeasureIdx, isPlaying, regionLengths, regionToSave, startMeasureIdx, trackTimes } from './variables';
 
 const modulesVisible = useModulesVisible(pinia);
@@ -23,7 +23,7 @@ function addControls() {
             e.preventDefault();
             if (modulesVisible.interpretationPlayer) {
                 const switchIdx = activePeaksIdx - 1;
-                if (switchIdx >= 0) selectPeaks(switchIdx, true);
+                if (switchIdx >= 0 && canSwitch) selectPeaks(switchIdx, true);
             }
         },
         { eventName: 'keyup' }
@@ -35,7 +35,7 @@ function addControls() {
             e.preventDefault();
             if (modulesVisible.interpretationPlayer) {
                 const switchIdx = activePeaksIdx + 1;
-                if (switchIdx < peaksInstances.length) selectPeaks(switchIdx, true);
+                if (switchIdx < peaksInstances.length && canSwitch) selectPeaks(switchIdx, true);
             }
         },
         { eventName: 'keyup' }
