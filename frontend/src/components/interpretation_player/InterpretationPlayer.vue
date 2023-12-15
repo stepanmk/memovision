@@ -260,7 +260,7 @@ function destroyInterpretationPlayer() {
                 <div
                     id="audio-container"
                     class="flex h-full w-full flex-row overflow-x-hidden overflow-y-scroll pt-3 dark:border-gray-700">
-                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-between gap-2 pl-5">
+                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 pl-5">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :id="`audio-controls-${i}`"

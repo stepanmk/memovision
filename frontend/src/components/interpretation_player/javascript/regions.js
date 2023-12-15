@@ -161,7 +161,7 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
     if (startMeasure === -1) {
         peaksInstances.forEach((peaksInstance, idx) => {
             const view = peaksInstance.views.getView('zoomview');
-            view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
+            view.setZoom({ seconds: 'auto' });
         });
         regionToSave.value = false;
         return;

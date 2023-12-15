@@ -220,13 +220,13 @@ const option = ref({
             :autoresize="true"
             :update-options="{ notMerge: true }"
             :theme="userInfo.chartsTheme" />
-        <div
+        <!-- <div
             class="absolute top-[30px] h-[calc(100%-50px)] bg-red-600 bg-opacity-10"
             :class="{ hidden: currentMeasure < 0 }"
             :style="{
                 width: `${indicatorWidth}px`,
                 marginLeft: `${(currentMeasure - startMeasureIdx) * indicatorWidth + 45}px`,
-            }"></div>
+            }"></div> -->
     </div>
 </template>
 
