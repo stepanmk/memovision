@@ -6,6 +6,7 @@ import { pinia } from '../../../piniaInstance';
 import { sleep } from '../../../sharedFunctions';
 import { hideAllRegions } from './regions';
 import {
+    cursorPositions,
     isPlaying,
     measuresVisible,
     numPeaksLoaded,
@@ -154,7 +155,7 @@ function initPeaks(filename, idx) {
         const view = peaksInstances[idx].views.getView('zoomview');
         view.enableAutoScroll(false, {});
         view.setZoom({ seconds: 'auto' });
-        peaksInstances[idx].views._zoomview._height = 64;
+        // peaksInstances[idx].views._zoomview._height = 64;
     });
 }
 
@@ -204,9 +205,13 @@ function movePlayheads(time) {
         reciprocalDurationRef * currentRefTime * tracksFromDb.syncPoints[activePeaksIdx].length
     );
     trackTimes.value[activePeaksIdx] = time;
+    cursorPositions.value[activePeaksIdx] =
+        peaksInstances[activePeaksIdx].views._zoomview._playheadLayer._playheadPixel;
+    console.log(cursorPositions.value[0]);
     selectedIndices.forEach((idx) => {
         const syncTime = tracksFromDb.syncPoints[idx][closestTimeIdx];
         peaksInstances[idx].views._zoomview._playheadLayer.updatePlayheadTime(syncTime);
+        cursorPositions.value[activePeaksIdx] = peaksInstances[idx].views._zoomview._playheadLayer._playheadPixel;
         trackTimes.value[idx] = syncTime;
     });
 }

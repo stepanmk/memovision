@@ -248,7 +248,9 @@ async function initPeaks() {
         peaksInstance.on('points.enter', (event) => {
             peaksInstance.player._adapter.playClick();
         });
-
+        peaksInstance.on('player.seeked', () => {
+            console.log('seeked', peaksInstance.views._zoomview._playheadLayer._playheadPixel);
+        });
         const zoomviewContainer = document.getElementById('zoomview-container');
         measuresVisible.value = false;
         const view = peaksInstance.views.getView('zoomview');
@@ -262,10 +264,7 @@ async function initPeaks() {
             }
         });
         view.setZoom({ seconds: seconds });
-
         resizeObserver.observe(zoomviewContainer);
-        // toggleMeasures();
-
         setTimeout(() => {
             menuButtonsDisable.stopLoading();
         }, 200);
