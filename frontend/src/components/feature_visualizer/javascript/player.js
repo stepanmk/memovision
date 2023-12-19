@@ -12,6 +12,7 @@ import {
     numPeaksLoaded,
     peaksInstancesReady,
     playing,
+    timeSelections,
     trackTimes,
     volume,
 } from './variables';
@@ -93,7 +94,7 @@ function initPeaksInstances() {
         tracksFromDb.syncTracks.forEach((track, idx) => {
             initPeaks(track.filename, idx);
             startTimes.value.push(0);
-            endTimes.value.push(track.length_sec);
+            endTimes.value.push(1 / track.length_sec);
         });
     }, 50);
 }
@@ -127,8 +128,8 @@ function initPeaks(filename, idx) {
                 overlayCornerRadius: 0,
             },
             container: waveformContainer,
-            playheadColor: 'red',
-            playheadClickTolerance: 500,
+            playheadColor: 'transparent',
+            playheadClickTolerance: 9999,
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
@@ -206,12 +207,10 @@ function movePlayheads(time) {
     );
     trackTimes.value[activePeaksIdx] = time;
     cursorPositions.value[activePeaksIdx] =
-        peaksInstances[activePeaksIdx].views._zoomview._playheadLayer._playheadPixel;
-    console.log(cursorPositions.value[0]);
+        (1 / timeSelections.value[activePeaksIdx]) * (time - startTimes.value[activePeaksIdx]);
     selectedIndices.forEach((idx) => {
         const syncTime = tracksFromDb.syncPoints[idx][closestTimeIdx];
-        peaksInstances[idx].views._zoomview._playheadLayer.updatePlayheadTime(syncTime);
-        cursorPositions.value[activePeaksIdx] = peaksInstances[idx].views._zoomview._playheadLayer._playheadPixel;
+        cursorPositions.value[idx] = (1 / timeSelections.value[idx]) * (syncTime - startTimes.value[idx]);
         trackTimes.value[idx] = syncTime;
     });
 }

@@ -225,9 +225,6 @@ async function initPeaks() {
 
     Peaks.init(options, (err, peaks) => {
         peaksInstance = peaks;
-        console.log(peaksInstance);
-        // peaksInstance.views._overview._playheadLayer.updatePlayheadTime(10);
-        // console.log(peaksInstance);
         peaksReady.value = true;
         refName.value = tracksFromDb.refTrack.filename;
         if (tracksFromDb.refTrack.performer) {
@@ -249,7 +246,10 @@ async function initPeaks() {
             peaksInstance.player._adapter.playClick();
         });
         peaksInstance.on('player.seeked', () => {
-            console.log('seeked', peaksInstance.views._zoomview._playheadLayer._playheadPixel);
+            console.log(peaksInstance.views._zoomview._playheadLayer._playheadPixel);
+            console.log(peaksInstance.views._zoomview._frameOffset);
+            console.log(peaksInstance.views._zoomview._zoomLevelSeconds);
+            console.log(peaksInstance.views._zoomview._scale);
         });
         const zoomviewContainer = document.getElementById('zoomview-container');
         measuresVisible.value = false;

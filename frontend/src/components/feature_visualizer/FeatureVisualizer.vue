@@ -40,6 +40,7 @@ import {
 } from './javascript/variables';
 
 import {
+    endTimes,
     goToMeasure,
     idxArray,
     initPlayer,
@@ -48,6 +49,7 @@ import {
     resetPlayer,
     rewind,
     selectPeaks,
+    startTimes,
     toggleMeasures,
 } from './javascript/player';
 
@@ -59,6 +61,7 @@ import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import SelectedRegion from '../shared_components/SelectedRegion.vue';
 import SubMenu from '../shared_components/SubMenu.vue';
 import FeatureName from './subcomponents/FeatureName.vue';
+import LineChart from './subcomponents/LineChart.vue';
 import LineChartMeasure from './subcomponents/LineChartMeasure.vue';
 import MeasureSelector from './subcomponents/MeasureSelector.vue';
 import ScatterRegression from './subcomponents/ScatterRegression.vue';
@@ -358,7 +361,7 @@ function showAllInPlots() {
                     </div>
                 </div>
                 <div id="feature-content" class="h-full w-[calc(100%-12rem)] overflow-x-hidden overflow-y-scroll">
-                    <div id="audio-tracks" class="flex w-full flex-col gap-2 py-5 dark:border-gray-700">
+                    <div id="audio-tracks" class="flex w-full flex-col gap-2 py-2 dark:border-gray-700">
                         <div
                             class=""
                             v-for="(obj, i) in tracksFromDb.syncTracks"
@@ -366,25 +369,56 @@ function showAllInPlots() {
                                 hidden: !waveformsVisible[i],
                             }">
                             <div class="">
-                                <div class="">
+                                <div class="relative">
+                                    <div class="pl-[45px]">
+                                        <div
+                                            class="h-16 w-full shrink-0 border bg-transparent dark:border-gray-700 dark:bg-gray-400"
+                                            :id="`track-div-${i}`"></div>
+                                    </div>
+                                    <div class="">
+                                        <div
+                                            v-for="(feat, j) in selectedFeatureLists.dynamicsTime"
+                                            class="flex flex-col gap-2">
+                                            <LineChart
+                                                v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
+                                                :feature-name="feat.name"
+                                                :units="feat.units"
+                                                :data="featureData.dynamics[feat.id][i].featData"
+                                                :start="startTimes[i]"
+                                                :end="endTimes[i]"
+                                                :y-min="feat.yMin"
+                                                :y-max="feat.yMax"
+                                                :length-sec="obj.length_sec"
+                                                :color="colors[i % 10]"
+                                                class="h-[10rem]" />
+                                        </div>
+                                        <div
+                                            v-for="(feat, j) in selectedFeatureLists.rhythmTime"
+                                            class="relative flex flex-col gap-2">
+                                            <LineChart
+                                                v-if="selectedFeatureLists.rhythmTimeVisible[j]"
+                                                :feature-name="feat.name"
+                                                :units="feat.units"
+                                                :data="featureData.rhythm[feat.id][i].featData"
+                                                :start="startTimes[i]"
+                                                :end="endTimes[i]"
+                                                :y-min="feat.yMin"
+                                                :y-max="feat.yMax"
+                                                :length-sec="obj.length_sec"
+                                                :color="colors[i % 10]"
+                                                class="h-[10rem]" />
+                                        </div>
+                                    </div>
+
                                     <div
-                                        class="ml-[45px] h-16 w-full shrink-0 border bg-transparent dark:border-gray-700"
-                                        :id="`track-div-${i}`"></div>
+                                        class="absolute top-0 h-full w-[1px] bg-red-500"
+                                        :style="{
+                                            marginLeft: `calc(${cursorPositions[i] * 100}% + ${
+                                                (1 - cursorPositions[i]) * 45
+                                            }px)`,
+                                        }"></div>
                                 </div>
-                                <!-- <div v-for="(feat, j) in selectedFeatureLists.dynamicsTime" class="flex flex-col gap-2">
-                                    <LineChart
-                                        v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
-                                        :feature-name="feat.name"
-                                        :units="feat.units"
-                                        :data="featureData.dynamics[feat.id][i].featData"
-                                        :start="startTimes[i]"
-                                        :end="endTimes[i]"
-                                        :y-min="feat.yMin"
-                                        :y-max="feat.yMax"
-                                        :length-sec="obj.length_sec"
-                                        :color="colors[i]"
-                                        class="h-[10rem]" />
-                                </div> -->
+
                                 <div>
                                     <!-- <div
                                         v-for="(feat, j) in selectedFeatureLists.rhythmTime"
