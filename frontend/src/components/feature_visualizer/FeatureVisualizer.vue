@@ -372,7 +372,7 @@ function showAllInPlots() {
                                 <div class="relative">
                                     <div class="pl-[45px]">
                                         <div
-                                            class="h-16 w-full shrink-0 border bg-transparent dark:border-gray-700 dark:bg-gray-400"
+                                            class="h-16 w-full shrink-0 border-b border-t bg-transparent dark:border-gray-700 dark:bg-gray-400"
                                             :id="`track-div-${i}`"></div>
                                     </div>
                                     <div class="">
