@@ -1,6 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Popper from 'vue3-popper';
 import {
     useFeatureData,
@@ -53,6 +53,7 @@ import {
     toggleMeasures,
 } from './javascript/player';
 
+import { addControls } from './javascript/controls';
 import { selectRelevanceLabel, setFeatureLists } from './javascript/features';
 import { addChordRegions, zoomOnMeasureSelection } from './javascript/regions';
 
@@ -74,6 +75,10 @@ const regionData = useRegionData(pinia);
 const menuButtonsDisable = useMenuButtonsDisable(pinia);
 
 const measureSelector = ref(null);
+
+onMounted(() => {
+    addControls();
+});
 
 watch(startMeasureIdx, () => {
     if (startMeasureIdx.value === 0 && endMeasureIdx.value === measureData.measureCount - 1) {
@@ -324,13 +329,11 @@ function showAllInPlots() {
 
                             <div class="flex flex-row gap-1">
                                 <div
-                                    class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md"
+                                    class="flex h-[1.5rem] w-[1.5rem] cursor-pointer items-center justify-center rounded-md hover:bg-cyan-600 hover:text-white"
                                     :class="{
                                         'bg-cyan-700 text-white': playing[i],
-                                        'cursor-default dark:text-gray-500': !waveformsVisible[i],
-                                        'hover:bg-cyan-600 hover:text-white': waveformsVisible[i],
                                     }"
-                                    @click="waveformsVisible[i] ? selectPeaks(i, true) : null">
+                                    @click="selectPeaks(i, true)">
                                     <Icon icon="material-symbols:volume-up-outline" width="20" />
                                 </div>
                                 <div
@@ -378,7 +381,7 @@ function showAllInPlots() {
                                     <div class="">
                                         <div
                                             v-for="(feat, j) in selectedFeatureLists.dynamicsTime"
-                                            class="flex flex-col gap-2">
+                                            class="relative flex flex-col gap-2">
                                             <LineChart
                                                 v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
                                                 :feature-name="feat.name"
@@ -391,6 +394,22 @@ function showAllInPlots() {
                                                 :length-sec="obj.length_sec"
                                                 :color="colors[i % 10]"
                                                 class="h-[10rem]" />
+                                            <div
+                                                v-if="selectedFeatureLists.dynamicsTimeVisible[j]"
+                                                class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
+                                                <input
+                                                    :id="`${feat.name}-time-ymin-${i}`"
+                                                    type="number"
+                                                    v-model="feat.yMin"
+                                                    class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
+                                                    step="0.1" />
+                                                <input
+                                                    :id="`${feat.name}-time-ymax-${i}`"
+                                                    type="number"
+                                                    v-model="feat.yMax"
+                                                    class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
+                                                    step="0.1" />
+                                            </div>
                                         </div>
                                         <div
                                             v-for="(feat, j) in selectedFeatureLists.rhythmTime"
@@ -407,6 +426,22 @@ function showAllInPlots() {
                                                 :length-sec="obj.length_sec"
                                                 :color="colors[i % 10]"
                                                 class="h-[10rem]" />
+                                            <div
+                                                v-if="selectedFeatureLists.rhythmTimeVisible[j]"
+                                                class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
+                                                <input
+                                                    :id="`${feat.name}-time-ymin-${i}`"
+                                                    type="number"
+                                                    v-model="feat.yMin"
+                                                    class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
+                                                    step="0.1" />
+                                                <input
+                                                    :id="`${feat.name}-time-ymax-${i}`"
+                                                    type="number"
+                                                    v-model="feat.yMax"
+                                                    class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
+                                                    step="0.1" />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -417,41 +452,6 @@ function showAllInPlots() {
                                                 (1 - cursorPositions[i]) * 45
                                             }px)`,
                                         }"></div>
-                                </div>
-
-                                <div>
-                                    <!-- <div
-                                        v-for="(feat, j) in selectedFeatureLists.rhythmTime"
-                                        class="relative flex flex-col gap-2">
-                                        <LineChart
-                                            v-if="selectedFeatureLists.rhythmTimeVisible[j]"
-                                            :feature-name="feat.name"
-                                            :units="feat.units"
-                                            :data="featureData.rhythm[feat.id][i].featData"
-                                            :start="startTimes[i]"
-                                            :end="endTimes[i]"
-                                            :y-min="feat.yMin"
-                                            :y-max="feat.yMax"
-                                            :length-sec="obj.length_sec"
-                                            :color="colors[i % 10]"
-                                            class="h-[10rem]" />
-                                        <div
-                                            v-if="selectedFeatureLists.rhythmTimeVisible[j]"
-                                            class="absolute top-0 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
-                                            <input
-                                                :id="`${feat.name}-time-ymin-${i}`"
-                                                type="number"
-                                                v-model="feat.yMin"
-                                                class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
-                                                step="0.1" />
-                                            <input
-                                                :id="`${feat.name}-time-ymax-${i}`"
-                                                type="number"
-                                                v-model="feat.yMax"
-                                                class="h-5 w-16 rounded-md border dark:border-gray-700 dark:bg-gray-300"
-                                                step="0.1" />
-                                        </div>
-                                    </div> -->
                                 </div>
                             </div>
                         </div>

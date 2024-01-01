@@ -6,7 +6,7 @@ const props = defineProps({
     timeSignatures: Array,
 });
 
-const emit = defineEmits(['selectRegion', 'deleteTimeSignature']);
+const emit = defineEmits(['selectRegion', 'deleteTimeSignature', 'goToMeasure']);
 
 defineExpose({
     init,
@@ -159,6 +159,7 @@ function relevanceBarMouseDown(event) {
                             'bg-neutral-400 dark:bg-gray-500': i % 2 !== 0,
                             'bg-neutral-300 dark:bg-gray-400': i % 2 == 0,
                         }"
+                        @click="$emit('goToMeasure', i)"
                         @mouseover="logMeasure(i)"
                         @mouseleave="clearMessage()">
                         <div

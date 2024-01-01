@@ -49,12 +49,14 @@ function addRegion(startIdx, endIdx) {
         endTimeString.value = getTimeString(endTime.value, 14, 22);
         peaksInstance.player.pause();
         peaksInstance.segments.add({
+            id: 'selectedRegion',
             startTime: startTime.value,
             endTime: endTime.value,
             editable: false,
             color: 'blue',
             borderColor: 'blue',
         });
+        peaksInstance.player.seek(startTime.value);
     }
 }
 

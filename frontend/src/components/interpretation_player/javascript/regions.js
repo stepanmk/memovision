@@ -15,6 +15,7 @@ import {
     regionSelected,
     regionToSave,
     startMeasureIdx,
+    trackTimes,
     zoomingEnabled,
 } from './variables';
 
@@ -162,6 +163,7 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure) {
         peaksInstances.forEach((peaksInstance, idx) => {
             const view = peaksInstance.views.getView('zoomview');
             view.setZoom({ seconds: 'auto' });
+            peaksInstance.views._zoomview._playheadLayer.updatePlayheadTime(trackTimes.value[idx]);
         });
         regionToSave.value = false;
         return;

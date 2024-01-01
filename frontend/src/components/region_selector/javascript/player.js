@@ -245,12 +245,12 @@ async function initPeaks() {
         peaksInstance.on('points.enter', (event) => {
             peaksInstance.player._adapter.playClick();
         });
-        peaksInstance.on('player.seeked', () => {
-            console.log(peaksInstance.views._zoomview._playheadLayer._playheadPixel);
-            console.log(peaksInstance.views._zoomview._frameOffset);
-            console.log(peaksInstance.views._zoomview._zoomLevelSeconds);
-            console.log(peaksInstance.views._zoomview._scale);
-        });
+        // peaksInstance.on('player.seeked', () => {
+        //     console.log(peaksInstance.views._zoomview._playheadLayer._playheadPixel);
+        //     console.log(peaksInstance.views._zoomview._frameOffset);
+        //     console.log(peaksInstance.views._zoomview._zoomLevelSeconds);
+        //     console.log(peaksInstance.views._zoomview._scale);
+        // });
         const zoomviewContainer = document.getElementById('zoomview-container');
         measuresVisible.value = false;
         const view = peaksInstance.views.getView('zoomview');
@@ -269,6 +269,12 @@ async function initPeaks() {
             menuButtonsDisable.stopLoading();
         }, 200);
     });
+}
+
+async function goToMeasure(measureIdx) {
+    const idx = tracksFromDb.getIdx(tracksFromDb.refTrack.filename);
+    const seekTime = measureData.selectedMeasures[idx][measureIdx + 1];
+    peaksInstance.player.seek(seekTime);
 }
 
 function toggleMeasures() {
@@ -304,7 +310,12 @@ function playPause() {
 }
 
 function rewind() {
-    peaksInstance.player.seek(0);
+    const selectedRegion = peaksInstance.segments.getSegment('selectedRegion');
+    if (selectedRegion) {
+        if (playing.value) peaksInstance.player.playSegment(selectedRegion, true);
+    } else {
+        peaksInstance.player.seek(0);
+    }
 }
 
 function toggleLooping() {
@@ -320,4 +331,14 @@ watch(amplitudeZoom, () => {
     view.setAmplitudeScale(Number(amplitudeZoom.value));
 });
 
-export { destroyPeaks, initPeaks, peaksInstance, playPause, rewind, toggleLooping, toggleMeasures, toggleMetronome };
+export {
+    destroyPeaks,
+    goToMeasure,
+    initPeaks,
+    peaksInstance,
+    playPause,
+    rewind,
+    toggleLooping,
+    toggleMeasures,
+    toggleMetronome,
+};

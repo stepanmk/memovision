@@ -1,6 +1,6 @@
 <script setup>
 import { Icon } from '@iconify/vue';
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useMeasureData, useMenuButtonsDisable, useModulesVisible, useRegionData } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import { getEndMeasure, getStartMeasure, getTimeString } from '../../sharedFunctions';
@@ -46,6 +46,7 @@ import {
 
 import {
     destroyPeaks,
+    goToMeasure,
     initPeaks,
     playPause,
     rewind,
@@ -57,12 +58,18 @@ import {
 import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import MeasureSelector from './subcomponents/MeasureSelector.vue';
 
+import { addControls } from './javascript/controls';
+
 // pinia stores
 const modulesVisible = useModulesVisible(pinia);
 const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
 const measureSelector = ref(null);
+
+onMounted(() => {
+    addControls();
+});
 
 watch(startMeasureIdx, () => {
     if (startMeasureIdx.value === -1) {
@@ -224,6 +231,7 @@ onBeforeUnmount(() => {
                 :measure-count="measureData.measureCount"
                 :time-signatures="regionData.timeSignatures"
                 ref="measureSelector"
+                @go-to-measure="goToMeasure"
                 @select-region="addRegion"
                 @delete-time-signature="deleteTimeSignature" />
             <div

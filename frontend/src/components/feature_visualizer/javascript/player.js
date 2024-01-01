@@ -94,7 +94,7 @@ function initPeaksInstances() {
         tracksFromDb.syncTracks.forEach((track, idx) => {
             initPeaks(track.filename, idx);
             startTimes.value.push(0);
-            endTimes.value.push(1 / track.length_sec);
+            endTimes.value.push(track.length_sec);
         });
     }, 50);
 }
@@ -300,6 +300,7 @@ async function rewind() {
 
 export {
     activePeaksIdx,
+    canSwitch,
     endTimes,
     goToMeasure,
     idxArray,
