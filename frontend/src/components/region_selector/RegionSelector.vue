@@ -370,7 +370,7 @@ onBeforeUnmount(() => {
                         maxlength="256"
                         size="20"
                         autocomplete="off"
-                        class="input-field-nomargin h-7 border placeholder-black dark:bg-gray-300"
+                        class="input-field-nomargin h-7 border dark:bg-gray-300"
                         placeholder="Region name"
                         v-model="regionName"
                         v-on:keyup.enter="saveRegion()" />
@@ -431,13 +431,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-input#name:focus,
+/* input#name:focus,
 input#start-measure:focus,
 input#end-measure:focus,
 input#note-value:focus,
 input#note-count:focus {
     outline: 2px solid rgb(14, 116, 144);
-}
+} */
 
 input#amplitude-zoom {
     transform: rotate(270deg);

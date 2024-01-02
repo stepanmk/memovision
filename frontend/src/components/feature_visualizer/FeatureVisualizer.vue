@@ -25,6 +25,7 @@ import {
     labelSelectors,
     measuresVisible,
     peaksInstancesReady,
+    percLoaded,
     playing,
     scatterVisible,
     selectedFeatureLists,
@@ -182,7 +183,10 @@ function showAllInPlots() {
         :visible="modulesVisible.featureVisualizer"
         :is-disabled="!allPeaksReady">
         <template v-slot:window>
-            <LoadingWindow :visible="!allPeaksReady" :loading-message="'Loading tracks...'" :progress-bar-perc="0" />
+            <LoadingWindow
+                :visible="!allPeaksReady"
+                :loading-message="'Loading tracks...'"
+                :progress-bar-perc="percLoaded" />
         </template>
         <template v-slot:module-content>
             <div class="flex h-[3rem] w-full items-center gap-2 border-b px-5 dark:border-gray-700">

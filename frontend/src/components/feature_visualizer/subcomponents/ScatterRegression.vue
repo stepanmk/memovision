@@ -45,7 +45,7 @@ const compSeries = computed(() => {
     let dataClassTwo = [];
     if (props.labelNames) {
         props.trackObjects.forEach((track, i) => {
-            if (track.year) {
+            if (track.year && props.visible[i]) {
                 series.push({
                     type: 'scatter',
                     name: track.performer ? track.performer + '; ' + track.year : track.filename + '; ' + track.year,
@@ -80,7 +80,7 @@ const compSeries = computed(() => {
         });
     } else {
         props.trackObjects.forEach((track, i) => {
-            if (track.year) {
+            if (track.year && props.visible[i]) {
                 series.push({
                     type: 'scatter',
                     name: track.performer ? track.performer + '; ' + track.year : track.filename + '; ' + track.year,

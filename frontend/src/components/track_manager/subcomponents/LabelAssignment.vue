@@ -240,7 +240,7 @@ async function uploadLabels() {
 </template>
 
 <style scoped>
-input:focus {
+/* input:focus {
     outline: 2px solid rgba(255, 255, 255, 0.2);
-}
+} */
 </style>

@@ -11,6 +11,7 @@ import {
     measuresVisible,
     numPeaksLoaded,
     peaksInstancesReady,
+    percLoaded,
     playing,
     timeSelections,
     trackTimes,
@@ -27,6 +28,10 @@ gainNode.connect(audioCtx.destination);
 
 watch(volume, () => {
     gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
+});
+
+watch(numPeaksLoaded, () => {
+    percLoaded.value = Math.round((numPeaksLoaded.value / tracksFromDb.syncTracks.length) * 100);
 });
 
 let activePeaksIdx = 0;
