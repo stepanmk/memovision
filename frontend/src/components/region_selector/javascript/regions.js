@@ -62,6 +62,7 @@ function addRegion(startIdx, endIdx) {
 
 function deselectAllRegions() {
     regionData.selected.fill(false);
+    peaksInstance.segments.removeAll();
 }
 
 function cancelRegionAdding() {

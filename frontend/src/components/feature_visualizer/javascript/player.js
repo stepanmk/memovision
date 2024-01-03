@@ -70,7 +70,7 @@ function resetPlayer() {
 
     prevPeaksIdx = null;
     numPeaksLoaded.value = 0;
-    // percLoaded.value = 0;
+    currentMeasure.value = -1;
 
     audioCtx.suspend();
     resizeObserver.disconnect();

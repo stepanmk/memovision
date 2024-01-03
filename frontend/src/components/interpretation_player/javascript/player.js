@@ -83,6 +83,7 @@ function resetPlayer() {
     reciprocalDurations = [];
     selectedIndices = [];
     numPeaksLoaded.value = 0;
+    currentMeasure.value = -1;
     percLoaded.value = 0;
     audioCtx.suspend();
     resizeObserver.disconnect();

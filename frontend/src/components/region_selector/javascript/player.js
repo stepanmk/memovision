@@ -11,7 +11,7 @@ import {
 } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 
-import { getTimeString } from '../../../sharedFunctions';
+import { getStartMeasure, getTimeString } from '../../../sharedFunctions';
 
 import {
     amplitudeZoom,
@@ -61,6 +61,7 @@ function destroyPeaks() {
     maxRMS.value = [-60, -60];
     currentRMS.value = [-60, -60];
     currentTime.value = '00:00.00';
+    currentMeasure.value = -1;
     volume.value = 0.0;
     metronomeVolume.value = -6.0;
 }

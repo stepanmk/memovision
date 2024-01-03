@@ -39,6 +39,7 @@ import {
     deleteAllRegions,
     deleteRegion,
     deleteTimeSignature,
+    deselectAllRegions,
     saveRegion,
     saveTimeSignature,
     selectRegion,
@@ -104,6 +105,7 @@ function destroyRegionSelector() {
     if (regionIdx !== -1) updateRegion(regionIdx);
     measureSelector.value.destroy();
 
+    deselectAllRegions();
     destroyPeaks();
     peaksReady.value = false;
     regionSelectorOpened.value = false;
