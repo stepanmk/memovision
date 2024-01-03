@@ -53,7 +53,6 @@ const regionData = useRegionData(pinia);
     getFeatureNames – returns names of all available features
     keepDiffStructureTracks – keeps the tracks with differences in musical structure
     keepDuplicates – keeps the found duplicate recordings 
-    processAllTracks – processes all uploaded tracks
     processAllTracks – wrapper function for track preprocessing
     resetProgress – resets helper variables for the progress bar
     resetProgress – resets progress bar
