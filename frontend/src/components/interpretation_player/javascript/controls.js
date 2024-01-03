@@ -1,11 +1,11 @@
 import { onKeyStroke } from '@vueuse/core';
-import { useMeasureData, useModulesVisible } from '../../../globalStores';
+import { useModulesVisible } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { activePeaksIdx, canSwitch, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
+import { hideAllRegions } from './regions';
 import { endMeasureIdx, isPlaying, regionLengths, regionToSave, startMeasureIdx, trackTimes } from './variables';
 
 const modulesVisible = useModulesVisible(pinia);
-const measureData = useMeasureData(pinia);
 
 function addControls() {
     onKeyStroke(' ', (e) => {
@@ -58,6 +58,7 @@ function addControls() {
             startMeasureIdx.value = -1;
             endMeasureIdx.value = -1;
             regionToSave.value = false;
+            hideAllRegions();
         }
     });
 }

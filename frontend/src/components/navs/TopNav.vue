@@ -9,7 +9,7 @@ import { api } from '../../axiosInstance';
 import { useAudioStore, useModulesVisible, useUserInfo } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
 import router from '../../router.js';
-import { darkMode, disableDarkMode } from '../../sharedFunctions';
+import { darkMode, disableDarkMode, getSecureConfig } from '../../sharedFunctions';
 
 const userInfo = useUserInfo(pinia);
 const modulesVisible = useModulesVisible(pinia);
@@ -28,12 +28,12 @@ function changeSession() {
     router.push('/sessions');
 }
 
-function logoutUser(data) {
+async function logoutUser(data) {
+    await api.put('/update-modified-time', {}, getSecureConfig());
     api.post('/logout', data)
         .then(function (response) {
             if (response.data.message === 'logout successful') {
                 // reset track pinia stores
-                // tracksFromDb.$reset();
                 modulesVisible.$reset();
                 userInfo.$reset();
                 audioStore.$reset();

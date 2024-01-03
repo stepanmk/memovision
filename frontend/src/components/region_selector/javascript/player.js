@@ -15,6 +15,7 @@ import { getTimeString } from '../../../sharedFunctions';
 
 import {
     amplitudeZoom,
+    currentMeasure,
     currentRMS,
     currentTime,
     loopingActive,
@@ -66,12 +67,7 @@ function destroyPeaks() {
 
 async function initPeaks() {
     let ctx = new AudioContext();
-    // let audioBuffer = await ctx.decodeAudioData(
-    //     await audioStore.getAudio(tracksFromDb.refTrack.filename).arrayBuffer()
-    // );
-    // let arrayBuff = await audioStore.getAudio(tracksFromDb.refTrack.filename);
     let metronomeAudioBuffer = await ctx.decodeAudioData(await audioStore.metronomeClick.arrayBuffer());
-
     const player = {
         externalPlayer: new Tone.Player(
             URL.createObjectURL(audioStore.getAudio(tracksFromDb.refTrack.filename))
@@ -235,6 +231,7 @@ async function initPeaks() {
         }
         peaksInstance.on('player.timeupdate', (time) => {
             currentTime.value = getTimeString(time, 14, 22);
+            currentMeasure.value = getStartMeasure(time + 0.005) - 2;
         });
         peaksInstance.on('player.playing', () => {
             playing.value = true;
@@ -245,12 +242,6 @@ async function initPeaks() {
         peaksInstance.on('points.enter', (event) => {
             peaksInstance.player._adapter.playClick();
         });
-        // peaksInstance.on('player.seeked', () => {
-        //     console.log(peaksInstance.views._zoomview._playheadLayer._playheadPixel);
-        //     console.log(peaksInstance.views._zoomview._frameOffset);
-        //     console.log(peaksInstance.views._zoomview._zoomLevelSeconds);
-        //     console.log(peaksInstance.views._zoomview._scale);
-        // });
         const zoomviewContainer = document.getElementById('zoomview-container');
         measuresVisible.value = false;
         const view = peaksInstance.views.getView('zoomview');

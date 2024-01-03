@@ -238,9 +238,3 @@ async function uploadLabels() {
         </div>
     </div>
 </template>
-
-<style scoped>
-/* input:focus {
-    outline: 2px solid rgba(255, 255, 255, 0.2);
-} */
-</style>

@@ -6,19 +6,21 @@ import { numComputed } from './variables';
 
 /* pinia stores */
 
-const tracksFromDb = useTracksFromDb(pinia);
-const userInfo = useUserInfo(pinia);
 const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
+const userInfo = useUserInfo(pinia);
 
-/*   actual fetch functions 
+/*   fetch functions description 
 
-    getTrackData – get objects with information about the tracks
-    getAudioData – fetches a blob with the audio data for a single track
-    getMetronomeClick – fetches the metronome audio clip
-    getMeasureData – fetches measure data for all uploaded tracks
     downloadMeasures – downloads transferred measure annotations
+    getAudioData – fetches a blob with the audio data for a single track
+    getChords – fetches chord annotations
+    getMeasureData – fetches measure data for all uploaded tracks
+    getMetronomeClick – fetches the metronome audio clip
+    getSyncPoints – fetches synchronization matrices
+    getTrackData – fetches objects with track metadata
 
 */
 

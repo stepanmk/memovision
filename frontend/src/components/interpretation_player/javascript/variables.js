@@ -18,6 +18,7 @@ const regionName = ref('');
 const regionSelected = ref(false);
 const regionToSave = ref(false);
 const relevantMeasures = ref([]);
+const relevantMeasuresSelected = ref([]);
 const selectedIdx = ref(0);
 const selectedLabel = ref('');
 const selectedRelevanceData = ref([]);
@@ -51,6 +52,7 @@ export {
     regionSelected,
     regionToSave,
     relevantMeasures,
+    relevantMeasuresSelected,
     selectedIdx,
     selectedLabel,
     selectedRelevanceData,

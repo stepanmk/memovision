@@ -3,9 +3,10 @@ import Peaks from 'peaks.js';
 import { watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { sleep } from '../../../sharedFunctions';
+import { getStartMeasure, sleep } from '../../../sharedFunctions';
 import { hideAllRegions } from './regions';
 import {
+    currentMeasure,
     isPlaying,
     measuresVisible,
     numPeaksLoaded,
@@ -43,11 +44,8 @@ function fit() {
     }
     peaksInstances.forEach((instance, idx) => {
         const view = instance.views.getView('zoomview');
-        // const container = document.getElementById(`track-div-${idx}`);
-        // container.style.height = '544px';
         view.fitToContainer();
         view.setZoom({ seconds: 'auto' });
-        // instance.views._zoomview._height = 64;
     });
     regionToSave.value = false;
     hideAllRegions();
@@ -200,6 +198,7 @@ function movePlayheads(time) {
         reciprocalDurations[activePeaksIdx] * time * tracksFromDb.linAxes[activePeaksIdx][0].length
     );
     const currentRefTime = tracksFromDb.linAxes[activePeaksIdx][1][currentLinIdx];
+    currentMeasure.value = getStartMeasure(currentRefTime + 0.005) - 2;
     const closestTimeIdx = Math.round(
         reciprocalDurationRef * currentRefTime * tracksFromDb.syncPoints[activePeaksIdx].length
     );

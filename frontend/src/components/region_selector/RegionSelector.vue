@@ -7,6 +7,7 @@ import { getEndMeasure, getStartMeasure, getTimeString } from '../../sharedFunct
 
 import {
     amplitudeZoom,
+    currentMeasure,
     currentRMS,
     currentTime,
     endMeasureIdx,
@@ -230,6 +231,7 @@ onBeforeUnmount(() => {
             <MeasureSelector
                 :measure-count="measureData.measureCount"
                 :time-signatures="regionData.timeSignatures"
+                :current-measure="currentMeasure"
                 ref="measureSelector"
                 @go-to-measure="goToMeasure"
                 @select-region="addRegion"

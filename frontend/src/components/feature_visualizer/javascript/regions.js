@@ -84,7 +84,6 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure, regionIdx) {
             id: 'selectedRegion',
         });
     }
-    // const secs = getLongestRegion();
     for (let i = 0; i < peaksInstances.length; i++) {
         startTimes.value[i] = measureData.selectedMeasures[i][startMeasure + 1];
         endTimes.value[i] = measureData.selectedMeasures[i][endMeasure + 2];

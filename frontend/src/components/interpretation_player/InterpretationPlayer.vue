@@ -27,6 +27,7 @@ import {
     regionName,
     regionToSave,
     relevantMeasures,
+    relevantMeasuresSelected,
     selectedLabel,
     selectedRelevanceData,
     selectedRelevanceFeatureName,
@@ -164,14 +165,20 @@ function destroyInterpretationPlayer() {
                         <p
                             v-for="(obj, i) in measureData.relevanceFeatures"
                             class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-300"
-                            @click="selectRelevanceFeature(obj.id, obj.name)">
+                            :class="{
+                                'bg-neutral-200 dark:bg-gray-300': measureData.relevanceFeaturesSelected[i],
+                            }"
+                            @click="selectRelevanceFeature(obj.id, obj.name, i)">
                             {{ obj.name }}
                         </p>
                     </SubMenu>
                     <SubMenu :name="'Label'" :num-entries="measureData.labels.length">
                         <p
                             v-for="(obj, i) in measureData.labels"
-                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
+                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-300"
+                            :class="{
+                                'bg-neutral-200 dark:bg-gray-300': measureData.labelsSelected[i],
+                            }"
                             @click="selectRelevanceLabel(i, 'custom')">
                             {{ obj }}
                         </p>
@@ -179,6 +186,7 @@ function destroyInterpretationPlayer() {
                     <SubMenu :name="'Selected regions'" :num-entries="regionData.selectedRegions.length">
                         <SelectedRegion
                             v-for="(obj, i) in regionData.selectedRegions"
+                            :class="{ 'bg-neutral-200 dark:bg-gray-300': regionData.selected[i] }"
                             :region-name="obj.regionName"
                             :idx="i"
                             :start-measure="getStartMeasure(obj.startTime)"
@@ -189,6 +197,7 @@ function destroyInterpretationPlayer() {
                     <SubMenu :name="'Difference regions'" :num-entries="regionData.diffRegions.length">
                         <DifferenceRegion
                             v-for="(obj, i) in regionData.diffRegions"
+                            :class="{ 'bg-neutral-200 dark:bg-gray-300': regionData.diffRegionsSelected[i] }"
                             :region-name="obj.regionName"
                             :idx="i"
                             :start-time="getTimeString(obj.startTime, 14, 22)"
@@ -200,10 +209,11 @@ function destroyInterpretationPlayer() {
                     </SubMenu>
                     <SubMenu
                         :name="'Relevant measures'"
-                        @mouseover="selectRelevantMeasures()"
-                        :num-entries="relevantMeasures.length">
+                        :num-entries="relevantMeasures.length"
+                        @click="selectRelevantMeasures()">
                         <RelevantMeasure
                             v-for="(obj, i) in relevantMeasures"
+                            :class="{ 'bg-neutral-200 dark:bg-gray-300': relevantMeasuresSelected[i] }"
                             :idx="i"
                             :region-name="obj.regionName"
                             :relevance="obj.relevance"

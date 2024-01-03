@@ -4,7 +4,6 @@ import { useDropZone } from '@vueuse/core';
 import { onMounted, ref } from 'vue';
 import Popper from 'vue3-popper';
 import {
-    useAudioStore,
     useFeatureLists,
     useMenuButtonsDisable,
     useModulesVisible,
@@ -18,8 +17,8 @@ import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import BottomLegend from './subcomponents/BottomLegend.vue';
 import LabelAssignment from './subcomponents/LabelAssignment.vue';
-import ProgressBar from './subcomponents/ProgressBar.vue';
 import TopLegend from './subcomponents/TopLegend.vue';
+import UploadProgressBar from './subcomponents/UploadProgressBar.vue';
 
 import {
     diffRegions,
@@ -82,14 +81,15 @@ const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const modulesVisible = useModulesVisible(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
 const userInfo = useUserInfo(pinia);
-const audioStore = useAudioStore(pinia);
 
 /* dropzone variables */
 const dropzone = ref();
-const metadataDropzone = ref();
 const { isOverDropzone } = useDropZone(dropzone, onDrop);
-const { isOverMetadataDropzone } = useDropZone(metadataDropzone, uploadMetadata);
 
+/* 
+    reset all data stores and fetch all data (audio and features) 
+    from server after the track manager is mounted 
+*/
 onMounted(() => {
     resetAllStores();
     getAllData();
@@ -108,22 +108,22 @@ async function getAllData() {
     loadingMessage.value = 'Retrieving audio data...';
     isLoading.value = true;
     isDisabled.value = true;
-    await getTrackData();
-    await getRegionData();
-    await getChords();
+    await getTrackData(); // track metadata
+    await getRegionData(); // saved region data
+    await getChords(); // chord annotations
     preciseSync.value = userInfo.preciseSync;
     numThingsToCompute.value = tracksFromDb.trackObjects.length;
     let audioData = [];
     for (const track of tracksFromDb.trackObjects) {
         audioData.push(getAudioData(track.filename));
     }
-    await Promise.all(audioData);
-    await getMetronomeClick();
-    await getMeasureData();
-    await getFeatureNames();
+    await Promise.all(audioData); // audio data
+    await getMetronomeClick(); // metronome audio
+    await getMeasureData(); // measure annotations
+    await getFeatureNames(); // feature names
     loadingMessage.value = 'Retrieving audio features...';
-    await getSyncPoints();
-    await getAllFeatures();
+    await getSyncPoints(); // synchronization points (matrices)
+    await getAllFeatures(); // already computed features
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
@@ -264,8 +264,7 @@ async function closeLabelAssignment() {
             <!-- uploaded files -->
             <TopLegend />
             <div
-                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900"
-                ref="metadataDropzone">
+                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900">
                 <TransitionGroup name="list">
                     <div
                         v-for="(obj, i) in tracksFromDb.trackObjects"
@@ -461,7 +460,7 @@ async function closeLabelAssignment() {
 
                         <div class="flex h-full w-[calc(100%-18rem)] items-center">
                             <div class="m-1 h-[40%] w-full rounded-md bg-neutral-400 dark:bg-gray-100">
-                                <ProgressBar :percentage="obj.progressPercentage" :id="i" />
+                                <UploadProgressBar :percentage="obj.progressPercentage" :id="i" />
                             </div>
                         </div>
 

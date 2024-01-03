@@ -5,6 +5,7 @@ import { ref } from 'vue';
 
 const amplitudeZoom = ref(1.0);
 const beatsPerMeasure = ref(1);
+const currentMeasure = ref(-1);
 const currentRMS = ref([-60, -60]);
 const currentTime = ref('00:00.00');
 const endMeasureIdx = ref(-1);
@@ -36,6 +37,7 @@ const year = ref(null);
 export {
     amplitudeZoom,
     beatsPerMeasure,
+    currentMeasure,
     currentRMS,
     currentTime,
     endMeasureIdx,

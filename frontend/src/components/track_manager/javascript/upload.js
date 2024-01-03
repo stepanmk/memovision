@@ -11,15 +11,16 @@ import { somethingToUpload, uploadList } from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);
 
-/*  actual upload functions 
+/*  upload functions description 
     
-    preUploadCheck – returns true if the filename is already uploaded on the server
     addFilesToUploadList – adds files to the upload list
+    clearUploadList – removes all files from the upload list
+    preUploadCheck – returns true if the file with a given filename is already uploaded
     removeFileFromUploadList – removes file from the upload list
-    clearUploadList – removes all not yet upload files from the upload list
-    uploadOneFile – uploads one file to server
     uploadAllFiles – uploads all the files from the upload list
     uploadMeasures – uploads manual measure annotations
+    uploadMetadata – uploads metadata to the server
+    uploadOneFile – uploads one file to the server
 
 */
 

@@ -3,9 +3,10 @@ import Peaks from 'peaks.js';
 import { ref, watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { sleep } from '../../../sharedFunctions';
+import { getStartMeasure, sleep } from '../../../sharedFunctions';
 import { hideAllRegions } from './regions';
 import {
+    currentMeasure,
     cursorPositions,
     isPlaying,
     measuresVisible,
@@ -207,6 +208,7 @@ function movePlayheads(time) {
         reciprocalDurations[activePeaksIdx] * time * tracksFromDb.linAxes[activePeaksIdx][0].length
     );
     const currentRefTime = tracksFromDb.linAxes[activePeaksIdx][1][currentLinIdx];
+    currentMeasure.value = getStartMeasure(currentRefTime + 0.005) - 2;
     const closestTimeIdx = Math.round(
         reciprocalDurationRef * currentRefTime * tracksFromDb.syncPoints[activePeaksIdx].length
     );

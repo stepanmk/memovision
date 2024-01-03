@@ -4,6 +4,7 @@ import { ref } from 'vue';
 const props = defineProps({
     measureCount: Number,
     timeSignatures: Array,
+    currentMeasure: Number,
 });
 
 const emit = defineEmits(['selectRegion', 'deleteTimeSignature', 'goToMeasure']);
@@ -167,7 +168,13 @@ function relevanceBarMouseDown(event) {
                             :class="{
                                 'border-b border-t border-cyan-600 bg-neutral-900 bg-opacity-70 hover:bg-red-600  dark:border-gray-400':
                                     regionOverlay[i],
-                            }"></div>
+                            }">
+                            <div
+                                class="h-full w-full"
+                                :class="{
+                                    'bg-red-600 bg-opacity-100': i === currentMeasure,
+                                }"></div>
+                        </div>
                     </div>
                 </div>
             </div>

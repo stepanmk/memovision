@@ -10,13 +10,13 @@ import { getCookie, getSecureConfig } from '../../../sharedFunctions';
 const tracksFromDb = useTracksFromDb(pinia);
 const audioStore = useAudioStore(pinia);
 
-/*   actual track functions 
+/*   track functions description
 
-    updateMetadata – updates metadata for a single track
-    updateAllMetadata – updates metadata for all the tracks
-    setReference – sets reference track
-    deleteFileFromDb – deletes a single file from the database
     deleteAllFilesFromDb – deletes all the uploaded tracks from the database
+    deleteFileFromDb – deletes a single file from the database
+    setReference – sets reference track
+    updateAllMetadata – updates metadata for all the tracks
+    updateMetadata – updates metadata for a single track
 
 */
 

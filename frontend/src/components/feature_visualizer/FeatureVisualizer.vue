@@ -139,6 +139,7 @@ function destroyFeatVisualizer() {
     endMeasureIdx.value = measureData.measureCount - 1;
     selectedLabel.value = '';
     labelSelectors.value.fill(false);
+    regionData.selected.fill(false);
 
     resetPlayer();
     peaksInstances.splice(0);
@@ -214,7 +215,7 @@ function showAllInPlots() {
                     <p
                         v-for="(obj, i) in measureData.labels"
                         :class="{ 'bg-neutral-200 dark:bg-gray-300': labelSelectors[i] }"
-                        class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-400"
+                        class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-300"
                         @click="selectRelevanceLabel(i)">
                         {{ obj }}
                     </p>
@@ -234,7 +235,7 @@ function showAllInPlots() {
                                 !selectedFeatureLists.dynamicsMeasureVisible[i]
                         " />
                     <FeatureName
-                        :class="{ 'bg-neutral-200': selectedFeatureLists.rhythmMeasureVisible[i] }"
+                        :class="{ 'bg-neutral-200 dark:bg-gray-300': selectedFeatureLists.rhythmMeasureVisible[i] }"
                         v-for="(obj, i) in selectedFeatureLists.rhythmMeasure"
                         :feat-name="obj.name"
                         :idx="i"
@@ -252,7 +253,7 @@ function showAllInPlots() {
                         :start-measure="getStartMeasure(obj.startTime)"
                         :end-measure="getEndMeasure(obj.endTime)"
                         :beats-per-measure="obj.beatsPerMeasure"
-                        :class="{ 'bg-neutral-200': regionData.selected[i] }"
+                        :class="{ 'bg-neutral-200 dark:bg-gray-300': regionData.selected[i] }"
                         @click="
                             zoomOnMeasureSelection(
                                 getStartMeasure(obj.startTime) - 1,
@@ -459,74 +460,89 @@ function showAllInPlots() {
                                 </div>
                             </div>
                         </div>
-                        <div v-for="(feat, j) in selectedFeatureLists.dynamicsMeasure" class="relative">
-                            <LineChartMeasure
-                                v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
-                                :colors="colors"
-                                :current-measure="currentMeasure"
-                                :data="featureData.dynamics[feat.id]"
-                                :end-measure-idx="endMeasureIdx"
-                                :feature-name="feat.name"
-                                :fpm="feat.fpm"
-                                :label-names="selectedLabel"
-                                :labels="trackLabels"
-                                :start-measure-idx="startMeasureIdx"
-                                :track-objects="tracksFromDb.syncTracks"
-                                :units="feat.units"
-                                :visible="tracksVisible"
-                                :y-max="feat.yMax"
-                                :y-min="feat.yMin"
-                                class="h-[16rem]" />
-                            <div
-                                v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
-                                class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
-                                <input
-                                    :id="`${feat.name}-measure-ymin`"
-                                    type="number"
-                                    v-model="feat.yMin"
-                                    class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
-                                    step="0.1" />
-                                <input
-                                    :id="`${feat.name}-measure-ymax`"
-                                    type="number"
-                                    v-model="feat.yMax"
-                                    class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
-                                    step="0.1" />
+                        <div class="relative">
+                            <div class="absolute top-0 ml-[45px] h-full w-[calc(100%-45px)]">
+                                <div
+                                    v-if="currentMeasure > -1"
+                                    class="h-full bg-red-200 bg-opacity-25"
+                                    :style="{
+                                        width: `${(1 / (endMeasureIdx - startMeasureIdx + 1)) * 100}%`,
+                                        marginLeft: `${
+                                            ((currentMeasure - startMeasureIdx) /
+                                                (endMeasureIdx - startMeasureIdx + 1)) *
+                                            100
+                                        }%`,
+                                    }"></div>
                             </div>
-                        </div>
-                        <div v-for="(feat, j) in selectedFeatureLists.rhythmMeasure" class="relative">
-                            <LineChartMeasure
-                                v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
-                                :colors="colors"
-                                :current-measure="currentMeasure"
-                                :data="featureData.rhythm[feat.id]"
-                                :end-measure-idx="endMeasureIdx"
-                                :feature-name="feat.name"
-                                :fpm="feat.fpm"
-                                :label-names="selectedLabel"
-                                :labels="trackLabels"
-                                :start-measure-idx="startMeasureIdx"
-                                :track-objects="tracksFromDb.syncTracks"
-                                :units="feat.units"
-                                :visible="tracksVisible"
-                                :y-max="feat.yMax"
-                                :y-min="feat.yMin"
-                                class="h-[16rem]" />
-                            <div
-                                v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
-                                class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
-                                <input
-                                    :id="`${feat.name}-measure-ymin`"
-                                    type="number"
-                                    v-model="feat.yMin"
-                                    class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
-                                    step="0.1" />
-                                <input
-                                    :id="`${feat.name}-measure-ymax`"
-                                    type="number"
-                                    v-model="feat.yMax"
-                                    class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
-                                    step="0.1" />
+                            <div v-for="(feat, j) in selectedFeatureLists.dynamicsMeasure" class="relative">
+                                <LineChartMeasure
+                                    v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
+                                    :colors="colors"
+                                    :current-measure="currentMeasure"
+                                    :data="featureData.dynamics[feat.id]"
+                                    :end-measure-idx="endMeasureIdx"
+                                    :feature-name="feat.name"
+                                    :fpm="feat.fpm"
+                                    :label-names="selectedLabel"
+                                    :labels="trackLabels"
+                                    :start-measure-idx="startMeasureIdx"
+                                    :track-objects="tracksFromDb.syncTracks"
+                                    :units="feat.units"
+                                    :visible="tracksVisible"
+                                    :y-max="feat.yMax"
+                                    :y-min="feat.yMin"
+                                    class="h-[16rem]" />
+                                <div
+                                    v-if="selectedFeatureLists.dynamicsMeasureVisible[j]"
+                                    class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
+                                    <input
+                                        :id="`${feat.name}-measure-ymin`"
+                                        type="number"
+                                        v-model="feat.yMin"
+                                        class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
+                                        step="0.1" />
+                                    <input
+                                        :id="`${feat.name}-measure-ymax`"
+                                        type="number"
+                                        v-model="feat.yMax"
+                                        class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
+                                        step="0.1" />
+                                </div>
+                            </div>
+                            <div v-for="(feat, j) in selectedFeatureLists.rhythmMeasure" class="relative">
+                                <LineChartMeasure
+                                    v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
+                                    :colors="colors"
+                                    :current-measure="currentMeasure"
+                                    :data="featureData.rhythm[feat.id]"
+                                    :end-measure-idx="endMeasureIdx"
+                                    :feature-name="feat.name"
+                                    :fpm="feat.fpm"
+                                    :label-names="selectedLabel"
+                                    :labels="trackLabels"
+                                    :start-measure-idx="startMeasureIdx"
+                                    :track-objects="tracksFromDb.syncTracks"
+                                    :units="feat.units"
+                                    :visible="tracksVisible"
+                                    :y-max="feat.yMax"
+                                    :y-min="feat.yMin"
+                                    class="h-[16rem]" />
+                                <div
+                                    v-if="selectedFeatureLists.rhythmMeasureVisible[j]"
+                                    class="absolute top-0 z-50 ml-[45px] flex h-7 items-center gap-1 rounded-md px-1 text-sm dark:text-gray-800">
+                                    <input
+                                        :id="`${feat.name}-measure-ymin`"
+                                        type="number"
+                                        v-model="feat.yMin"
+                                        class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
+                                        step="0.1" />
+                                    <input
+                                        :id="`${feat.name}-measure-ymax`"
+                                        type="number"
+                                        v-model="feat.yMax"
+                                        class="h-5 w-16 rounded-md border px-1 dark:border-gray-700 dark:bg-gray-300"
+                                        step="0.1" />
+                                </div>
                             </div>
                         </div>
                         <div class="h-[30rem] w-full" v-if="scatterVisible">
