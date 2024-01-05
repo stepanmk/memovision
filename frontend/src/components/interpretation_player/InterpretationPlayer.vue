@@ -233,7 +233,7 @@ function destroyInterpretationPlayer() {
                         maxlength="256"
                         size="20"
                         autocomplete="off"
-                        class="input-field-nomargin h-7 w-36 border"
+                        class="input-field-nomargin h-7 w-36 border dark:bg-gray-300"
                         placeholder="Region name"
                         v-model="regionName" />
                     <button class="btn btn-blue" @click="saveRegion()">Save</button>
