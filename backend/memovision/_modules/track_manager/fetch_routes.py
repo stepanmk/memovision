@@ -159,3 +159,24 @@ def get_all_regions():
             'color': '#0000ff'
         })
     return jsonify({'regions': regs, 'timeSignatures': time_sigs})
+
+
+@fetch_routes.route('/available-space', methods=['GET'])
+@jwt_required()
+def available_space():
+    sessions = Session.query.filter_by(user=current_user).all()
+    occupied = 0
+    available = 100
+    for session in sessions:
+        for track in session.tracks:
+            occupied += track.disk_space
+    return jsonify({
+        'message':
+        'success',
+        'occupiedSpace':
+        round(occupied / 1000000, 2),
+        'availableSpace':
+        available,
+        'occupiedPerc':
+        round(((occupied / 1000000) / available) * 100, 2)
+    })

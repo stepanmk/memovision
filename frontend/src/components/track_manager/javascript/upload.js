@@ -1,8 +1,8 @@
 import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
-import { useTracksFromDb } from '../../../globalStores';
+import { useTracksFromDb, useUserInfo } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getCookie, getSecureConfig } from '../../../sharedFunctions';
+import { availableSpace, getCookie, getSecureConfig } from '../../../sharedFunctions';
 import { getAudioData, getMeasureData, getTrackData } from './fetch';
 import { transferAllMeasures } from './process';
 import { somethingToUpload, uploadList } from './variables';
@@ -10,6 +10,7 @@ import { somethingToUpload, uploadList } from './variables';
 /* pinia stores */
 
 const tracksFromDb = useTracksFromDb(pinia);
+const userInfo = useUserInfo(pinia);
 
 /*  upload functions description 
     
@@ -70,6 +71,7 @@ async function uploadOneFile(fileObject) {
         fileObject.beingUploaded = true;
         let formData = new FormData();
         formData.append('file', fileObject.file);
+        formData.append('availableSpace', userInfo.availableSpace);
         function fileUploadProgress(event) {
             const percentage = Math.round((100 * event.loaded) / event.total);
             fileObject.progressPercentage = percentage;
@@ -87,6 +89,7 @@ async function uploadOneFile(fileObject) {
         // add track to the store and fetch audio with waveform
         tracksFromDb.addTrackData(res.data.obj);
         await getAudioData(res.data.obj.filename);
+        await availableSpace();
     }
 }
 

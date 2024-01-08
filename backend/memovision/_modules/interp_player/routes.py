@@ -35,28 +35,29 @@ def sync_points():
     sync_points = []
     lin_axes = []
     for track in tracks:
-        lin_axis = []
-        measures = load_measures(current_user.username, session.name,
-                                 track.filename, track.gt_measures)
-        positions = create_positions(measures, track.length_sec)
-        lin_axis.append(positions)
-        wp = np.load(
-            f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/wp.npy'
-        )
-        target_positions = scipy.interpolate.interp1d(
-            wp[0] / 50, wp[1] / 50, kind='linear')(ref_positions)
-        target_positions = list(np.clip(target_positions, 0.,
-                                        track.length_sec))
+        if track.sync:
+            lin_axis = []
+            measures = load_measures(current_user.username, session.name,
+                                     track.filename, track.gt_measures)
+            positions = create_positions(measures, track.length_sec)
+            lin_axis.append(positions)
+            wp = np.load(
+                f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/wp.npy'
+            )
+            target_positions = scipy.interpolate.interp1d(
+                wp[0] / 50, wp[1] / 50, kind='linear')(ref_positions)
+            target_positions = list(
+                np.clip(target_positions, 0., track.length_sec))
 
-        target_positions_backref = scipy.interpolate.interp1d(
-            wp[1] / 50, wp[0] / 50, kind='linear')(positions)
-        target_positions_backref = list(
-            np.clip(target_positions_backref, 0., ref_track.length_sec))
+            target_positions_backref = scipy.interpolate.interp1d(
+                wp[1] / 50, wp[0] / 50, kind='linear')(positions)
+            target_positions_backref = list(
+                np.clip(target_positions_backref, 0., ref_track.length_sec))
 
-        lin_axis.append(target_positions_backref)
+            lin_axis.append(target_positions_backref)
 
-        if track.reference: target_positions = ref_positions.copy()
-        lin_axes.append(lin_axis)
-        sync_points.append(target_positions)
+            if track.reference: target_positions = ref_positions.copy()
+            lin_axes.append(lin_axis)
+            sync_points.append(target_positions)
 
     return jsonify({'syncPoints': sync_points, 'linAxes': lin_axes})

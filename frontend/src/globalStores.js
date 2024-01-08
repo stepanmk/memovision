@@ -8,6 +8,9 @@ export const useUserInfo = defineStore('userInfo', {
         selectedSession: null,
         darkModeEnabled: false,
         chartsTheme: 'default',
+        availableSpace: null,
+        occupiedSpace: null,
+        occupiedPerc: null,
     }),
 });
 

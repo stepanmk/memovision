@@ -3,7 +3,7 @@ import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
 import { useAudioStore, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getCookie, getSecureConfig } from '../../../sharedFunctions';
+import { availableSpace, getCookie, getSecureConfig } from '../../../sharedFunctions';
 
 /* pinia stores */
 
@@ -66,6 +66,7 @@ async function deleteFileFromDb(filename) {
         showAlert('Successfully deleted file: ' + filename, 1500);
         tracksFromDb.remove(filename);
         audioStore.remove(filename);
+        availableSpace();
     });
 }
 
@@ -74,6 +75,7 @@ function deleteAllFilesFromDb() {
         showAlert('Successfully deleted all files.', 1500);
         audioStore.removeAll();
         tracksFromDb.removeAll();
+        availableSpace();
     });
 }
 

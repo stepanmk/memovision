@@ -11,7 +11,7 @@ import {
     useUserInfo,
 } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
-import { getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
+import { availableSpace, getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
 import DialogWindow from '../DialogWindow.vue';
 import LoadingWindow from '../LoadingWindow.vue';
 import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
@@ -108,6 +108,7 @@ async function getAllData() {
     loadingMessage.value = 'Retrieving audio data...';
     isLoading.value = true;
     isDisabled.value = true;
+    availableSpace();
     await getTrackData(); // track metadata
     await getRegionData(); // saved region data
     await getChords(); // chord annotations

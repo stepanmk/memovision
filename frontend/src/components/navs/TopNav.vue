@@ -52,14 +52,30 @@ async function logoutUser(data) {
 <template>
     <div
         id="navbar"
-        class="flex h-16 w-full flex-row items-center justify-between border-b bg-white px-7 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+        class="flex h-16 w-full flex-row items-center justify-between gap-2 border-b bg-white px-7 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
         <div
             id="first"
             class="flex h-full w-[calc(100%-7rem)] select-none flex-row items-center justify-start text-xl font-bold">
-            MemoVision
+            <p>MemoVision</p>
         </div>
 
-        <div id="second" class="flex h-full w-[4rem] items-center justify-center">
+        <div
+            id="available-space"
+            class="flex h-full flex-row items-center justify-center gap-2 whitespace-nowrap font-mono text-sm text-black dark:text-gray-200">
+            <div
+                id="outer-rect"
+                class="flex h-[0.75rem] w-[8rem] items-center justify-start overflow-clip rounded-md bg-neutral-200 dark:bg-gray-600">
+                <div
+                    id="inner-rect"
+                    class="h-full bg-neutral-400 dark:bg-gray-400"
+                    :style="{
+                        width: `${userInfo.occupiedPerc}%`,
+                    }"></div>
+            </div>
+            <p>{{ userInfo.occupiedSpace }}/{{ userInfo.availableSpace }} MB</p>
+        </div>
+
+        <div id="second" class="flex h-full items-center justify-center">
             <div id="dark-toggle-container" class="flex h-full w-full items-center justify-center dark:text-gray-900">
                 <div
                     id="toggle-bg"
@@ -78,7 +94,7 @@ async function logoutUser(data) {
             </div>
         </div>
 
-        <div id="third" class="flex h-full w-[3rem] items-center justify-center text-black">
+        <div id="third" class="flex h-full items-center justify-center text-black">
             <div
                 id="user-icon"
                 class="dark:text-gray flex cursor-pointer flex-row items-center justify-center gap-1 hover:text-neutral-600 dark:text-gray-300 dark:hover:text-white"
