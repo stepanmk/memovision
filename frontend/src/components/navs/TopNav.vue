@@ -61,7 +61,7 @@ async function logoutUser(data) {
 
         <div
             id="available-space"
-            class="flex h-full flex-row items-center justify-center gap-2 whitespace-nowrap font-mono text-sm text-black dark:text-gray-200">
+            class="flex h-full flex-row items-center justify-center gap-2 whitespace-nowrap text-sm text-black dark:text-gray-200">
             <div
                 id="outer-rect"
                 class="flex h-[0.75rem] w-[8rem] items-center justify-start overflow-clip rounded-md bg-neutral-200 dark:bg-gray-600">
@@ -72,7 +72,9 @@ async function logoutUser(data) {
                         width: `${userInfo.occupiedPerc}%`,
                     }"></div>
             </div>
-            <p>{{ userInfo.occupiedSpace }}/{{ userInfo.availableSpace }} MB</p>
+            <p class="flex h-full w-[6.5rem] items-center justify-start">
+                {{ userInfo.occupiedSpace }}/{{ userInfo.availableSpace }} MB
+            </p>
         </div>
 
         <div id="second" class="flex h-full items-center justify-center">

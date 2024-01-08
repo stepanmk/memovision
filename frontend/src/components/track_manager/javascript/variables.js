@@ -1,4 +1,8 @@
 import { computed, ref } from 'vue';
+import { useUserInfo } from '../../../globalStores';
+import { pinia } from '../../../piniaInstance';
+
+const userInfo = useUserInfo(pinia);
 
 /*  global variables and properties 
 
@@ -32,19 +36,31 @@ const duplicatesWindow = ref(false);
 const featureExtractionWindow = ref(false);
 const isDisabled = ref(true);
 const isLoading = ref(true);
+const isUploading = ref(false);
 const labelAssignmentVisible = ref(false);
 const loadingMessage = ref('');
 const numComputed = ref(0);
 const numThingsToCompute = ref(0);
 const preciseSync = ref(false);
+const trackManagerOpened = ref(true);
+const uploadList = ref([]);
+
+const filesToUploadSize = computed(() => {
+    let totalSize = 0;
+    uploadList.value.forEach((file) => {
+        totalSize += file.size;
+    });
+    return totalSize;
+});
+const notEnoughSpace = computed(() => {
+    return userInfo.occupiedSpace + filesToUploadSize.value > userInfo.availableSpace;
+});
 const progressBarPerc = computed(() => {
     return Math.round((numComputed.value / numThingsToCompute.value) * 100);
 });
 const somethingToUpload = computed(() => {
     return uploadList.value.length > 0;
 });
-const trackManagerOpened = ref(true);
-const uploadList = ref([]);
 
 export {
     diffRegions,
@@ -54,10 +70,13 @@ export {
     duplicatesMessage,
     duplicatesWindow,
     featureExtractionWindow,
+    filesToUploadSize,
     isDisabled,
     isLoading,
+    isUploading,
     labelAssignmentVisible,
     loadingMessage,
+    notEnoughSpace,
     numComputed,
     numThingsToCompute,
     preciseSync,

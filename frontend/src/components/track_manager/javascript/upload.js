@@ -5,7 +5,7 @@ import { pinia } from '../../../piniaInstance';
 import { availableSpace, getCookie, getSecureConfig } from '../../../sharedFunctions';
 import { getAudioData, getMeasureData, getTrackData } from './fetch';
 import { transferAllMeasures } from './process';
-import { somethingToUpload, uploadList } from './variables';
+import { isUploading, somethingToUpload, uploadList } from './variables';
 
 /* pinia stores */
 
@@ -30,26 +30,44 @@ async function preUploadCheck(filename) {
         filename: filename,
     };
     const res = await api.post('/pre-upload-check', data, getSecureConfig());
-    return res.data.exists;
+    const canBeUploaded = !res.data.exists;
+    if (res.data.exists) showAlert(`Track named ${filename} already uploaded!`, 2000);
+    return canBeUploaded;
+}
+
+async function estimateSizeAfterUpload(file) {
+    const url = URL.createObjectURL(file);
+    return new Promise((resolve) => {
+        const audio = new Audio();
+        audio.src = url;
+        audio.preload = 'metadata';
+        audio.onloadedmetadata = function () {
+            resolve(audio.duration / 60);
+        };
+    });
 }
 
 async function addFilesToUploadList(files) {
     if (!files) {
         files = document.getElementById('added-files').files;
     }
+    isUploading.value = true;
     for (let i = 0; i < files.length; i++) {
+        let estimatedSize = await estimateSizeAfterUpload(files[0]);
         const fileAlreadyInList = uploadList.value.find((obj) => obj.filename === files[i].name);
-        const fileAlreadyUploaded = await preUploadCheck(files[i].name);
-        if (!fileAlreadyInList && !fileAlreadyUploaded) {
+        const canBeUploaded = await preUploadCheck(files[i].name);
+        if (!fileAlreadyInList && canBeUploaded) {
             uploadList.value.push({
                 file: files[i],
                 filename: files[i].name,
                 beingUploaded: false,
                 beingConverted: false,
                 progressPercentage: 0,
+                size: estimatedSize,
             });
         }
     }
+    isUploading.value = false;
 }
 
 function removeFileFromUploadList(filename) {
@@ -85,16 +103,16 @@ async function uploadOneFile(fileObject) {
             onUploadProgress: fileUploadProgress,
         };
         const res = await api.post('/upload-audio-file', formData, axiosConfig);
+        await availableSpace();
         removeFileFromUploadList(fileObject.file.name);
-        // add track to the store and fetch audio with waveform
         tracksFromDb.addTrackData(res.data.obj);
         await getAudioData(res.data.obj.filename);
-        await availableSpace();
     }
 }
 
 function uploadAllFiles() {
     const uploads = [];
+    isUploading.value = true;
     if (somethingToUpload) {
         for (let i = 0; i < uploadList.value.length; i++) {
             uploads.push(uploadOneFile(uploadList.value[i]));
@@ -102,6 +120,7 @@ function uploadAllFiles() {
     }
     Promise.all(uploads).then(() => {
         api.put('/check-labels', {}, getSecureConfig());
+        isUploading.value = false;
     });
 }
 

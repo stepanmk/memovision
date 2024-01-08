@@ -7,6 +7,9 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
     selected_session = db.Column(db.String(512), unique=False, nullable=True)
+    available_space = db.Column(db.Float(), unique=False, default=100)
+    occupied_space = db.Column(db.Float(), unique=False, default=0)
+    permissions = db.Column(db.Integer, unique=False, default=0)
     # settings
     precise_sync = db.Column(db.Boolean, unique=False, default=True)
     # one-to-many relationship with Sessions
