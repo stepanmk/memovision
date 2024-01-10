@@ -3,14 +3,14 @@ from memovision import db
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, unique=True, nullable=False)
-    email = db.Column(db.String, unique=True, nullable=False)
-    password = db.Column(db.String, nullable=False)
-    selected_session = db.Column(db.String, unique=False, nullable=True)
-    available_space = db.Column(db.Float, unique=False, default=128)
-    occupied_space = db.Column(db.Float, unique=False, default=0)
-    permissions = db.Column(db.String, unique=False, default='generic_user')
-    precise_sync = db.Column(db.Boolean, unique=False, default=True)
+    username = db.Column(db.String, unique=True)
+    email = db.Column(db.String, unique=True)
+    password = db.Column(db.String)
+    selected_session = db.Column(db.String)
+    available_space = db.Column(db.Float, default=128)
+    occupied_space = db.Column(db.Float, default=0)
+    permissions = db.Column(db.String, default='generic_user')
+    precise_sync = db.Column(db.Boolean, default=True)
     sessions = db.relationship('Session', backref='user', passive_deletes=True)
 
 
@@ -18,9 +18,9 @@ class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id',
                                                   ondelete='CASCADE'))
-    name = db.Column(db.String, unique=True, nullable=True)
-    created_at = db.Column(db.DateTime, unique=False, nullable=False)
-    last_modified = db.Column(db.DateTime, unique=False, nullable=False)
+    name = db.Column(db.String, unique=True)
+    created_at = db.Column(db.DateTime)
+    last_modified = db.Column(db.DateTime)
     tracks = db.relationship('Track',
                              backref='session',
                              passive_deletes=True,
@@ -42,22 +42,22 @@ class Track(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.Integer,
                            db.ForeignKey('session.id', ondelete='CASCADE'))
-    filename = db.Column(db.String, unique=False, nullable=False)
-    disk_space = db.Column(db.Float, unique=False, nullable=False)
-    length_sec = db.Column(db.Float, unique=False, nullable=False)
-    path_44 = db.Column(db.String, unique=True, nullable=False)
-    path_22 = db.Column(db.String, unique=True, nullable=False)
-    tuning_offset = db.Column(db.Float, unique=False, nullable=True)
-    year = db.Column(db.String, unique=False, nullable=True)
-    performer = db.Column(db.String, unique=False, nullable=True)
-    reference = db.Column(db.Boolean, unique=False, default=False)
-    chroma = db.Column(db.Boolean, unique=False, default=False)
-    act_func = db.Column(db.Boolean, unique=False, default=False)
-    sync = db.Column(db.Boolean, unique=False, default=False)
-    diff = db.Column(db.Boolean, unique=False, default=False)
-    num_diff_regions = db.Column(db.Integer, unique=False)
-    gt_measures = db.Column(db.Boolean, unique=False, default=False)
-    tf_measures = db.Column(db.Boolean, unique=False, default=False)
+    filename = db.Column(db.String)
+    disk_space = db.Column(db.Float)
+    length_sec = db.Column(db.Float)
+    path_44 = db.Column(db.String, unique=True)
+    path_22 = db.Column(db.String, unique=True)
+    tuning_offset = db.Column(db.Float)
+    year = db.Column(db.String)
+    performer = db.Column(db.String)
+    reference = db.Column(db.Boolean, default=False)
+    chroma = db.Column(db.Boolean, default=False)
+    act_func = db.Column(db.Boolean, default=False)
+    sync = db.Column(db.Boolean, default=False)
+    diff = db.Column(db.Boolean, default=False)
+    gt_measures = db.Column(db.Boolean, default=False)
+    tf_measures = db.Column(db.Boolean, default=False)
+    num_diff_regions = db.Column(db.Integer)
     regions = db.relationship('TrackRegion',
                               backref='track',
                               passive_deletes=True)
@@ -94,42 +94,42 @@ class TrackRegion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer,
                          db.ForeignKey('track.id', ondelete='CASCADE'))
-    region_name = db.Column(db.String, unique=False, nullable=False)
-    start_time = db.Column(db.Float, unique=False, nullable=True)
-    end_time = db.Column(db.Float, unique=False, nullable=True)
-    start_measure_idx = db.Column(db.Integer, unique=False, nullable=True)
-    end_measure_idx = db.Column(db.Integer, unique=False, nullable=True)
-    length_sec = db.Column(db.Float, unique=False, nullable=True)
+    region_name = db.Column(db.String)
+    start_time = db.Column(db.Float)
+    end_time = db.Column(db.Float)
+    start_measure_idx = db.Column(db.Integer)
+    end_measure_idx = db.Column(db.Integer)
+    length_sec = db.Column(db.Float)
 
 
 class DiffRegion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer,
                          db.ForeignKey('track.id', ondelete='CASCADE'))
-    start_time_ref = db.Column(db.Float, unique=False, nullable=True)
-    end_time_ref = db.Column(db.Float, unique=False, nullable=True)
-    start_time = db.Column(db.Float, unique=False, nullable=True)
-    end_time = db.Column(db.Float, unique=False, nullable=True)
+    start_time_ref = db.Column(db.Float)
+    end_time_ref = db.Column(db.Float)
+    start_time = db.Column(db.Float)
+    end_time = db.Column(db.Float)
 
 
 class TimeSignature(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer,
                          db.ForeignKey('track.id', ondelete='CASCADE'))
-    start_time = db.Column(db.Float, unique=False, nullable=False)
-    end_time = db.Column(db.Float, unique=False, nullable=False)
-    start_measure_idx = db.Column(db.Integer, unique=False, nullable=True)
-    end_measure_idx = db.Column(db.Integer, unique=False, nullable=True)
-    note_count = db.Column(db.Integer, unique=False, nullable=False)
-    note_value = db.Column(db.Integer, unique=False, nullable=False)
-    length_sec = db.Column(db.Float, unique=False, nullable=True)
+    start_time = db.Column(db.Float)
+    end_time = db.Column(db.Float)
+    start_measure_idx = db.Column(db.Integer)
+    end_measure_idx = db.Column(db.Integer)
+    note_count = db.Column(db.Integer)
+    note_value = db.Column(db.Integer)
+    length_sec = db.Column(db.Float)
 
 
 class TrackLabel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     track_id = db.Column(db.Integer,
                          db.ForeignKey('track.id', ondelete='CASCADE'))
-    track_count = db.Column(db.Integer, unique=False, nullable=False)
-    label_name = db.Column(db.String, unique=False, nullable=False)
-    label_type = db.Column(db.String, unique=False, nullable=False)
-    label = db.Column(db.Boolean, unique=False, default=False)
+    track_count = db.Column(db.Integer)
+    label_name = db.Column(db.String)
+    label_type = db.Column(db.String)
+    label = db.Column(db.Boolean)

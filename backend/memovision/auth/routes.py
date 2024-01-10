@@ -1,23 +1,16 @@
-from memovision import db, bcrypt, jwt
+import os
+# time
+from datetime import datetime, timedelta
+
+from flask import Blueprint, jsonify, render_template, request
+# current user is a global variable, which can be accessed by all routes guarded by jwt
+# jwt auth
+from flask_jwt_extended import (create_access_token, current_user, get_jwt,
+                                jwt_required, set_access_cookies,
+                                unset_jwt_cookies, verify_jwt_in_request)
 from memovision.db_models import User
 
-import os
-from flask import render_template, request, jsonify, Blueprint
-
-# jwt auth
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import set_access_cookies
-from flask_jwt_extended import unset_jwt_cookies
-from flask_jwt_extended import jwt_required
-from flask_jwt_extended import get_jwt
-
-# current user is a global variable, which can be accessed by all routes guarded by jwt
-from flask_jwt_extended import current_user
-from flask_jwt_extended import verify_jwt_in_request
-
-# time
-from datetime import datetime
-from datetime import timedelta
+from memovision import bcrypt, db, jwt
 
 auth = Blueprint('auth', __name__)
 
@@ -38,8 +31,8 @@ def refresh_expiring_jwts(response):
         target_timestamp = datetime.timestamp(now + timedelta(minutes=10))
         # print(datetime.fromtimestamp(target_timestamp), datetime.fromtimestamp(exp_timestamp))
         if target_timestamp > exp_timestamp:
-            access_token = create_access_token(identity=current_user,
-                                               expires_delta=timedelta(minutes=20))
+            access_token = create_access_token(
+                identity=current_user, expires_delta=timedelta(minutes=20))
             set_access_cookies(response, access_token)
         return response
     except (RuntimeError, KeyError):
@@ -81,8 +74,10 @@ def login():
         if pw_correct:
             response = jsonify({'message': 'login successful'})
             # create access token with user from the db for later identification
-            access_token = create_access_token(identity=user, expires_delta=timedelta(hours=12))
-            set_access_cookies(response=response, encoded_access_token=access_token)
+            access_token = create_access_token(
+                identity=user, expires_delta=timedelta(hours=12))
+            set_access_cookies(response=response,
+                               encoded_access_token=access_token)
             return response
         else:
             return jsonify({'message': 'wrong password'})
@@ -103,11 +98,13 @@ def login_check():
     jwt_from_request = verify_jwt_in_request()
     if jwt_from_request is not None:
         t = get_jwt()['exp']
-        return jsonify({'valid': True,
-                        'username': current_user.username,
-                        'selectedSession': current_user.selected_session,
-                        'preciseSync': current_user.precise_sync,
-                        'exp': datetime.fromtimestamp(t)})
+        return jsonify({
+            'valid': True,
+            'username': current_user.username,
+            'selectedSession': current_user.selected_session,
+            'preciseSync': current_user.precise_sync,
+            'exp': datetime.fromtimestamp(t)
+        })
     else:
         return jsonify({'valid': False})
 
@@ -124,7 +121,8 @@ def register():
         elif email_exists:
             return jsonify({'message': 'email already exists'})
     else:
-        hashed_password = bcrypt.generate_password_hash(request.json['password']).decode('utf-8')
+        hashed_password = bcrypt.generate_password_hash(
+            request.json['password']).decode('utf-8')
         new_user = User(username=request.json['username'],
                         email=request.json['email'],
                         password=hashed_password)
