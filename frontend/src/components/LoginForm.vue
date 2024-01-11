@@ -1,4 +1,5 @@
 <script setup>
+import { Icon } from '@iconify/vue';
 import { useVuelidate } from '@vuelidate/core';
 import { minLength, required } from '@vuelidate/validators';
 import { reactive } from 'vue';
@@ -55,43 +56,63 @@ function loginUser(data) {
 </script>
 
 <template>
-    <p
-        class="select-none bg-gradient-to-r from-green-400 to-blue-700 bg-clip-text pb-10 text-8xl font-bold text-transparent">
-        MemoVision
-    </p>
+    <div
+        class="flex flex-col items-center justify-center overflow-clip rounded-3xl bg-black bg-opacity-30 px-16 py-12 backdrop-blur-3xl">
+        <p
+            class="select-none bg-gradient-to-r from-cyan-700 to-green-400 bg-clip-text text-7xl font-bold text-transparent">
+            MemoVision
+        </p>
 
-    <form
-        id="login-form"
-        class="px-25 flex w-full flex-col items-center justify-center bg-neutral-700 bg-opacity-50 py-5 text-white backdrop-blur-sm"
-        @submit.prevent="submit">
-        <p class="mb-5 select-none text-3xl">{{ t('form.login') }}</p>
+        <form
+            id="login-form"
+            class="px-25 flex w-[20rem] flex-col items-center justify-center py-5 text-white"
+            @submit.prevent="submit">
+            <input
+                id="username"
+                v-model="v$.username.$model"
+                type="text"
+                class="input-field w-full"
+                placeholder="Username"
+                autocomplete="username" />
+            <input
+                id="password"
+                v-model="v$.password.$model"
+                type="password"
+                class="input-field w-full"
+                placeholder="Password"
+                autocomplete="current-password" />
 
-        <input
-            id="username"
-            v-model="v$.username.$model"
-            type="text"
-            class="input-field"
-            :placeholder="t('form.username')"
-            autocomplete="username" />
-        <input
-            id="password"
-            v-model="v$.password.$model"
-            type="password"
-            class="input-field"
-            :placeholder="t('form.pswd')"
-            autocomplete="current-password" />
+            <button @click="loginUser(formData)" type="submit" class="btn btn-blue h-8 w-[20rem]">Sign in</button>
 
-        <button @click="loginUser(formData)" type="submit" class="btn btn-blue h-8 text-base font-semibold">
-            {{ t('button.signin') }}
-        </button>
+            <div class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
+                <p>Not registered?</p>
+                <router-link :to="{ path: '/signup' }" class="text-green-400 hover:text-white"
+                    >Create an account.</router-link
+                >
+            </div>
+        </form>
+        <a href="https://www.tacr.cz/en/">
+            <div
+                class="group flex max-w-[35rem] select-none items-center gap-2 rounded-md p-2 text-justify text-xs text-white">
+                <div
+                    class="bg-tacr-logo group-hover:bg-tacr-logo-color h-[4rem] w-[4rem] rounded-sm bg-slate-400 bg-cover transition"></div>
 
-        <div class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
-            <p>{{ t('login.notregistered') }}</p>
-            <router-link :to="{ path: '/signup' }" class="text-green-400 hover:text-white">{{
-                t('login.goregister')
-            }}</router-link>
-        </div>
-    </form>
+                <p class="w-[calc(100%-4rem)]">
+                    This work was supported by the project TA ČR, TL05000527 Memories of Sound: The Evolution of the
+                    Interpretative Tradition Based on the Works of Antonin Dvorak and Bedrich Smetana and was
+                    co-financed with state support of the Technology Agency of the Czech Republic within the ÉTA
+                    Program.
+                </p>
+            </div>
+        </a>
+        <a href="https://github.com/stepanmk/memovision" class="text-green-400 hover:text-white">
+            <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
+                <Icon icon="icomoon-free:github" width="32" class="" />
+
+                <p class="">This is the alpha version of the aplication. Feel free to contribute on GitHub.</p>
+            </div>
+        </a>
+    </div>
 </template>
 
 <style scoped>

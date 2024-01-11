@@ -31,7 +31,6 @@ def sync_points():
     ref_positions = create_positions(ref_measures, ref_track.length_sec)
     tracks = Track.query.filter_by(session_id=session.id).order_by(
         Track.filename.asc())
-
     sync_points = []
     lin_axes = []
     for track in tracks:
@@ -59,5 +58,4 @@ def sync_points():
             if track.reference: target_positions = ref_positions.copy()
             lin_axes.append(lin_axis)
             sync_points.append(target_positions)
-
     return jsonify({'syncPoints': sync_points, 'linAxes': lin_axes})

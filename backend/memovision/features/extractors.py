@@ -13,7 +13,6 @@ def compute_rms(y, frame_length=1024, hop_length=256):
 def compute_loudness(y, sr):
     meter = MemovisionMeter(sr)
     lufs, loudness = meter.integrated_loudness(y)
-    print(type(loudness))
     loudness = np.nan_to_num(loudness, neginf=-100)
     return loudness
 

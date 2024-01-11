@@ -28,8 +28,10 @@ def get_label_data(session):
                                                label_name=label_name).first()
             single_label_data.append(label.label)
         label_data.append({
-            'label_name': label_name,
-            'labels': np.array(single_label_data, dtype=int)
+            'label_name':
+            label_name,
+            'labels':
+            np.array(single_label_data, dtype=int).tolist()
         })
     return label_data
 

@@ -30,8 +30,10 @@ import {
     featureExtractionWindow,
     isDisabled,
     isLoading,
+    isUploading,
     labelAssignmentVisible,
     loadingMessage,
+    notEnoughSpace,
     numComputed,
     numThingsToCompute,
     preciseSync,
@@ -489,7 +491,12 @@ async function closeLabelAssignment() {
             <!-- files to upload end -->
 
             <!-- buttons bottom -->
-            <div class="flex h-[3rem] w-full items-center justify-end px-7">
+            <div class="flex h-[3rem] w-full items-center justify-between px-7">
+                <div>
+                    <p v-if="notEnoughSpace" class="text-sm text-red-600">
+                        Not enough space available, please remove some tracks.
+                    </p>
+                </div>
                 <div class="flex gap-2">
                     <input
                         id="added-files"
@@ -497,23 +504,25 @@ async function closeLabelAssignment() {
                         class="hidden"
                         accept="audio/*"
                         multiple
-                        @change="addFilesToUploadList(false)"
+                        @change="!isUploading ? addFilesToUploadList(false) : null"
                         @click="$event.target.value = ''" />
                     <label for="added-files" class="hover:cursor-pointer">
-                        <div id="add-files-btn" class="btn btn-blue">Add files</div>
+                        <div id="add-files-btn" class="btn btn-blue" :class="{ 'btn-disabled': isUploading }">
+                            Add files
+                        </div>
                     </label>
                     <button
                         id="delete-all-btn"
                         class="btn btn-blue"
-                        :class="{ 'btn-disabled': !somethingToUpload }"
-                        @click="somethingToUpload ? clearUploadList() : null">
+                        :class="{ 'btn-disabled': !somethingToUpload || isUploading }"
+                        @click="somethingToUpload || !isUploading ? clearUploadList() : null">
                         Clear upload list
                     </button>
                     <button
                         id="upload-btn"
                         class="btn btn-blue"
-                        :class="{ 'btn-disabled': !somethingToUpload }"
-                        @click="somethingToUpload ? uploadAllFiles() : null">
+                        :class="{ 'btn-disabled': !somethingToUpload || isUploading || notEnoughSpace }"
+                        @click="somethingToUpload && !isUploading && !notEnoughSpace ? uploadAllFiles() : null">
                         Upload all files
                     </button>
                 </div>
