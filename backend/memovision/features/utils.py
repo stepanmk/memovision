@@ -67,25 +67,3 @@ def get_resampled_feature(len_y, feature, measures, fps=10):
         previous_value = segment
         output.extend(segment)
     return output
-
-
-# def get_xlimit_measures(relative_measures, region):
-#     return [relative_measures[region[0]], relative_measures[region[-1] + 1]]
-
-# def get_xlimit_time(len_feature, region_start, region_end):
-#     x_start = int(len_feature * region_start)
-#     x_end = int(len_feature * region_end)
-
-#     return [x_start, x_end]
-
-# def get_measures_steps(measures, fps=50):
-#     # get relative measures
-#     return [(i * fps) - 1 if i > 0 else (i * fps) for i in range(len(measures))]
-
-# def get_measures_from_region(measures, region):
-#     # get measures inside regions
-#     return [measure for measure in measures if region[0] < measure < region[-1]]
-
-# def get_measures_idx_from_region(measures, region):
-#     # get measures indexes inside regions
-#     return [np.where(measures == measure)[0][0] for measure in measures if region[0] < measure < region[-1]]
