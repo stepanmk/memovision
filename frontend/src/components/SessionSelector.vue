@@ -67,7 +67,7 @@ function deleteSession(sessionName) {
 
 <template>
     <div
-        class="flex flex-col items-center justify-center overflow-clip rounded-3xl bg-black bg-opacity-30 px-16 py-12 backdrop-blur-3xl">
+        class="flex flex-col items-center justify-center overflow-clip rounded-3xl bg-gray-800 px-16 py-12 backdrop-blur-3xl">
         <p
             class="select-none bg-gradient-to-r from-cyan-700 to-green-400 bg-clip-text text-7xl font-bold text-transparent">
             MemoVision
