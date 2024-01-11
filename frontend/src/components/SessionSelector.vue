@@ -119,7 +119,7 @@ function deleteSession(sessionName) {
                 Create a new session
             </button>
         </form>
-        <a href="https://www.tacr.cz/en/">
+        <a href="https://www.tacr.cz/en/" target="”_blank”">
             <div
                 class="group flex max-w-[35rem] select-none items-center gap-2 rounded-md p-2 text-justify text-xs text-white">
                 <div
@@ -133,7 +133,7 @@ function deleteSession(sessionName) {
                 </p>
             </div>
         </a>
-        <a href="https://github.com/stepanmk/memovision" class="text-green-400 hover:text-white">
+        <a href="https://github.com/stepanmk/memovision" class="text-green-400 hover:text-white" target="”_blank”">
             <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
                 <Icon icon="icomoon-free:github" width="32" class="" />
 
