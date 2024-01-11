@@ -55,7 +55,6 @@ const regionData = useRegionData(pinia);
     keepDuplicates – keeps the found duplicate recordings 
     processAllTracks – wrapper function for track preprocessing
     resetProgress – resets helper variables for the progress bar
-    resetProgress – resets progress bar
     setPreciseSync – increases synchronization accuracy with neural beat tracking
     synchronizeTracks – wrapper function for track synchronization
     syncTrack – synchronizes a single track with a reference that was previously selected

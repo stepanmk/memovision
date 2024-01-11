@@ -109,7 +109,7 @@ function loginUser(data) {
             <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
                 <Icon icon="icomoon-free:github" width="32" class="" />
 
-                <p class="">This is the alpha version of the aplication. Feel free to contribute on GitHub.</p>
+                <p class="">This is the alpha version of the application. Feel free to contribute on GitHub.</p>
             </div>
         </a>
     </div>
