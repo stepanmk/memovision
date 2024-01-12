@@ -59,7 +59,7 @@ function loginUser(data) {
     <div
         class="flex flex-col items-center justify-center overflow-clip rounded-3xl bg-gray-800 px-16 py-12 backdrop-blur-3xl">
         <p
-            class="select-none bg-gradient-to-r from-cyan-700 to-green-400 bg-clip-text text-7xl font-bold text-transparent">
+            class="select-none bg-gradient-to-r from-cyan-700 to-red-400 bg-clip-text text-7xl font-bold text-transparent">
             MemoVision
         </p>
 
@@ -86,7 +86,7 @@ function loginUser(data) {
 
             <div class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
                 <p>Not registered?</p>
-                <router-link :to="{ path: '/signup' }" class="text-green-400 hover:text-white"
+                <router-link :to="{ path: '/signup' }" class="text-red-400 hover:text-white"
                     >Create an account.</router-link
                 >
             </div>
@@ -105,7 +105,7 @@ function loginUser(data) {
                 </p>
             </div>
         </a>
-        <a href="https://github.com/stepanmk/memovision" target="”_blank”" class="text-green-400 hover:text-white">
+        <a href="https://github.com/stepanmk/memovision" target="”_blank”" class="text-red-400 hover:text-white">
             <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
                 <Icon icon="icomoon-free:github" width="32" class="" />
 

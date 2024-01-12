@@ -109,22 +109,29 @@ async function logoutUser(data) {
     <div
         v-if="menuOpen"
         id="user-menu"
-        class="absolute right-0 top-0 z-50 mr-12 mt-14 flex w-60 flex-col rounded-md border bg-white pb-3 pt-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+        class="absolute right-0 top-0 z-50 mr-12 mt-14 flex w-64 flex-col gap-1 rounded-md border bg-white px-2 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-neutral-200"
         ref="target">
-        <div class="flex gap-1 pb-1 pl-5 pr-5 pt-1 text-base font-semibold">User: {{ username }}</div>
+        <div class="flex select-none flex-row gap-1 px-2">
+            <p>User:</p>
+            <p class="font-semibold">{{ username }}</p>
+        </div>
+        <div class="mb-1 flex select-none flex-row gap-1 px-2">
+            <p>Session:</p>
+            <p class="font-semibold">{{ userInfo.selectedSession }}</p>
+        </div>
 
-        <div
+        <button
             @click="changeSession()"
-            class="flex cursor-pointer gap-1 pb-1 pl-5 pr-5 pt-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
+            class="flex cursor-pointer gap-1 rounded-md px-2 py-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
             <Icon icon="material-symbols:swap-horiz-rounded" :inline="true" width="20" />
             Change session
-        </div>
+        </button>
 
-        <div
+        <button
             @click="logoutUser()"
-            class="flex cursor-pointer gap-1 pb-1 pl-5 pr-5 pt-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
+            class="flex cursor-pointer gap-1 rounded-md px-2 py-1 text-sm hover:bg-neutral-200 dark:hover:bg-gray-700">
             <Icon icon="clarity:sign-out-line" :inline="true" width="20" />
             {{ t('button.signout') }}
-        </div>
+        </button>
     </div>
 </template>

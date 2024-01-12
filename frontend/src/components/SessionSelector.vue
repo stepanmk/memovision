@@ -69,7 +69,7 @@ function deleteSession(sessionName) {
     <div
         class="flex flex-col items-center justify-center overflow-clip rounded-3xl bg-gray-800 px-16 py-12 backdrop-blur-3xl">
         <p
-            class="select-none bg-gradient-to-r from-cyan-700 to-green-400 bg-clip-text text-7xl font-bold text-transparent">
+            class="select-none bg-gradient-to-r from-cyan-700 to-red-400 bg-clip-text text-7xl font-bold text-transparent">
             MemoVision
         </p>
 
@@ -79,7 +79,7 @@ function deleteSession(sessionName) {
             @submit.prevent="submit">
             <!-- <p class="">Session selection</p> -->
 
-            <div class="flex h-36 w-[34rem] flex-col items-center gap-1 overflow-y-auto rounded-md bg-white px-2 py-3">
+            <div class="flex h-36 w-[34rem] flex-col items-center gap-1 overflow-y-auto rounded-md bg-white px-2 py-2">
                 <div
                     v-for="(obj, i) in userInfo.sessions"
                     class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 px-2 text-black hover:bg-neutral-300">
@@ -133,7 +133,7 @@ function deleteSession(sessionName) {
                 </p>
             </div>
         </a>
-        <a href="https://github.com/stepanmk/memovision" class="text-green-400 hover:text-white" target="”_blank”">
+        <a href="https://github.com/stepanmk/memovision" class="text-red-400 hover:text-white" target="”_blank”">
             <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
                 <Icon icon="icomoon-free:github" width="32" class="" />
 

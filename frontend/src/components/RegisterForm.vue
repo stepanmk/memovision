@@ -63,7 +63,7 @@ function registerUser(data) {
     <div
         class="flex flex-col items-center justify-center overflow-clip rounded-3xl bg-gray-800 px-16 py-12 backdrop-blur-3xl">
         <p
-            class="select-none bg-gradient-to-r from-cyan-700 to-green-400 bg-clip-text text-7xl font-bold text-transparent">
+            class="select-none bg-gradient-to-r from-cyan-700 to-red-400 bg-clip-text text-7xl font-bold text-transparent">
             MemoVision
         </p>
 
@@ -174,9 +174,7 @@ function registerUser(data) {
 
             <div class="mt-5 flex flex-row gap-1 font-semibold text-white">
                 <p>{{ t('register.alreadyregistered') }}</p>
-                <router-link :to="{ name: 'Login' }" class="text-green-400 hover:text-white">{{
-                    t('register.gologin')
-                }}</router-link>
+                <router-link :to="{ name: 'Login' }" class="text-red-400 hover:text-white">Sign in.</router-link>
             </div>
         </form>
         <a href="https://www.tacr.cz/en/" target="”_blank”">
@@ -193,7 +191,7 @@ function registerUser(data) {
                 </p>
             </div>
         </a>
-        <a href="https://github.com/stepanmk/memovision" class="text-green-400 hover:text-white" target="”_blank”">
+        <a href="https://github.com/stepanmk/memovision" class="text-red-400 hover:text-white" target="”_blank”">
             <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
                 <Icon icon="icomoon-free:github" width="32" class="" />
 
