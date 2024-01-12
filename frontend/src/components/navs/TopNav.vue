@@ -115,7 +115,7 @@ async function logoutUser(data) {
             <p>User:</p>
             <p class="font-semibold">{{ username }}</p>
         </div>
-        <div class="mb-1 flex select-none flex-row gap-1 px-2">
+        <div class="b mb-1 flex select-none flex-row gap-1 px-2">
             <p>Session:</p>
             <p class="font-semibold">{{ userInfo.selectedSession }}</p>
         </div>
