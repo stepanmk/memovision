@@ -43,7 +43,7 @@ function registerUser(data) {
     api.post('/register', data)
         .then(function (response) {
             if (response.data.message === 'registration successful') {
-                router.push('/signin');
+                router.push('/login');
                 showAlert(t('register.registersuccess'), 1500);
             }
             if (response.data.message === 'email already exists') {

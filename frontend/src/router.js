@@ -4,10 +4,10 @@ import Register from './views/Register.vue';
 import Sessions from './views/Sessions.vue';
 
 import { createRouter, createWebHistory } from 'vue-router';
-import { getSecureConfig, getSessions } from './sharedFunctions';
-import { useUserInfo } from './globalStores';
 import { showAlert } from './alerts';
 import { api } from './axiosInstance';
+import { useUserInfo } from './globalStores';
+import { getSecureConfig, getSessions } from './sharedFunctions';
 
 const routes = [
     {
@@ -55,12 +55,12 @@ const routes = [
         },
     },
     {
-        path: '/signin',
+        path: '/login',
         name: 'Login',
         component: Login,
     },
     {
-        path: '/signup',
+        path: '/register',
         name: 'Register',
         component: Register,
     },

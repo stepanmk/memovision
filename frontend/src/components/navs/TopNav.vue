@@ -39,7 +39,7 @@ async function logoutUser(data) {
                 audioStore.$reset();
                 showAlert('Successfully logged out.', 1500);
                 // if the logout was successful, redirect user to the sign in page
-                router.push('/signin');
+                router.push('/login');
                 disableDarkMode();
             }
         })

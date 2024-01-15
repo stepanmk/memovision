@@ -86,7 +86,7 @@ function loginUser(data) {
 
             <div class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
                 <p>Not registered?</p>
-                <router-link :to="{ path: '/signup' }" class="text-red-400 hover:text-white"
+                <router-link :to="{ path: '/register' }" class="text-red-400 hover:text-white"
                     >Create an account.</router-link
                 >
             </div>
