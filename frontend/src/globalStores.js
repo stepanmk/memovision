@@ -7,6 +7,10 @@ export const useUserInfo = defineStore('userInfo', {
         preciseSync: null,
         selectedSession: null,
         darkModeEnabled: false,
+        chartsTheme: 'default',
+        availableSpace: null,
+        occupiedSpace: null,
+        occupiedPerc: null,
     }),
 });
 
@@ -44,17 +48,14 @@ export const useMenuButtonsDisable = defineStore('menuButtonsDisable', {
     }),
     actions: {
         startLoading(moduleName) {
-            // console.log('started');
             this.isLoading = true;
             this.trackManager = true;
             this.regionSelector = true;
             this.interpretationPlayer = true;
             this.featureVisualizer = true;
-
             this[moduleName] = false;
         },
         stopLoading() {
-            // console.log('finished');
             this.isLoading = false;
             this.trackManager = false;
             this.regionSelector = false;
@@ -68,6 +69,7 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
     state: () => ({
         trackObjects: [],
         syncPoints: [],
+        linAxes: [],
         selected: [],
     }),
     getters: {

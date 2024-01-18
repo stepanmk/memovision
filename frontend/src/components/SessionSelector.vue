@@ -66,57 +66,81 @@ function deleteSession(sessionName) {
 </script>
 
 <template>
-    <p
-        class="select-none bg-gradient-to-r from-green-400 to-blue-700 bg-clip-text pb-10 text-8xl font-bold text-transparent">
-        MemoVision
-    </p>
+    <div
+        class="flex flex-col items-center justify-center overflow-clip rounded-3xl bg-gray-800 px-16 py-12 backdrop-blur-3xl">
+        <p
+            class="select-none bg-gradient-to-r from-cyan-700 to-red-400 bg-clip-text text-7xl font-bold text-transparent">
+            MemoVision
+        </p>
 
-    <form
-        class="px-25 flex w-full select-none flex-col items-center justify-center gap-5 bg-neutral-700 bg-opacity-50 py-5 text-white backdrop-blur-sm"
-        id="session-form"
-        @submit.prevent="submit">
-        <p class="text-3xl">Session selection</p>
+        <form
+            class="px-25 flex w-[34rem] flex-col items-center justify-center gap-5 py-5 text-white"
+            id="session-form"
+            @submit.prevent="submit">
+            <!-- <p class="">Session selection</p> -->
 
-        <div class="flex h-36 w-[40rem] flex-col items-center gap-1 overflow-y-auto rounded-md bg-white px-5 py-3">
-            <div
-                v-for="(obj, i) in userInfo.sessions"
-                class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 px-2 text-black hover:bg-neutral-300">
+            <div class="flex h-36 w-[34rem] flex-col items-center gap-1 overflow-y-auto rounded-md bg-white px-2 py-2">
                 <div
-                    class="flex h-full w-[calc(100%-1.5rem)] flex-row items-center justify-between gap-5 pr-2"
-                    @click="selectSession(obj.name)">
-                    <p class="text-sm">{{ obj.name }}</p>
-                    <p class="text-sm">Last modified: {{ obj.last_modified }}</p>
+                    v-for="(obj, i) in userInfo.sessions"
+                    class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 px-2 text-black hover:bg-neutral-300">
+                    <div
+                        class="flex h-full w-[calc(100%-1.5rem)] flex-row items-center justify-between gap-5 pr-2"
+                        @click="selectSession(obj.name)">
+                        <p class="text-sm">{{ obj.name }}</p>
+                        <p class="text-sm">Last modified: {{ obj.last_modified }}</p>
+                    </div>
+
+                    <Icon
+                        icon="fluent:delete-48-regular"
+                        :inline="true"
+                        width="18"
+                        @click="deleteSession(obj.name)"
+                        class="w-[1.5rem] cursor-pointer hover:text-red-600" />
                 </div>
-
-                <Icon
-                    icon="fluent:delete-48-regular"
-                    :inline="true"
-                    width="18"
-                    @click="deleteSession(obj.name)"
-                    class="w-[1.5rem] cursor-pointer hover:text-red-600" />
             </div>
-        </div>
 
-        <input
-            v-model="v$.sessionName.$model"
-            id="session-name"
-            type="text"
-            class="input-field-nomargin"
-            placeholder="New session name"
-            maxlength="20"
-            :class="{
-                'border-2 border-green-400': !v$.sessionName.$invalid,
-                'border-2 border-gray-300': v$.sessionName.$invalid,
-            }" />
+            <input
+                v-model="v$.sessionName.$model"
+                id="session-name"
+                type="text"
+                class="input-field-nomargin w-[20rem]"
+                placeholder="New session name"
+                maxlength="20"
+                :class="{
+                    'border-2 border-green-400': !v$.sessionName.$invalid,
+                    'border-2 border-gray-300': v$.sessionName.$invalid,
+                }" />
 
-        <button
-            @click="v$.sessionName.$invalid ? null : createSession()"
-            type="submit"
-            class="btn btn-blue h-8 text-base font-semibold"
-            :class="{ 'btn-disabled': v$.sessionName.$invalid }">
-            Create a new session
-        </button>
-    </form>
+            <button
+                @click="v$.sessionName.$invalid ? null : createSession()"
+                type="submit"
+                class="btn btn-blue h-8 w-[20rem]"
+                :class="{ 'btn-disabled': v$.sessionName.$invalid }">
+                Create a new session
+            </button>
+        </form>
+        <a href="https://www.tacr.cz/en/" target="”_blank”">
+            <div
+                class="group flex max-w-[35rem] select-none items-center gap-2 rounded-md p-2 text-justify text-xs text-white">
+                <div
+                    class="bg-tacr-logo group-hover:bg-tacr-logo-color h-[4rem] w-[4rem] rounded-sm bg-slate-400 bg-cover transition"></div>
+
+                <p class="w-[calc(100%-4rem)]">
+                    This work was supported by the project TA ČR, TL05000527 Memories of Sound: The Evolution of the
+                    Interpretative Tradition Based on the Works of Antonin Dvorak and Bedrich Smetana and was
+                    co-financed with state support of the Technology Agency of the Czech Republic within the ÉTA
+                    Program.
+                </p>
+            </div>
+        </a>
+        <a href="https://github.com/stepanmk/memovision" class="text-red-400 hover:text-white" target="”_blank”">
+            <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
+                <Icon icon="icomoon-free:github" width="32" class="" />
+
+                <p class="">This is the alpha version of the application. Feel free to contribute on GitHub.</p>
+            </div>
+        </a>
+    </div>
 </template>
 
 <style scoped>

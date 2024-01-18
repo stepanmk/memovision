@@ -10,11 +10,11 @@
     }
 
     .input-field-nomargin {
-        @apply h-8 rounded-md p-2 text-sm text-black;
+        @apply h-8 rounded-md p-2 text-sm text-black dark:border-hidden;
     }
 
     .btn {
-        @apply h-7 select-none rounded-md py-1 px-2 text-sm text-white;
+        @apply h-7 select-none rounded-md px-2 py-1 text-sm text-white;
     }
 
     .btn-blue {
@@ -22,7 +22,7 @@
     }
 
     .btn-gray {
-        @apply rounded-md bg-neutral-200 py-1 px-2 text-sm text-black duration-[50ms]
+        @apply rounded-md bg-neutral-200 px-2 py-1 text-sm text-black duration-[50ms]
         hover:bg-cyan-600 hover:text-white 
         dark:bg-gray-400 dark:hover:bg-cyan-600;
     }

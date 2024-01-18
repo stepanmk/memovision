@@ -6,6 +6,8 @@ from flask import Blueprint, jsonify, send_from_directory
 from flask_jwt_extended import current_user, jwt_required
 from memovision.db_models import Session, TimeSignature, Track, TrackRegion
 
+from memovision import db
+
 fetch_routes = Blueprint('fetch_routes', __name__)
 
 
@@ -159,3 +161,26 @@ def get_all_regions():
             'color': '#0000ff'
         })
     return jsonify({'regions': regs, 'timeSignatures': time_sigs})
+
+
+@fetch_routes.route('/available-space', methods=['GET'])
+@jwt_required()
+def available_space():
+    sessions = Session.query.filter_by(user=current_user).all()
+    occupied = 0
+    for session in sessions:
+        for track in session.tracks:
+            occupied += track.disk_space
+    current_user.occupied_space = round(occupied / (1024 * 1024), 2)
+    db.session.commit()
+    return jsonify({
+        'message':
+        'success',
+        'occupiedSpace':
+        current_user.occupied_space,
+        'availableSpace':
+        current_user.available_space,
+        'occupiedPerc':
+        round(current_user.occupied_space / current_user.available_space * 100,
+              2)
+    })

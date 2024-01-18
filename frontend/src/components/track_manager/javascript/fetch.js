@@ -2,22 +2,25 @@ import { api } from '../../../axiosInstance';
 import { useAudioStore, useMeasureData, useRegionData, useTracksFromDb, useUserInfo } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { getSecureConfig } from '../../../sharedFunctions';
+import { numComputed } from './variables';
 
 /* pinia stores */
 
-const tracksFromDb = useTracksFromDb(pinia);
-const userInfo = useUserInfo(pinia);
 const audioStore = useAudioStore(pinia);
 const measureData = useMeasureData(pinia);
 const regionData = useRegionData(pinia);
+const tracksFromDb = useTracksFromDb(pinia);
+const userInfo = useUserInfo(pinia);
 
-/*   actual fetch functions 
+/*   fetch functions description 
 
-    getTrackData – get objects with information about the tracks
-    getAudioData – fetches a blob with the audio data for a single track
-    getMetronomeClick – fetches the metronome audio clip
-    getMeasureData – fetches measure data for all uploaded tracks
     downloadMeasures – downloads transferred measure annotations
+    getAudioData – fetches a blob with the audio data for a single track
+    getChords – fetches chord annotations
+    getMeasureData – fetches measure data for all uploaded tracks
+    getMetronomeClick – fetches the metronome audio clip
+    getSyncPoints – fetches synchronization matrices
+    getTrackData – fetches objects with track metadata
 
 */
 
@@ -38,6 +41,7 @@ async function getAudioData(filename) {
         waveformData: waveformRes.data,
     });
     audioStore.sortByName();
+    numComputed.value += 1;
 }
 
 async function getMetronomeClick() {
@@ -88,7 +92,8 @@ async function getRegionData() {
 async function getSyncPoints() {
     if (tracksFromDb.syncTracks.length > 0) {
         const syncPointsRes = await api.get('/get-sync-points', getSecureConfig());
-        tracksFromDb.syncPoints = syncPointsRes.data;
+        tracksFromDb.syncPoints = syncPointsRes.data.syncPoints;
+        tracksFromDb.linAxes = syncPointsRes.data.linAxes;
     }
 }
 

@@ -24,6 +24,8 @@ const colors = colormap({
     nshades: 101,
 });
 
+const rectWidth = 16;
+
 const regionOverlay = ref([]);
 const measureMessage = ref(null);
 let measureCount = 0;
@@ -60,10 +62,10 @@ function resetRegionOverlay() {
 function logMeasure(i, relevance) {
     measureMessage.value = 'Measure ' + (i + 1) + ', Rel. ' + relevance.toFixed(2);
     const popup = document.getElementById('measure-popup');
-    const width = measureCount * 16;
+    const width = measureCount * rectWidth;
     const topBar = document.getElementById('top-bar');
     popup.style.left =
-        Math.round(((i + 1) / measureCount) * width) - popup.offsetWidth / 2 - topBar.scrollLeft + 16 + 'px';
+        Math.round(((i + 1) / measureCount) * width) - popup.offsetWidth / 2 - topBar.scrollLeft + rectWidth + 'px';
 }
 
 function clearMessage() {
@@ -107,7 +109,7 @@ function relevanceBarMouseUp() {
 function relevanceBarMouseMove(event) {
     const relevanceBar = document.getElementById('overview-2');
     const bounds = relevanceBar.getBoundingClientRect();
-    const barWidth = 16 * measureCount;
+    const barWidth = rectWidth * measureCount;
     if (isHoldingMouseButton && !regionSelected) {
         dragged = true;
         regionOverlay.value.fill(false);
@@ -123,7 +125,7 @@ function relevanceBarMouseMove(event) {
 function relevanceBarMouseDown(event) {
     const relevanceBar = document.getElementById('overview-2');
     const bounds = relevanceBar.getBoundingClientRect();
-    const barWidth = 16 * measureCount;
+    const barWidth = rectWidth * measureCount;
     event.preventDefault();
     isHoldingMouseButton = true;
     const x = event.clientX - bounds.left;
@@ -146,8 +148,8 @@ function relevanceBarMouseDown(event) {
                     :id="`ts-${i}`"
                     class="absolute flex h-full select-none items-center justify-start bg-pink-600 text-xs font-semibold text-white hover:bg-pink-500"
                     :style="{
-                        width: (obj.endMeasureIdx - obj.startMeasureIdx + 1) * 16 + 'px',
-                        'margin-left': obj.startMeasureIdx * 16 + 'px',
+                        width: (obj.endMeasureIdx - obj.startMeasureIdx + 1) * rectWidth + 'px',
+                        'margin-left': obj.startMeasureIdx * rectWidth + 'px',
                     }">
                     <p
                         v-if="obj.endMeasureIdx - obj.startMeasureIdx > 0"
@@ -173,7 +175,7 @@ function relevanceBarMouseDown(event) {
                     <div
                         class="h-full w-full hover:cursor-pointer hover:bg-red-600"
                         :class="{
-                            'border-t border-b border-blue-600 bg-neutral-100 bg-opacity-50 dark:border-gray-400':
+                            'border-b border-t border-blue-600 bg-neutral-100 bg-opacity-50 dark:border-gray-400':
                                 regionOverlay[i],
                         }">
                         <div

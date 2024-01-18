@@ -1,17 +1,20 @@
 import { useDebounceFn } from '@vueuse/core';
 import Peaks from 'peaks.js';
-import { watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useAudioStore, useMeasureData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { findClosestTimeIdx, getStartMeasure, sleep } from '../../../sharedFunctions';
-import { hideAllRegions, zoomOut } from './regions';
+import { getStartMeasure, sleep } from '../../../sharedFunctions';
+import { hideAllRegions } from './regions';
 import {
     currentMeasure,
     cursorPositions,
     isPlaying,
     measuresVisible,
+    numPeaksLoaded,
     peaksInstancesReady,
+    percLoaded,
     playing,
+    timeSelections,
     trackTimes,
     volume,
 } from './variables';
@@ -22,48 +25,55 @@ const measureData = useMeasureData(pinia);
 
 const audioCtx = new AudioContext();
 const gainNode = audioCtx.createGain();
-gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
 gainNode.connect(audioCtx.destination);
-
-const rampUp = new Float32Array(10);
-const rampDown = new Float32Array(10);
-function createFadeRamps() {
-    for (let i = 0; i < 10; i++) {
-        rampUp[i] = Math.pow(i / 9, 3) * volume.value;
-        rampDown[rampUp.length - i - 1] = Math.pow(i / 9, 3) * volume.value;
-    }
-}
-const fadeIn = () => gainNode.gain.setValueCurveAtTime(rampUp, audioCtx.currentTime, 0.01);
-const fadeOut = () => gainNode.gain.setValueCurveAtTime(rampDown, audioCtx.currentTime, 0.01);
 
 watch(volume, () => {
     gainNode.gain.setValueAtTime(volume.value, audioCtx.currentTime);
-    createFadeRamps();
+});
+
+watch(numPeaksLoaded, () => {
+    percLoaded.value = Math.round((numPeaksLoaded.value / tracksFromDb.syncTracks.length) * 100);
 });
 
 let activePeaksIdx = 0;
-let canRewind = true;
-let endTimes = [];
+let canSwitch = true;
 let firstResize = true;
+let prevPeaksIdx = null;
+
 let idxArray = [];
 let peaksInstances = [];
-let prevPeaksIdx = null;
+let reciprocalDurationRef = 0;
+let reciprocalDurations = [];
 let selectedIndices = [];
-let startTimes = [];
+
+const endTimes = ref([]);
+const startTimes = ref([]);
 
 async function initPlayer() {
     firstResize = true;
     audioCtx.resume();
-    createFadeRamps();
     initPeaksInstances();
 }
 
 function resetPlayer() {
-    // numPeaksLoaded.value = 0;
-    // percLoaded.value = 0;
-    audioCtx.suspend();
+    isPlaying.value = false;
+    peaksInstances[activePeaksIdx].player.pause();
+    peaksInstances.forEach((instance) => {
+        instance.destroy();
+    });
+    endTimes.value = [];
+    idxArray = [];
+    peaksInstances = [];
+    reciprocalDurations = [];
     selectedIndices = [];
+    startTimes.value = [];
+
     prevPeaksIdx = null;
+    numPeaksLoaded.value = 0;
+    currentMeasure.value = -1;
+
+    audioCtx.suspend();
+    resizeObserver.disconnect();
 }
 
 const debouncedFit = useDebounceFn(() => {
@@ -78,10 +88,9 @@ function fit() {
     peaksInstances.forEach((instance) => {
         const view = instance.views.getView('zoomview');
         view.fitToContainer();
-        // view.setZoom({ seconds: 'auto' });
+        view.setZoom({ seconds: 'auto' });
     });
     hideAllRegions();
-    zoomOut();
 }
 
 const resizeObserver = new ResizeObserver(debouncedFit);
@@ -90,13 +99,15 @@ function initPeaksInstances() {
     setTimeout(() => {
         tracksFromDb.syncTracks.forEach((track, idx) => {
             initPeaks(track.filename, idx);
+            startTimes.value.push(0);
+            endTimes.value.push(track.length_sec);
         });
     }, 50);
 }
 
 function waveformListener(idx, event) {
     if (idx !== activePeaksIdx) {
-        selectPeaks(idx);
+        if (canSwitch) selectPeaks(idx, false);
     }
 }
 
@@ -104,31 +115,31 @@ function initPeaks(filename, idx) {
     const audioElement = document.getElementById(`audio-${idx}`);
     const audio = audioStore.getAudio(filename);
     audioElement.src = URL.createObjectURL(audio);
-    const audioSource = audioCtx.createMediaElementSource(audioElement);
-    audioSource.connect(gainNode);
-    // get waveform data
-    const waveformData = audioStore.getWaveformData(filename);
     const waveformContainer = document.getElementById(`track-div-${idx}`);
     waveformContainer.addEventListener('mousedown', waveformListener.bind(event, idx));
-    // const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
-    // const zoomLevels = createZoomLevels(waveformContainer.offsetWidth, trackLengthSec);
-    // peaks.js options
+    const audioSource = audioCtx.createMediaElementSource(audioElement);
+    audioSource.connect(gainNode);
+    const waveformData = audioStore.getWaveformData(filename);
+    const trackLengthSec = tracksFromDb.getObject(filename).length_sec;
+    reciprocalDurations[idx] = 1 / trackLengthSec;
+    if (filename === tracksFromDb.refTrack.filename) {
+        reciprocalDurationRef = 1 / tracksFromDb.refTrack.length_sec;
+    }
     const options = {
         zoomview: {
-            fontFamily: 'Inter',
             segmentOptions: {
                 overlay: true,
                 overlayOffset: 0,
-                overlayOpacity: 0.35,
+                overlayOpacity: 0.15,
                 overlayCornerRadius: 0,
-                overlayFontSize: 10,
             },
             container: waveformContainer,
-            playheadColor: 'rgba(0, 0, 0, 0)',
-            playheadClickTolerance: 2500,
+            playheadColor: 'transparent',
+            playheadClickTolerance: 9999,
             waveformColor: 'rgb(17 24 39)',
             axisLabelColor: 'rgb(17 24 39)',
             axisGridlineColor: 'rgb(17 24 39)',
+            fontFamily: 'Inter',
         },
         mediaElement: audioElement,
         dataUri: {
@@ -140,40 +151,19 @@ function initPeaks(filename, idx) {
         zoomLevels: [1024],
     };
     Peaks.init(options, (err, peaks) => {
-        if (err) console.log(err);
         peaksInstances[idx] = peaks;
-        const view = peaksInstances[idx].views.getView('zoomview');
-        view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
-        view.enableAutoScroll(false, {});
-        setCursorPos(idx, 0);
-        addMeasuresToPeaksInstance(idx);
         if (idx === 0) {
             selectPeaks(idx);
-            const featureContent = document.getElementById('feature-content');
-            resizeObserver.observe(featureContent);
-        }
-        if (filename === tracksFromDb.refTrack.filename) {
-            peaksInstances[idx].on('player.timeupdate', (time) => {
-                trackTimes.value[idx] = time;
-                const measureIdx = getStartMeasure(time + 0.01);
-                currentMeasure.value = measureIdx - 2;
-                setCursorPos(idx, time);
-            });
-        } else {
-            peaksInstances[idx].on('player.timeupdate', (time) => {
-                trackTimes.value[idx] = time;
-                setCursorPos(idx, time);
-            });
+            const audioContainer = document.getElementById('feature-content');
+            resizeObserver.observe(audioContainer);
         }
         peaksInstancesReady.value[idx] = true;
+        numPeaksLoaded.value += 1;
+        const view = peaksInstances[idx].views.getView('zoomview');
+        view.enableAutoScroll(false, {});
+        view.setZoom({ seconds: 'auto' });
+        // peaksInstances[idx].views._zoomview._height = 64;
     });
-}
-
-function setCursorPos(idx, time) {
-    const ratio = (time - startTimes[idx]) / (endTimes[idx] - startTimes[idx]);
-    const perc = 100 * ratio;
-    const px = 45 * (1 - ratio);
-    cursorPositions.value[idx] = `calc(${perc}% + ${px}px)`;
 }
 
 function toggleMeasures() {
@@ -203,95 +193,122 @@ function addMeasuresToPeaksInstance(idx) {
 }
 
 async function goToMeasure(measureIdx) {
-    if (canRewind) {
-        canRewind = false;
-        fadeOut();
-        await sleep(20);
-        const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
-        peaksInstances[activePeaksIdx].player.seek(seekTime);
-        fadeIn();
-        canRewind = true;
-    }
+    const seekTime = measureData.selectedMeasures[activePeaksIdx][measureIdx + 1];
+    peaksInstances[activePeaksIdx].player.seek(seekTime);
 }
 
-function seekCallback(time) {
-    const closestTimeIdx = findClosestTimeIdx(activePeaksIdx, time);
+function updatePlayheads() {
+    const audioElement = document.getElementById(`audio-${activePeaksIdx}`);
+    const time = audioElement.currentTime;
+    movePlayheads(time);
+}
+
+function movePlayheads(time) {
+    const currentLinIdx = Math.round(
+        reciprocalDurations[activePeaksIdx] * time * tracksFromDb.linAxes[activePeaksIdx][0].length
+    );
+    const currentRefTime = tracksFromDb.linAxes[activePeaksIdx][1][currentLinIdx];
+    currentMeasure.value = getStartMeasure(currentRefTime + 0.005) - 2;
+    const closestTimeIdx = Math.round(
+        reciprocalDurationRef * currentRefTime * tracksFromDb.syncPoints[activePeaksIdx].length
+    );
+    trackTimes.value[activePeaksIdx] = time;
+    cursorPositions.value[activePeaksIdx] =
+        (1 / timeSelections.value[activePeaksIdx]) * (time - startTimes.value[activePeaksIdx]);
     selectedIndices.forEach((idx) => {
-        peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
+        const syncTime = tracksFromDb.syncPoints[idx][closestTimeIdx];
+        cursorPositions.value[idx] = (1 / timeSelections.value[idx]) * (syncTime - startTimes.value[idx]);
+        trackTimes.value[idx] = syncTime;
     });
 }
 
-async function selectPeaks(idx) {
+async function animatePlayheads() {
+    const interval = 1000 / 30;
+    let then = performance.now();
+    let delta = 0;
+    while (isPlaying.value) {
+        let now = await new Promise(requestAnimationFrame);
+        if (now - then < interval - delta) {
+            continue;
+        }
+        delta = Math.min(interval, delta + now - then - interval);
+        then = now;
+        updatePlayheads();
+    }
+}
+
+async function selectPeaks(idx, key) {
+    canSwitch = false;
     selectedIndices = idxArray.slice();
     selectedIndices.splice(idx, 1);
     if (prevPeaksIdx !== null) {
         playing[prevPeaksIdx] = false;
         if (isPlaying.value) {
-            fadeOut();
-            await sleep(10);
+            gainNode.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.02);
+            await sleep(50);
             peaksInstances[prevPeaksIdx].player.pause();
         }
-        peaksInstances[prevPeaksIdx].off('player.timeupdate', seekCallback);
+        peaksInstances[prevPeaksIdx].off('player.timeupdate', movePlayheads);
     }
-    // add seekCallback to peaks instance specified by idx
     playing[idx] = true;
     activePeaksIdx = idx;
-    peaksInstances[idx].on('player.timeupdate', seekCallback);
-    // if playing is active
     if (isPlaying.value) {
-        // play currently selected region if it is not null
         const selectedRegion = peaksInstances[idx].segments.getSegment('selectedRegion');
+        const currentTime = trackTimes.value[idx];
         if (selectedRegion) {
-            const closestTimeIdx = findClosestTimeIdx(prevPeaksIdx, trackTimes.value[prevPeaksIdx]);
             peaksInstances[idx].player.playSegment(selectedRegion, true);
-            peaksInstances[idx].player.seek(tracksFromDb.syncPoints[idx][closestTimeIdx]);
-            await sleep(10);
-            fadeIn();
-        }
-        // otherwise just continue playing at the current cursor position
-        else {
+            peaksInstances[idx].player.seek(currentTime);
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
+        } else {
+            if (key) peaksInstances[idx].player.seek(currentTime);
             peaksInstances[idx].player.play();
-            await sleep(10);
-            fadeIn();
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
         }
+    } else {
+        peaksInstances[idx].on('player.timeupdate', movePlayheads);
     }
     prevPeaksIdx = idx;
+    canSwitch = true;
 }
 
 async function playPause() {
-    // pause playing if it is active
     if (isPlaying.value) {
-        fadeOut();
-        await sleep(10);
+        gainNode.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.02);
+        await sleep(50);
         peaksInstances[activePeaksIdx].player.pause();
+        peaksInstances[activePeaksIdx].on('player.timeupdate', movePlayheads);
     } else {
-        // play currently selected region if it is not null
         const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+        peaksInstances[activePeaksIdx].off('player.timeupdate', movePlayheads);
         if (selectedRegion) {
             peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
-            fadeIn();
-        }
-        // otherwise just continue playing at the current cursor position
-        else {
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
+        } else {
             peaksInstances[activePeaksIdx].player.play();
-            fadeIn();
+            await sleep(20);
+            gainNode.gain.setTargetAtTime(volume.value, audioCtx.currentTime, 0.02);
         }
     }
     isPlaying.value = !isPlaying.value;
+    animatePlayheads();
 }
 
 async function rewind() {
-    fadeOut();
-    await sleep(20);
-    peaksInstances[activePeaksIdx].player.seek(0);
-    fadeIn();
+    const selectedRegion = peaksInstances[activePeaksIdx].segments.getSegment('selectedRegion');
+    if (selectedRegion) {
+        if (isPlaying.value) peaksInstances[activePeaksIdx].player.playSegment(selectedRegion, true);
+    } else {
+        peaksInstances[activePeaksIdx].player.seek(0);
+    }
 }
 
 export {
     activePeaksIdx,
+    canSwitch,
     endTimes,
-    fadeIn,
-    fadeOut,
     goToMeasure,
     idxArray,
     initPlayer,
@@ -300,7 +317,6 @@ export {
     resetPlayer,
     rewind,
     selectPeaks,
-    setCursorPos,
     startTimes,
     toggleMeasures,
 };

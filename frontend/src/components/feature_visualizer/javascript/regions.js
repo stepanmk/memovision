@@ -1,8 +1,8 @@
 import { useMeasureData, useRegionData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { findClosestTimeIdx } from '../../../sharedFunctions';
-import { activePeaksIdx, endTimes, peaksInstances, playPause, setCursorPos, startTimes } from './player';
-import { chordsVisible, endMeasureIdx, isPlaying, startMeasureIdx, timeSelections } from './variables';
+import { activePeaksIdx, endTimes, peaksInstances, playPause, startTimes } from './player';
+import { chordsVisible, endMeasureIdx, isPlaying, startMeasureIdx, timeSelections, trackTimes } from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);
 const measureData = useMeasureData(pinia);
@@ -10,8 +10,8 @@ const regionData = useRegionData(pinia);
 
 function hideAllRegions() {
     peaksInstances.forEach((peaksInstance, idx) => {
-        startTimes[idx] = 0;
-        endTimes[idx] = tracksFromDb.syncTracks[idx].length_sec;
+        startTimes.value[idx] = 0;
+        endTimes.value[idx] = tracksFromDb.syncTracks[idx].length_sec;
         timeSelections.value[idx] = tracksFromDb.syncTracks[idx].length_sec;
         peaksInstance.segments.removeById('selectedRegion');
     });
@@ -21,8 +21,8 @@ function hideAllRegions() {
 function zoomOut() {
     peaksInstances.forEach((peaksInstance, idx) => {
         const view = peaksInstance.views.getView('zoomview');
-        view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
-        setCursorPos(idx, 0);
+        peaksInstance.player.seek(trackTimes.value[idx]);
+        view.setZoom({ seconds: 'auto' });
     });
     startMeasureIdx.value = 0;
     endMeasureIdx.value = measureData.measureCount - 1;
@@ -84,12 +84,10 @@ async function zoomOnMeasureSelection(startMeasure, endMeasure, regionIdx) {
             id: 'selectedRegion',
         });
     }
-    // const secs = getLongestRegion();
     for (let i = 0; i < peaksInstances.length; i++) {
-        startTimes[i] = measureData.selectedMeasures[i][startMeasure + 1];
-        endTimes[i] = measureData.selectedMeasures[i][endMeasure + 2];
-        timeSelections.value[i] = endTimes[i] - startTimes[i];
-        setCursorPos(i, measureData.selectedMeasures[i][startMeasure + 1]);
+        startTimes.value[i] = measureData.selectedMeasures[i][startMeasure + 1];
+        endTimes.value[i] = measureData.selectedMeasures[i][endMeasure + 2];
+        timeSelections.value[i] = endTimes.value[i] - startTimes.value[i];
         const view = peaksInstances[i].views.getView('zoomview');
         view.setZoom({
             seconds: timeSelections.value[i],

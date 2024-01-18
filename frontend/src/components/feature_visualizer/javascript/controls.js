@@ -1,27 +1,28 @@
 import { onKeyStroke } from '@vueuse/core';
-import { useModulesVisible } from '../../../globalStores';
+import { useMeasureData, useModulesVisible } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
 import { activePeaksIdx, canSwitch, peaksInstances, playPause, rewind, selectPeaks, toggleMeasures } from './player';
 import { hideAllRegions } from './regions';
-import { endMeasureIdx, isPlaying, regionLengths, regionToSave, startMeasureIdx, trackTimes } from './variables';
+import { endMeasureIdx, isPlaying, startMeasureIdx, trackTimes } from './variables';
 
 const modulesVisible = useModulesVisible(pinia);
+const measureData = useMeasureData(pinia);
 
 function addControls() {
     onKeyStroke(' ', (e) => {
         e.preventDefault();
-        if (modulesVisible.interpretationPlayer) playPause();
+        if (modulesVisible.featureVisualizer) playPause();
     });
 
     onKeyStroke('Home', (e) => {
-        if (modulesVisible.interpretationPlayer) rewind();
+        if (modulesVisible.featureVisualizer) rewind();
     });
 
     onKeyStroke(
         'ArrowUp',
         (e) => {
             e.preventDefault();
-            if (modulesVisible.interpretationPlayer) {
+            if (modulesVisible.featureVisualizer) {
                 const switchIdx = activePeaksIdx - 1;
                 if (switchIdx >= 0 && canSwitch) selectPeaks(switchIdx, true);
             }
@@ -33,7 +34,7 @@ function addControls() {
         'ArrowDown',
         (e) => {
             e.preventDefault();
-            if (modulesVisible.interpretationPlayer) {
+            if (modulesVisible.featureVisualizer) {
                 const switchIdx = activePeaksIdx + 1;
                 if (switchIdx < peaksInstances.length && canSwitch) selectPeaks(switchIdx, true);
             }
@@ -42,22 +43,20 @@ function addControls() {
     );
 
     onKeyStroke('m', (e) => {
-        if (modulesVisible.interpretationPlayer) toggleMeasures();
+        if (modulesVisible.featureVisualizer) toggleMeasures();
     });
 
     onKeyStroke('Escape', (e) => {
-        if (modulesVisible.interpretationPlayer) {
+        if (modulesVisible.featureVisualizer) {
             if (isPlaying.value) playPause();
             peaksInstances.forEach((peaksInstance, i) => {
                 peaksInstance.segments.removeAll();
-                regionLengths.value[i] = 0;
                 const view = peaksInstance.views.getView('zoomview');
                 peaksInstance.player.seek(trackTimes.value[i]);
                 view.setZoom({ seconds: 'auto' });
             });
-            startMeasureIdx.value = -1;
-            endMeasureIdx.value = -1;
-            regionToSave.value = false;
+            startMeasureIdx.value = 0;
+            endMeasureIdx.value = measureData.measureCount - 1;
             hideAllRegions();
         }
     });

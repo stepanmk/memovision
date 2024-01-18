@@ -27,6 +27,7 @@ import {
     regionName,
     regionToSave,
     relevantMeasures,
+    relevantMeasuresSelected,
     selectedLabel,
     selectedRelevanceData,
     selectedRelevanceFeatureName,
@@ -43,6 +44,7 @@ import {
     initPlayer,
     peaksInstances,
     playPause,
+    reciprocalDurations,
     resetPlayer,
     rewind,
     selectPeaks,
@@ -61,7 +63,7 @@ import {
 import { addControls } from './javascript/controls';
 
 import LoadingWindow from '../LoadingWindow.vue';
-import ModuleTemplate from '../ModuleTemplate.vue';
+import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import SelectedRegion from '../shared_components/SelectedRegion.vue';
 import SubMenu from '../shared_components/SubMenu.vue';
 import DifferenceRegion from './subcomponents/DifferenceRegion.vue';
@@ -118,11 +120,11 @@ async function initInterpretationPlayer() {
         // from player
         idxArray.push(idx);
         peaksInstances.push(null);
+        reciprocalDurations.push(0.0);
     });
     selectDefaultRelevanceFeature();
     await initPlayer();
     measureSelector.value.init();
-    measuresVisible.value = true;
     interpretationPlayerOpened.value = true;
 }
 
@@ -134,10 +136,6 @@ function destroyInterpretationPlayer() {
     regionLengths.value = [];
     trackLabels.value = [];
     trackTimes.value = [];
-
-    // player
-    idxArray.splice(0);
-    peaksInstances.splice(0);
 
     resetPlayer();
     measureSelector.value.destroy();
@@ -166,15 +164,21 @@ function destroyInterpretationPlayer() {
                     <SubMenu :name="'Feature'" :num-entries="measureData.relevanceFeatures.length">
                         <p
                             v-for="(obj, i) in measureData.relevanceFeatures"
-                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
-                            @click="selectRelevanceFeature(obj.id, obj.name)">
+                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-300"
+                            :class="{
+                                'bg-neutral-200 dark:bg-gray-300': measureData.relevanceFeaturesSelected[i],
+                            }"
+                            @click="selectRelevanceFeature(obj.id, obj.name, i)">
                             {{ obj.name }}
                         </p>
                     </SubMenu>
                     <SubMenu :name="'Label'" :num-entries="measureData.labels.length">
                         <p
                             v-for="(obj, i) in measureData.labels"
-                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200"
+                            class="flex h-7 shrink-0 items-center rounded-md px-2 hover:cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-300"
+                            :class="{
+                                'bg-neutral-200 dark:bg-gray-300': measureData.labelsSelected[i],
+                            }"
                             @click="selectRelevanceLabel(i, 'custom')">
                             {{ obj }}
                         </p>
@@ -182,6 +186,7 @@ function destroyInterpretationPlayer() {
                     <SubMenu :name="'Selected regions'" :num-entries="regionData.selectedRegions.length">
                         <SelectedRegion
                             v-for="(obj, i) in regionData.selectedRegions"
+                            :class="{ 'bg-neutral-200 dark:bg-gray-300': regionData.selected[i] }"
                             :region-name="obj.regionName"
                             :idx="i"
                             :start-measure="getStartMeasure(obj.startTime)"
@@ -192,6 +197,7 @@ function destroyInterpretationPlayer() {
                     <SubMenu :name="'Difference regions'" :num-entries="regionData.diffRegions.length">
                         <DifferenceRegion
                             v-for="(obj, i) in regionData.diffRegions"
+                            :class="{ 'bg-neutral-200 dark:bg-gray-300': regionData.diffRegionsSelected[i] }"
                             :region-name="obj.regionName"
                             :idx="i"
                             :start-time="getTimeString(obj.startTime, 14, 22)"
@@ -203,10 +209,11 @@ function destroyInterpretationPlayer() {
                     </SubMenu>
                     <SubMenu
                         :name="'Relevant measures'"
-                        @mouseover="selectRelevantMeasures()"
-                        :num-entries="relevantMeasures.length">
+                        :num-entries="relevantMeasures.length"
+                        @click="selectRelevantMeasures()">
                         <RelevantMeasure
                             v-for="(obj, i) in relevantMeasures"
+                            :class="{ 'bg-neutral-200 dark:bg-gray-300': relevantMeasuresSelected[i] }"
                             :idx="i"
                             :region-name="obj.regionName"
                             :relevance="obj.relevance"
@@ -226,7 +233,7 @@ function destroyInterpretationPlayer() {
                         maxlength="256"
                         size="20"
                         autocomplete="off"
-                        class="input-field-nomargin h-7 w-36 border"
+                        class="input-field-nomargin h-7 w-36 border dark:bg-gray-300"
                         placeholder="Region name"
                         v-model="regionName" />
                     <button class="btn btn-blue" @click="saveRegion()">Save</button>
@@ -241,30 +248,29 @@ function destroyInterpretationPlayer() {
                 @select-region="zoomOnMeasureSelection"
                 ref="measureSelector" />
             <div
-                id="container"
-                class="relative flex h-[calc(100%-11.5rem)] w-full flex-row items-end border-b dark:border-gray-700">
-                <div
-                    id="label-feature"
-                    class="-100 absolute top-0 z-10 flex w-full justify-center gap-2 border-b bg-white py-1 text-sm dark:border-gray-700 dark:bg-gray-800">
-                    <div class="flex flex-row gap-1 text-xs">
-                        <p>Selected feature:</p>
-                        <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
-                            {{ selectedRelevanceFeatureName }}
-                        </p>
-                    </div>
-
-                    <div class="flex flex-row gap-1 text-xs">
-                        <p>Selected label:</p>
-                        <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
-                            {{ selectedLabel }}
-                        </p>
-                    </div>
+                id="label-feature"
+                class="z-10 flex h-[1.5rem] w-full items-center justify-center gap-2 border-b bg-white py-1 text-sm dark:border-gray-700 dark:bg-gray-800">
+                <div class="flex flex-row gap-1 text-xs">
+                    <p>Selected feature:</p>
+                    <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
+                        {{ selectedRelevanceFeatureName }}
+                    </p>
                 </div>
 
+                <div class="flex flex-row gap-1 text-xs">
+                    <p>Selected label:</p>
+                    <p class="flex items-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-black">
+                        {{ selectedLabel }}
+                    </p>
+                </div>
+            </div>
+            <div
+                id="container"
+                class="relative flex h-[calc(100%-13rem)] w-full flex-row items-end border-b dark:border-gray-700">
                 <div
                     id="audio-container"
-                    class="flex h-full w-full flex-row overflow-x-hidden overflow-y-scroll dark:border-gray-700">
-                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 py-8 pl-5">
+                    class="flex h-full w-full flex-row overflow-x-hidden overflow-y-scroll pt-3 dark:border-gray-700">
+                    <div id="audio-controls" class="flex w-[10rem] flex-col items-center justify-start gap-2 pl-5">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             :id="`audio-controls-${i}`"
@@ -311,7 +317,7 @@ function destroyInterpretationPlayer() {
                                         :class="{
                                             'bg-cyan-700 text-white': playing[i],
                                         }"
-                                        @click="selectPeaks(i)">
+                                        @click="selectPeaks(i, true)">
                                         <Icon icon="material-symbols:volume-up-outline" width="20" />
                                     </div>
                                     <div
@@ -332,27 +338,25 @@ function destroyInterpretationPlayer() {
                                     'bg-blue-600': trackLabels[i],
                                 }"></div>
                         </div>
-                        <div id="audio-controls-pb" class="h-3 w-full shrink-0"></div>
+                        <div id="audio-controls-pb" class="h-1 w-full shrink-0"></div>
                     </div>
-                    <div
-                        id="audio-tracks"
-                        class="flex w-[calc(100%-10rem)] flex-col gap-2 px-2 py-8 dark:border-gray-700">
+                    <div id="audio-tracks" class="flex w-[calc(100%-10rem)] flex-col gap-2 px-2 dark:border-gray-700">
                         <div
                             v-for="(obj, i) in tracksFromDb.syncTracks"
                             class="flex h-16 w-full shrink-0 flex-row gap-2">
                             <div
-                                class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-300"
+                                class="w-[calc(100%-8rem)] border dark:border-gray-500 dark:bg-gray-400"
                                 :id="`track-div-${i}`"></div>
                             <div
                                 class="flex h-full w-[7.5rem] flex-col items-center justify-center rounded-md bg-neutral-200 text-sm text-black dark:bg-gray-400">
-                                <div class="flex items-center justify-center text-xs font-semibold">
-                                    <p class="w-9">
-                                        {{ getTimeString(trackTimes[i], 14, 19) }}
+                                <div class="mono flex items-center justify-center text-xs">
+                                    <p>
+                                        {{ getTimeString(trackTimes[i], 14, 22) }}
                                     </p>
                                 </div>
                                 <div
                                     v-show="regionLengths[i] > 0"
-                                    class="flex flex-row items-center justify-center gap-1 text-xs font-semibold">
+                                    class="mono flex flex-row items-center justify-center gap-1 text-xs">
                                     <p class="w-full rounded-md bg-neutral-900 px-[0.2rem] text-white">
                                         {{ getTimeString(regionLengths[i], 14, 22) }}
                                     </p>
@@ -432,9 +436,5 @@ function destroyInterpretationPlayer() {
 .regions-transition-enter-from,
 .regions-transition-leave-to {
     opacity: 0;
-}
-
-input:focus {
-    outline: 2px solid rgba(255, 255, 255, 0.2);
 }
 </style>

@@ -11,6 +11,7 @@ import { pinia } from './piniaInstance';
 
 const measureData = useMeasureData(pinia);
 const tracksFromDb = useTracksFromDb(pinia);
+const userInfo = useUserInfo(pinia);
 
 async function getSessions() {
     const res = await api.get('/get-sessions', getSecureConfig());
@@ -52,13 +53,14 @@ function resetAllStores() {
 }
 
 function darkMode() {
-    const userInfo = useUserInfo(pinia);
     if (userInfo.darkModeEnabled) {
         document.documentElement.classList.remove('dark');
         userInfo.darkModeEnabled = false;
+        userInfo.chartsTheme = 'default';
     } else {
         document.documentElement.classList.add('dark');
         userInfo.darkModeEnabled = true;
+        userInfo.chartsTheme = 'dark';
     }
 }
 
@@ -75,6 +77,13 @@ function truncateFilename(filename, numChars) {
         shortFilename = filename;
     }
     return shortFilename;
+}
+
+async function availableSpace() {
+    const res = await api.get('/available-space', getSecureConfig());
+    userInfo.availableSpace = res.data.availableSpace;
+    userInfo.occupiedSpace = res.data.occupiedSpace;
+    userInfo.occupiedPerc = res.data.occupiedPerc;
 }
 
 function createZoomLevels(zoomviewWidth, trackLengthSec) {
@@ -110,7 +119,7 @@ function getEndMeasure(end) {
 }
 
 function getTimeString(seconds, start, end) {
-    return new Date(seconds * 1000).toISOString().slice(start, end);
+    return new Date(seconds * 1000).toISOString().substring(start, end);
 }
 
 function sleep(ms) {
@@ -125,6 +134,7 @@ function findClosestTimeIdx(peaksIdx, time) {
 }
 
 export {
+    availableSpace,
     createZoomLevels,
     darkMode,
     disableDarkMode,

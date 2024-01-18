@@ -11,14 +11,14 @@ import {
     useUserInfo,
 } from '../../globalStores';
 import { pinia } from '../../piniaInstance';
-import { getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
+import { availableSpace, getTimeString, resetAllStores, truncateFilename } from '../../sharedFunctions';
 import DialogWindow from '../DialogWindow.vue';
 import LoadingWindow from '../LoadingWindow.vue';
-import ModuleTemplate from '../ModuleTemplate.vue';
+import ModuleTemplate from '../shared_components/ModuleTemplate.vue';
 import BottomLegend from './subcomponents/BottomLegend.vue';
 import LabelAssignment from './subcomponents/LabelAssignment.vue';
-import ProgressBar from './subcomponents/ProgressBar.vue';
 import TopLegend from './subcomponents/TopLegend.vue';
+import UploadProgressBar from './subcomponents/UploadProgressBar.vue';
 
 import {
     diffRegions,
@@ -30,8 +30,10 @@ import {
     featureExtractionWindow,
     isDisabled,
     isLoading,
+    isUploading,
     labelAssignmentVisible,
     loadingMessage,
+    notEnoughSpace,
     numComputed,
     numThingsToCompute,
     preciseSync,
@@ -84,10 +86,12 @@ const userInfo = useUserInfo(pinia);
 
 /* dropzone variables */
 const dropzone = ref();
-const metadataDropzone = ref();
 const { isOverDropzone } = useDropZone(dropzone, onDrop);
-const { isOverMetadataDropzone } = useDropZone(metadataDropzone, uploadMetadata);
 
+/* 
+    reset all data stores and fetch all data (audio and features) 
+    from server after the track manager is mounted 
+*/
 onMounted(() => {
     resetAllStores();
     getAllData();
@@ -106,21 +110,23 @@ async function getAllData() {
     loadingMessage.value = 'Retrieving audio data...';
     isLoading.value = true;
     isDisabled.value = true;
-    await getTrackData();
-    await getRegionData();
-    await getSyncPoints();
-    await getChords();
+    availableSpace();
+    await getTrackData(); // track metadata
+    await getRegionData(); // saved region data
+    await getChords(); // chord annotations
     preciseSync.value = userInfo.preciseSync;
     numThingsToCompute.value = tracksFromDb.trackObjects.length;
+    let audioData = [];
     for (const track of tracksFromDb.trackObjects) {
-        await getAudioData(track.filename);
-        numComputed.value += 1;
+        audioData.push(getAudioData(track.filename));
     }
-    await getMetronomeClick();
-    await getMeasureData();
-    await getFeatureNames();
+    await Promise.all(audioData); // audio data
+    await getMetronomeClick(); // metronome audio
+    await getMeasureData(); // measure annotations
+    await getFeatureNames(); // feature names
     loadingMessage.value = 'Retrieving audio features...';
-    await getAllFeatures();
+    await getSyncPoints(); // synchronization points (matrices)
+    await getAllFeatures(); // already computed features
     isDisabled.value = false;
     isLoading.value = false;
     resetProgress();
@@ -166,11 +172,11 @@ async function closeLabelAssignment() {
             <DialogWindow :visible="duplicatesWindow" :message="duplicatesMessage">
                 <template v-slot:dialog-content>
                     <div
-                        class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b py-3 px-5 dark:border-gray-700">
+                        class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
                         <div
                             v-for="(obj, i) in duplicates"
                             :id="`duplicate-${i}`"
-                            class="flex h-7 w-full justify-start gap-2 rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400 dark:hover:bg-gray-700">
+                            class="flex h-7 w-full justify-start gap-2 rounded-md bg-neutral-200 pb-1 pl-2 pr-2 pt-1 text-sm dark:bg-gray-400 dark:hover:bg-gray-700">
                             <p class="flex items-center rounded-md bg-neutral-500 px-2 text-white">
                                 {{ truncateFilename(obj[0], 20) }}
                             </p>
@@ -193,11 +199,11 @@ async function closeLabelAssignment() {
             <DialogWindow :visible="diffRegionsWindow" :message="diffRegionsMessage">
                 <template v-slot:dialog-content>
                     <div
-                        class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b py-3 px-5 dark:border-gray-700">
+                        class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
                         <div
                             v-for="(obj, i) in diffRegions"
                             :id="`bad-regions-${i}`"
-                            class="flex h-7 w-full justify-between gap-2 rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400 dark:hover:bg-gray-700">
+                            class="flex h-7 w-full justify-between gap-2 rounded-md bg-neutral-200 pb-1 pl-2 pr-2 pt-1 text-sm dark:bg-gray-400 dark:hover:bg-gray-700">
                             <p class="flex items-center rounded-md">
                                 {{ truncateFilename(obj.filename, 20) }}
                             </p>
@@ -219,23 +225,20 @@ async function closeLabelAssignment() {
                 </template>
             </DialogWindow>
 
-            <DialogWindow
-                :visible="featureExtractionWindow"
-                message="Feature extraction"
-                class="h-[30rem] w-[50rem] font-semibold">
+            <DialogWindow :visible="featureExtractionWindow" message="Feature extraction" class="h-[30rem] w-[50rem]">
                 <template v-slot:dialog-content>
                     <div
-                        class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b py-3 px-5 dark:border-gray-700">
+                        class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
                         <div
                             v-for="obj in featureLists.rhythmMetadata"
-                            class="flex h-7 w-full items-center justify-between rounded-md bg-indigo-200 px-2 text-sm font-normal">
+                            class="flex h-7 w-full items-center justify-between rounded-md bg-indigo-200 px-2 text-sm font-normal dark:text-gray-700">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
                             <Icon v-else icon="material-symbols:check" :inline="true" width="18" />
                         </div>
                         <div
                             v-for="obj in featureLists.dynamicsMetadata"
-                            class="flex h-7 w-full items-center justify-between rounded-md bg-orange-200 px-2 text-sm font-normal">
+                            class="flex h-7 w-full items-center justify-between rounded-md bg-orange-200 px-2 text-sm font-normal dark:text-gray-700">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
                             <Icon v-else icon="material-symbols:check" :inline="true" width="18" />
@@ -264,8 +267,7 @@ async function closeLabelAssignment() {
             <!-- uploaded files -->
             <TopLegend />
             <div
-                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900"
-                ref="metadataDropzone">
+                class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900">
                 <TransitionGroup name="list">
                     <div
                         v-for="(obj, i) in tracksFromDb.trackObjects"
@@ -273,7 +275,7 @@ async function closeLabelAssignment() {
                         :key="obj.filename"
                         class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400 dark:hover:bg-gray-500"
                         :class="{
-                            'bg-violet-300 hover:bg-violet-400 dark:bg-violet-300 dark:hover:bg-violet-400':
+                            'bg-violet-300 hover:bg-violet-400 dark:bg-violet-400 dark:hover:bg-violet-500':
                                 obj.reference,
                         }">
                         <div
@@ -319,13 +321,13 @@ async function closeLabelAssignment() {
                                 <input
                                     type="number"
                                     maxlength="4"
-                                    class="w-16 rounded-md px-1 text-black"
+                                    class="w-16 rounded-md px-1 text-black dark:bg-gray-300"
                                     v-model="obj.year"
                                     :name="`year-${i}`"
                                     @input="updateAllMetadata()" />
                                 <input
                                     type="text"
-                                    class="w-32 rounded-md px-1 text-black"
+                                    class="w-32 rounded-md px-1 text-black dark:bg-gray-300"
                                     v-model="obj.performer"
                                     :name="`performer-${i}`"
                                     @input="updateAllMetadata()" />
@@ -443,7 +445,7 @@ async function closeLabelAssignment() {
                 :class="{ 'bg-neutral-100 dark:bg-gray-700': isOverDropzone }">
                 <a
                     v-if="!somethingToUpload"
-                    class="absolute top-0 left-0 flex h-full w-full items-center justify-center dark:text-gray-300">
+                    class="absolute left-0 top-0 flex h-full w-full items-center justify-center dark:text-gray-300">
                     Drag & drop audio files here.</a
                 >
 
@@ -452,7 +454,7 @@ async function closeLabelAssignment() {
                         v-for="(obj, i) in uploadList"
                         :id="`file-${i}`"
                         :key="obj.filename"
-                        class="flex h-7 w-full shrink-0 rounded-md bg-neutral-200 pt-1 pb-1 pl-2 pr-2 text-sm dark:bg-gray-400">
+                        class="flex h-7 w-full shrink-0 rounded-md bg-neutral-200 pb-1 pl-2 pr-2 pt-1 text-sm dark:bg-gray-400">
                         <div class="flex w-[17rem] items-center px-1 text-sm">
                             <Popper :content="obj.filename" hover placement="right" :arrow="true" class="select-none">
                                 {{ truncateFilename(obj.filename, 14) }}
@@ -461,7 +463,7 @@ async function closeLabelAssignment() {
 
                         <div class="flex h-full w-[calc(100%-18rem)] items-center">
                             <div class="m-1 h-[40%] w-full rounded-md bg-neutral-400 dark:bg-gray-100">
-                                <ProgressBar :percentage="obj.progressPercentage" :id="i" />
+                                <UploadProgressBar :percentage="obj.progressPercentage" :id="i" />
                             </div>
                         </div>
 
@@ -489,7 +491,12 @@ async function closeLabelAssignment() {
             <!-- files to upload end -->
 
             <!-- buttons bottom -->
-            <div class="flex h-[3rem] w-full items-center justify-end px-7">
+            <div class="flex h-[3rem] w-full items-center justify-between px-7">
+                <div>
+                    <p v-if="notEnoughSpace" class="text-sm text-red-600">
+                        Not enough space available, please remove some tracks.
+                    </p>
+                </div>
                 <div class="flex gap-2">
                     <input
                         id="added-files"
@@ -497,23 +504,25 @@ async function closeLabelAssignment() {
                         class="hidden"
                         accept="audio/*"
                         multiple
-                        @change="addFilesToUploadList(false)"
+                        @change="!isUploading ? addFilesToUploadList(false) : null"
                         @click="$event.target.value = ''" />
                     <label for="added-files" class="hover:cursor-pointer">
-                        <div id="add-files-btn" class="btn btn-blue">Add files</div>
+                        <div id="add-files-btn" class="btn btn-blue" :class="{ 'btn-disabled': isUploading }">
+                            Add files
+                        </div>
                     </label>
                     <button
                         id="delete-all-btn"
                         class="btn btn-blue"
-                        :class="{ 'btn-disabled': !somethingToUpload }"
-                        @click="somethingToUpload ? clearUploadList() : null">
+                        :class="{ 'btn-disabled': !somethingToUpload || isUploading }"
+                        @click="somethingToUpload || !isUploading ? clearUploadList() : null">
                         Clear upload list
                     </button>
                     <button
                         id="upload-btn"
                         class="btn btn-blue"
-                        :class="{ 'btn-disabled': !somethingToUpload }"
-                        @click="somethingToUpload ? uploadAllFiles() : null">
+                        :class="{ 'btn-disabled': !somethingToUpload || isUploading || notEnoughSpace }"
+                        @click="somethingToUpload && !isUploading && !notEnoughSpace ? uploadAllFiles() : null">
                         Upload all files
                     </button>
                 </div>

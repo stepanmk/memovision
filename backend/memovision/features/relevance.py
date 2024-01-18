@@ -52,6 +52,24 @@ def compute_one_vs_rest(tracks, relevance_func, X):
     return one_vs_rest
 
 
+def compute_custom(label_data, relevance_func, X):
+    custom = []
+    for label in label_data:
+        if (X.shape[0] == len(label['labels'])):
+            relevance = relevance_func(
+                **{
+                    'X': pd.DataFrame(X),
+                    'y': pd.Series(np.array(label['labels']))
+                })
+            relevance_object = create_relevance_object(relevance,
+                                                       label['label_name'],
+                                                       'custom')
+            relevance_object['labels'] = np.array(
+                label['labels']).astype(bool).tolist()
+            custom.append(relevance_object)
+    return custom
+
+
 def compute_relevance(username,
                       session,
                       feature_name,
@@ -96,16 +114,29 @@ def compute_relevance(username,
             pickle.dump({'data': one_vs_rest, 'filenames': filenames}, f)
     # compute relevance according to the custom labels
     label_data = get_label_data(session)
-    custom = []
-    for label in label_data:
-        if (X.shape[0] == len(label['labels'])):
-            relevance = relevance_func(**{
-                'X': pd.DataFrame(X),
-                'y': pd.Series(label['labels'])
-            })
-            relevance_object = create_relevance_object(relevance,
-                                                       label['label_name'],
-                                                       'custom')
-            relevance_object['labels'] = label['labels'].astype(bool).tolist()
-            custom.append(relevance_object)
+    custom_path = f'./user_uploads/{username}/{session.name}/relevance/{feature_name}_custom.pkl'
+    if (os.path.exists(custom_path)):
+        with open(custom_path, 'rb') as f:
+            custom_file = pickle.load(f)
+        if filenames == custom_file['filenames'] and label_data == custom_file[
+                'label_data']:
+            custom = custom_file['data']
+        else:
+            custom = compute_custom(label_data, relevance_func, X)
+            with open(custom_path, 'wb') as f:
+                pickle.dump(
+                    {
+                        'data': custom,
+                        'filenames': filenames,
+                        'label_data': label_data
+                    }, f)
+    else:
+        custom = compute_custom(label_data, relevance_func, X)
+        with open(custom_path, 'wb') as f:
+            pickle.dump(
+                {
+                    'data': custom,
+                    'filenames': filenames,
+                    'label_data': label_data
+                }, f)
     return {'oneVsRest': one_vs_rest, 'custom': custom}

@@ -1,25 +1,27 @@
 import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
-import { useTracksFromDb } from '../../../globalStores';
+import { useTracksFromDb, useUserInfo } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getCookie, getSecureConfig } from '../../../sharedFunctions';
+import { availableSpace, getCookie, getSecureConfig } from '../../../sharedFunctions';
 import { getAudioData, getMeasureData, getTrackData } from './fetch';
 import { transferAllMeasures } from './process';
-import { somethingToUpload, uploadList } from './variables';
+import { isUploading, somethingToUpload, uploadList } from './variables';
 
 /* pinia stores */
 
 const tracksFromDb = useTracksFromDb(pinia);
+const userInfo = useUserInfo(pinia);
 
-/*  actual upload functions 
+/*  upload functions description 
     
-    preUploadCheck – returns true if the filename is already uploaded on the server
     addFilesToUploadList – adds files to the upload list
+    clearUploadList – removes all files from the upload list
+    preUploadCheck – returns true if the file with a given filename is already uploaded
     removeFileFromUploadList – removes file from the upload list
-    clearUploadList – removes all not yet upload files from the upload list
-    uploadOneFile – uploads one file to server
     uploadAllFiles – uploads all the files from the upload list
     uploadMeasures – uploads manual measure annotations
+    uploadMetadata – uploads metadata to the server
+    uploadOneFile – uploads one file to the server
 
 */
 
@@ -28,26 +30,44 @@ async function preUploadCheck(filename) {
         filename: filename,
     };
     const res = await api.post('/pre-upload-check', data, getSecureConfig());
-    return res.data.exists;
+    const canBeUploaded = !res.data.exists;
+    if (res.data.exists) showAlert(`Track named ${filename} already uploaded!`, 2000);
+    return canBeUploaded;
+}
+
+async function estimateSizeAfterUpload(file) {
+    const url = URL.createObjectURL(file);
+    return new Promise((resolve) => {
+        const audio = new Audio();
+        audio.src = url;
+        audio.preload = 'metadata';
+        audio.onloadedmetadata = function () {
+            resolve(audio.duration / 60);
+        };
+    });
 }
 
 async function addFilesToUploadList(files) {
     if (!files) {
         files = document.getElementById('added-files').files;
     }
+    isUploading.value = true;
     for (let i = 0; i < files.length; i++) {
+        let estimatedSize = await estimateSizeAfterUpload(files[0]);
         const fileAlreadyInList = uploadList.value.find((obj) => obj.filename === files[i].name);
-        const fileAlreadyUploaded = await preUploadCheck(files[i].name);
-        if (!fileAlreadyInList && !fileAlreadyUploaded) {
+        const canBeUploaded = await preUploadCheck(files[i].name);
+        if (!fileAlreadyInList && canBeUploaded) {
             uploadList.value.push({
                 file: files[i],
                 filename: files[i].name,
                 beingUploaded: false,
                 beingConverted: false,
                 progressPercentage: 0,
+                size: estimatedSize,
             });
         }
     }
+    isUploading.value = false;
 }
 
 function removeFileFromUploadList(filename) {
@@ -69,6 +89,7 @@ async function uploadOneFile(fileObject) {
         fileObject.beingUploaded = true;
         let formData = new FormData();
         formData.append('file', fileObject.file);
+        formData.append('availableSpace', userInfo.availableSpace);
         function fileUploadProgress(event) {
             const percentage = Math.round((100 * event.loaded) / event.total);
             fileObject.progressPercentage = percentage;
@@ -82,8 +103,8 @@ async function uploadOneFile(fileObject) {
             onUploadProgress: fileUploadProgress,
         };
         const res = await api.post('/upload-audio-file', formData, axiosConfig);
+        await availableSpace();
         removeFileFromUploadList(fileObject.file.name);
-        // add track to the store and fetch audio with waveform
         tracksFromDb.addTrackData(res.data.obj);
         await getAudioData(res.data.obj.filename);
     }
@@ -91,6 +112,7 @@ async function uploadOneFile(fileObject) {
 
 function uploadAllFiles() {
     const uploads = [];
+    isUploading.value = true;
     if (somethingToUpload) {
         for (let i = 0; i < uploadList.value.length; i++) {
             uploads.push(uploadOneFile(uploadList.value[i]));
@@ -98,6 +120,7 @@ function uploadAllFiles() {
     }
     Promise.all(uploads).then(() => {
         api.put('/check-labels', {}, getSecureConfig());
+        isUploading.value = false;
     });
 }
 

@@ -21,7 +21,9 @@ const featureVisualizerOpened = ref(false);
 const isPlaying = ref(false);
 const labelSelectors = ref([]);
 const measuresVisible = ref(false);
+const numPeaksLoaded = ref(0);
 const peaksInstancesReady = ref([]);
+const percLoaded = ref(0);
 const playing = reactive([]);
 const scatterVisible = ref(false);
 const selectedFeatureLists = reactive({});
@@ -50,7 +52,9 @@ export {
     isPlaying,
     labelSelectors,
     measuresVisible,
+    numPeaksLoaded,
     peaksInstancesReady,
+    percLoaded,
     playing,
     scatterVisible,
     selectedFeatureLists,

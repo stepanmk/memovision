@@ -137,7 +137,7 @@ async function uploadLabels() {
             class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 text-sm dark:border-gray-700">
             <div
                 v-for="(label, i) in labelNames"
-                class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 px-2 hover:bg-neutral-300">
+                class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 px-2 hover:bg-neutral-300 dark:bg-gray-400 dark:text-gray-900 dark:hover:bg-gray-500">
                 <p class="flex h-full w-[calc(100%-1.5rem)] items-center" @click="openLabel(label)">
                     {{ label }}
                 </p>
@@ -154,7 +154,7 @@ async function uploadLabels() {
             class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 text-sm dark:border-gray-700">
             <div
                 v-for="(obj, i) in tracksFromDb.trackObjects"
-                class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 pl-2 hover:bg-neutral-300"
+                class="flex h-7 w-full shrink-0 cursor-pointer items-center justify-between rounded-md bg-neutral-200 pl-2 hover:bg-neutral-300 dark:bg-gray-400 dark:text-gray-900 dark:hover:bg-gray-500"
                 @click="labelObjects[i] = !labelObjects[i]">
                 <p>{{ obj.filename }}</p>
                 <div
@@ -171,7 +171,7 @@ async function uploadLabels() {
                 <input
                     v-model="v$.labelName0.$model"
                     type="text"
-                    class="input-field-nomargin h-7 w-28 text-red-600"
+                    class="input-field-nomargin h-7 w-28 text-red-600 dark:bg-gray-300"
                     placeholder="Label A name"
                     maxlength="20"
                     :class="{
@@ -182,7 +182,7 @@ async function uploadLabels() {
                 <input
                     v-model="v$.labelName1.$model"
                     type="text"
-                    class="input-field-nomargin h-7 w-28 text-blue-600"
+                    class="input-field-nomargin h-7 w-28 text-blue-600 dark:bg-gray-300"
                     placeholder="Label B name"
                     maxlength="20"
                     :class="{
@@ -238,9 +238,3 @@ async function uploadLabels() {
         </div>
     </div>
 </template>
-
-<style scoped>
-input:focus {
-    outline: 2px solid rgba(255, 255, 255, 0.2);
-}
-</style>

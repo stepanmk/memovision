@@ -8,7 +8,7 @@ import {
     useUserInfo,
 } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getSecureConfig } from '../../../sharedFunctions';
+import { getSecureConfig, sleep } from '../../../sharedFunctions';
 import { getChords, getMeasureData, getSyncPoints } from './fetch';
 import { deleteFileFromDb } from './track';
 
@@ -39,14 +39,28 @@ const menuButtonsDisable = useMenuButtonsDisable(pinia);
 const userInfo = useUserInfo(pinia);
 const regionData = useRegionData(pinia);
 
-/*  actual process functions 
+/*  fetch functions description
     
-    processAllTracks – processes all uploaded tracks
+    checkStructure – checks if the particular track has the same musical structure as the reference
+    computeActFunc – computes beat tracking activation function via conv net
+    computeAllChromas – computes chroma representations for all tracks
+    computeAllFeatures – computes all available audio features
+    computeChroma – computes chroma representation for a single track
+    deleteDiffStructureTracks – deletes the tracks with differences in musical structure
+    deleteDuplicates – deletes duplicate recordings (if there are any)
+    findDuplicates – searches for pairs of duplicate recordings
+    getAllFeatures – fetches all computed features from the server
+    getFeatureNames – returns names of all available features
+    keepDiffStructureTracks – keeps the tracks with differences in musical structure
+    keepDuplicates – keeps the found duplicate recordings 
+    processAllTracks – wrapper function for track preprocessing
     resetProgress – resets helper variables for the progress bar
-
-    transferMeasures – transfer measure annotations from the reference track to another track
+    setPreciseSync – increases synchronization accuracy with neural beat tracking
+    synchronizeTracks – wrapper function for track synchronization
+    syncTrack – synchronizes a single track with a reference that was previously selected
     transferAllMeasures – transfer measure annotations from the reference to all the tracks
-
+    transferMeasures – transfer measure annotations from the reference track to another track
+    
 */
 
 async function computeChroma(filename) {
@@ -158,10 +172,6 @@ async function keepDiffStructureTracks() {
     resetProgress();
     await computeAllFeatures();
     await getAllFeatures();
-}
-
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function getFeatureNames() {

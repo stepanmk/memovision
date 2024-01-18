@@ -1,21 +1,17 @@
-import vue from '@vitejs/plugin-vue'
-import { vueI18n } from '@intlify/vite-plugin-vue-i18n'
-import { defineConfig } from 'vite'
-
+import { vueI18n } from '@intlify/vite-plugin-vue-i18n';
+import vue from '@vitejs/plugin-vue';
+import { defineConfig } from 'vite';
 
 // vite config
 export default defineConfig({
-  plugins: [
-    vue(),
-    vueI18n(),
-  ],
-  
-  build: {
-    outDir: '../backend/mos_backend/vue',
-    emptyOutDir: true
-  },
+    plugins: [vue(), vueI18n()],
 
-  server: {
-    host: '127.0.0.1',
-  }
-})
+    build: {
+        outDir: '../backend/memovision/vue',
+        emptyOutDir: true,
+    },
+
+    server: {
+        host: '127.0.0.1',
+    },
+});

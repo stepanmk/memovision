@@ -1,11 +1,11 @@
 import { showAlert } from '../../../alerts';
 import { api } from '../../../axiosInstance';
-import { useMeasureData, useTracksFromDb } from '../../../globalStores';
+import { useMeasureData, useRegionData, useTracksFromDb } from '../../../globalStores';
 import { pinia } from '../../../piniaInstance';
-import { getEndMeasure, getSecureConfig, getStartMeasure, sleep } from '../../../sharedFunctions';
+import { findClosestTimeIdx, getEndMeasure, getSecureConfig, getStartMeasure } from '../../../sharedFunctions';
 import { getRegionData } from '../../track_manager/javascript/fetch';
 
-import { activePeaksIdx, fadeOut, findClosestTimeIdx, peaksInstances, playPause, selectPeaks } from './player';
+import { activePeaksIdx, peaksInstances, playPause, selectPeaks } from './player';
 
 import {
     endMeasureIdx,
@@ -14,34 +14,76 @@ import {
     regionName,
     regionSelected,
     regionToSave,
+    relevantMeasuresSelected,
     startMeasureIdx,
+    trackTimes,
     zoomingEnabled,
 } from './variables';
 
 const tracksFromDb = useTracksFromDb(pinia);
 const measureData = useMeasureData(pinia);
+const regionData = useRegionData(pinia);
+
+function zoomOut() {
+    peaksInstances.forEach((peaksInstance, idx) => {
+        const view = peaksInstance.views.getView('zoomview');
+        peaksInstance.player.seek(trackTimes.value[idx]);
+        view.setZoom({ seconds: 'auto' });
+    });
+}
+
+function clearSelections() {
+    regionData.selected.fill(false);
+    regionData.diffRegionsSelected.fill(false);
+    relevantMeasuresSelected.value.fill(false);
+}
 
 async function selectRegion(regionIdx, obj) {
     hideAllRegions();
     regionToSave.value = false;
     const referenceName = tracksFromDb.refTrack.filename;
     const refIdx = tracksFromDb.getIdx(referenceName);
-    fadeOut();
-    await sleep(10);
     peaksInstances[activePeaksIdx].player.pause();
     isPlaying.value = false;
     const startIdx = findClosestTimeIdx(refIdx, obj.startTime);
     const endIdx = findClosestTimeIdx(refIdx, obj.endTime);
     switch (obj.type) {
         case 'selectedRegion':
-            addSelectedRegion(startIdx, endIdx, obj);
+            if (regionData.selected[regionIdx]) {
+                clearSelections();
+                hideAllRegions();
+                zoomOut();
+                return;
+            } else {
+                clearSelections();
+                regionData.selected[regionIdx] = true;
+                addSelectedRegion(startIdx, endIdx, obj);
+            }
             break;
         case 'differenceRegion':
-            const targetIdx = tracksFromDb.getIdx(obj.regionName);
-            addDifferenceRegion(refIdx, targetIdx, obj);
+            if (regionData.diffRegionsSelected[regionIdx]) {
+                clearSelections();
+                hideAllRegions();
+                zoomOut();
+                return;
+            } else {
+                clearSelections();
+                regionData.diffRegionsSelected[regionIdx] = true;
+                const targetIdx = tracksFromDb.getIdx(obj.regionName);
+                addDifferenceRegion(refIdx, targetIdx, obj);
+            }
             break;
         case 'relevantMeasure':
-            addRelevantMeasure(obj);
+            if (relevantMeasuresSelected.value[regionIdx]) {
+                clearSelections();
+                hideAllRegions();
+                zoomOut();
+                return;
+            } else {
+                clearSelections();
+                relevantMeasuresSelected.value[regionIdx] = true;
+                addRelevantMeasure(obj);
+            }
             break;
     }
 }
@@ -156,14 +198,15 @@ function zoomOnSelectedRegion() {
 }
 
 async function zoomOnMeasureSelection(startMeasure, endMeasure) {
-    if (isPlaying.value) await playPause();
+    if (isPlaying.value) playPause();
     regionSelected.value = true;
     regionToSave.value = true;
     hideAllRegions();
     if (startMeasure === -1) {
         peaksInstances.forEach((peaksInstance, idx) => {
             const view = peaksInstance.views.getView('zoomview');
-            view.setZoom({ seconds: tracksFromDb.syncTracks[idx].length_sec + 0.01 });
+            view.setZoom({ seconds: 'auto' });
+            peaksInstance.views._zoomview._playheadLayer.updatePlayheadTime(trackTimes.value[idx]);
         });
         regionToSave.value = false;
         return;
