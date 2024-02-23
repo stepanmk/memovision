@@ -1,0 +1,17 @@
+-- dependencies --
+
+numpy -- liberal BSD license
+Flask -- BSD-3-Clause License
+psycopg2 -- GNU Lesser General Public License
+librosa -- ISC License
+synctoolbox -- MIT License
+pyloudnorm -- MIT License
+ImageHash -- BSD 2-Clause "Simplified" License
+Cython -- Apache License 2.0
+madmom -- BSD license
+tensorflow-cpu -- Apache 2.0
+protobuf -- BSD license
+mrmr-selection -- GNU General Public License v3.0
+polars -- MIT License
+ffmpeg-normalize -- MIT License
+openpyxl -- MIT Licence
