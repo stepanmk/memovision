@@ -11,6 +11,7 @@ module.exports = {
                 'main-bg': "url('./assets/images/main_bg_lq.jpg')",
                 'tacr-logo': 'url(./assets/images/tacr-small.png)',
                 'tacr-logo-color': 'url(./assets/images/tacr-small-color.png)',
+                'muni-arts': 'url(./assets/images/arts-lg-eng-white.png)',
             },
         },
     },

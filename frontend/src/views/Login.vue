@@ -6,7 +6,7 @@ import LoginForm from '../components/LoginForm.vue';
     <div class="bg-main-bg min-h-screen bg-cover">
         <div
             id="login-container"
-            class="flex h-[calc(100vh)] items-center justify-center bg-gray-700 bg-opacity-50 backdrop-blur">
+            class="flex h-[calc(100vh)] flex-col items-center justify-center bg-gray-700 bg-opacity-50 backdrop-blur">
             <LoginForm />
         </div>
     </div>
