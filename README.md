@@ -1,6 +1,6 @@
 # MemoVision
 
-Official repository for the MemoVision software. The online version of the software is currently available here: [https://memovision.phil.muni.cz](www.memovision.phil.muni.cz/)
+Official repository for the MemoVision software. The online version of the software is currently available here: [https://memovision.phil.muni.cz](https://memovision.phil.muni.cz)
 
 MemoVision software aims to provide an interface for comparative performance music analysis. This includes music information retrieval and feature selection methods. The frontend is developed with the Vue.js framework and communicates with the Python backend server built with Flask. JavaScript allows the interface to update dynamically and provides modern visuals together with Tailwind CSS. The Python backend leverages the open-source music feature extraction modules and deep learning implementations.
 
