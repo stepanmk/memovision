@@ -87,7 +87,7 @@ function loginUser(data) {
                 >
             </div>
         </form>
-        <div class="flex items-center justify-center gap-8">
+        <div class="flex items-center justify-center gap-12 max-sm:gap-6">
             <a href="https://www.tacr.cz/en/ " target="”_blank”">
                 <div class="bg-tacr-logo rounded- h-[4.6rem] w-[4.6rem] bg-cover"></div>
             </a>
@@ -98,12 +98,12 @@ function loginUser(data) {
                 <Icon icon="icomoon-free:github" width="52" />
             </a>
         </div>
-        <p class="w-[30rem] select-none pt-5 text-justify text-xs text-white max-sm:hidden">
+        <p class="mt-3 w-[36rem] select-none rounded-xl p-3 text-justify text-[11px] text-gray-400 max-sm:hidden">
             This work was supported by the project TA ČR, TL05000527 Memories of Sound: The Evolution of the
             Interpretative Tradition Based on the Works of Antonin Dvorak and Bedrich Smetana and was co-financed with
             state support of the Technology Agency of the Czech Republic within the ÉTA Program.
         </p>
-        <p class="pt-5 text-xs font-semibold text-white sm:hidden">
+        <p class="pt-5 text-xs font-semibold text-gray-400 sm:hidden">
             This application is only intended for desktop use.
         </p>
     </div>
