@@ -283,7 +283,34 @@ def delete_user(user_id):
     if user.id == current_user.id:
         return jsonify({'message': 'cannot delete currently logged in admin'}), 400
 
+    username = user.username
+    user_folder = (USER_UPLOADS_DIR / username).resolve()
+
+    # extra safety: only allow deletion inside USER_UPLOADS_DIR
+    try:
+        user_folder.relative_to(USER_UPLOADS_DIR)
+    except ValueError:
+        return jsonify({'message': 'invalid user folder path'}), 400
+
     db.session.delete(user)
     db.session.commit()
 
-    return jsonify({'message': 'user deleted'}), 200
+    folder_deleted = False
+    folder_delete_error = None
+
+    try:
+        if user_folder.exists() and user_folder.is_dir():
+            shutil.rmtree(user_folder)
+            folder_deleted = True
+    except Exception as e:
+        folder_delete_error = str(e)
+
+    response = {
+        'message': 'user deleted',
+        'folder_deleted': folder_deleted,
+    }
+
+    if folder_delete_error is not None:
+        response['folder_delete_error'] = folder_delete_error
+
+    return jsonify(response), 200
