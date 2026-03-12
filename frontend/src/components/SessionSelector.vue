@@ -119,27 +119,25 @@ function deleteSession(sessionName) {
                 Create a new session
             </button>
         </form>
-        <a href="https://www.tacr.cz/en/" target="”_blank”">
-            <div
-                class="group flex max-w-[35rem] select-none items-center gap-2 rounded-md p-2 text-justify text-xs text-white">
-                <div
-                    class="bg-tacr-logo group-hover:bg-tacr-logo-color h-[4rem] w-[4rem] rounded-sm bg-slate-400 bg-cover transition"></div>
-
-                <p class="w-[calc(100%-4rem)]">
-                    This work was supported by the project TA ČR, TL05000527 Memories of Sound: The Evolution of the
-                    Interpretative Tradition Based on the Works of Antonin Dvorak and Bedrich Smetana and was
-                    co-financed with state support of the Technology Agency of the Czech Republic within the ÉTA
-                    Program.
-                </p>
-            </div>
-        </a>
-        <a href="https://github.com/stepanmk/memovision" class="text-red-400 hover:text-white" target="”_blank”">
-            <div class="flex max-w-[35rem] select-none flex-row items-center gap-2 rounded-md pt-2 text-xs">
-                <Icon icon="icomoon-free:github" width="32" class="" />
-
-                <p class="">This is the alpha version of the application. Feel free to contribute on GitHub.</p>
-            </div>
-        </a>
+        <!-- <div class="flex items-center justify-center gap-8">
+            <a href="https://www.tacr.cz/en/ " target="”_blank”">
+                <div class="bg-tacr-logo rounded- h-[4.6rem] w-[4.6rem] bg-cover"></div>
+            </a>
+            <a href="https://www.music.phil.muni.cz" target="”_blank”">
+                <div class="bg-muni-arts h-[5rem] w-[6.5rem] rounded-sm bg-cover transition"></div>
+            </a>
+            <a href="https://www.github.com/stepanmk/memovision" target="”_blank”" class="text-white">
+                <Icon icon="icomoon-free:github" width="52" />
+            </a>
+        </div>
+        <p class="w-[30rem] select-none pt-5 text-justify text-xs text-white max-sm:hidden">
+            This work was supported by the project TA ČR, TL05000527 Memories of Sound: The Evolution of the
+            Interpretative Tradition Based on the Works of Antonin Dvorak and Bedrich Smetana and was co-financed with
+            state support of the Technology Agency of the Czech Republic within the ÉTA Program.
+        </p>
+        <p class="pt-5 text-xs font-semibold text-white sm:hidden">
+            This application is only intended for desktop use.
+        </p> -->
     </div>
 </template>
 
