@@ -2,29 +2,30 @@ from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+
 from memovision.app_config import Config
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 cors = CORS()
+migrate = Migrate()
+
 
 
 def create_app():
-    app = Flask(__name__,
-                static_folder='./vue/assets',
-                template_folder='./vue')
+    app = Flask(__name__)
     app.config.from_object(Config)
 
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
     cors.init_app(app,
-                  resources={r'/*': {
-                      'origins': '*'
-                  }},
+                  resources={r"/api/*": {"origins": "*"}},
                   supports_credentials=True)
+    migrate.init_app(app, db)
 
     from memovision._modules.interp_player.routes import interp_player
     from memovision._modules.region_selector.routes import region_selector
@@ -34,22 +35,24 @@ def create_app():
     from memovision._modules.track_manager.sync_routes import sync_routes
     from memovision._modules.track_manager.track_routes import track_routes
     from memovision._modules.track_manager.upload_routes import upload_routes
+    from memovision.admin.routes import admin
     from memovision.auth.routes import auth
     from memovision.features.dynamics import dynamics
     from memovision.features.rhythm import rhythm
     from memovision.session_selector.routes import session_selector
 
-    app.register_blueprint(region_selector)
-    app.register_blueprint(interp_player)
-    app.register_blueprint(fetch_routes)
-    app.register_blueprint(label_routes)
-    app.register_blueprint(setting_routes)
-    app.register_blueprint(sync_routes)
-    app.register_blueprint(track_routes)
-    app.register_blueprint(upload_routes)
-    app.register_blueprint(auth)
-    app.register_blueprint(rhythm)
-    app.register_blueprint(dynamics)
-    app.register_blueprint(session_selector)
+    app.register_blueprint(region_selector, url_prefix='/api')
+    app.register_blueprint(interp_player, url_prefix='/api')
+    app.register_blueprint(fetch_routes, url_prefix='/api')
+    app.register_blueprint(label_routes, url_prefix='/api')
+    app.register_blueprint(setting_routes, url_prefix='/api')
+    app.register_blueprint(sync_routes, url_prefix='/api')
+    app.register_blueprint(track_routes, url_prefix='/api')
+    app.register_blueprint(upload_routes, url_prefix='/api')
+    app.register_blueprint(auth, url_prefix='/api')
+    app.register_blueprint(rhythm, url_prefix='/api')
+    app.register_blueprint(dynamics, url_prefix='/api')
+    app.register_blueprint(session_selector, url_prefix='/api')
+    app.register_blueprint(admin, url_prefix='/api')
 
     return app

@@ -11,6 +11,7 @@ export const useUserInfo = defineStore('userInfo', {
         availableSpace: null,
         occupiedSpace: null,
         occupiedPerc: null,
+        isAdmin: false,
     }),
 });
 
@@ -82,6 +83,10 @@ export const useTracksFromDb = defineStore('tracksFromDb', {
         allTracksHaveMeasures: (state) =>
             state.trackObjects.filter((obj) => obj.gt_measures || obj.tf_measures).length ===
                 state.trackObjects.length && state.trackObjects.length > 0,
+        refTrackHasMeasures: (state) => {
+            const ref = state.trackObjects.find((obj) => obj.reference);
+            return !!ref && (ref.gt_measures || ref.tf_measures);
+        },
         somethingToSync() {
             return this.nonSyncTracks.length > 0;
         },

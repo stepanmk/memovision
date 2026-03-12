@@ -1,0 +1,10 @@
+[database]
+user = 
+password = 
+host = localhost
+name = 
+
+[jwt]
+secret_key = jwt_secret_key
+cookie_secure = true
+csrf_protect = true

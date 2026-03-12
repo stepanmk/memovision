@@ -61,31 +61,19 @@ function loginUser(data) {
             class="select-none bg-gradient-to-r from-cyan-700 to-red-400 bg-clip-text pb-5 text-8xl font-bold text-transparent max-sm:text-5xl">
             MemoVision
         </p>
-        <form
-            id="login-form"
+        <form id="login-form"
             class="px-25 flex w-[20rem] flex-col items-center justify-center py-5 text-white max-sm:hidden"
             @submit.prevent="submit">
-            <input
-                id="username"
-                v-model="v$.username.$model"
-                type="text"
-                class="input-field w-full"
-                placeholder="Username"
-                autocomplete="username" />
-            <input
-                id="password"
-                v-model="v$.password.$model"
-                type="password"
-                class="input-field w-full"
-                placeholder="Password"
-                autocomplete="current-password" />
+            <input id="username" v-model="v$.username.$model" type="text" class="input-field w-full"
+                placeholder="Username" autocomplete="username" />
+            <input id="password" v-model="v$.password.$model" type="password" class="input-field w-full"
+                placeholder="Password" autocomplete="current-password" />
             <button @click="loginUser(formData)" type="submit" class="btn btn-blue h-8 w-[20rem]">Sign in</button>
-            <div class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
+            <!-- <div class="mt-5 flex select-none flex-row gap-1 font-semibold text-white">
                 <p>Not registered?</p>
-                <router-link :to="{ path: '/register' }" class="text-red-400 hover:text-white"
-                    >Create an account.</router-link
-                >
-            </div>
+                <router-link :to="{ path: '/register' }" class="text-red-400 hover:text-white">Create an
+                    account.</router-link>
+            </div> -->
         </form>
         <div class="flex items-center justify-center gap-12 max-sm:gap-6">
             <a href="https://www.tacr.cz/en/ " target="”_blank”">

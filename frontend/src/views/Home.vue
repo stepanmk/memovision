@@ -23,8 +23,7 @@ window.addEventListener(
         <TopNav />
         <div id="main-container" class="flex h-[calc(100vh-4rem)]">
             <SideNav />
-            <div
-                id="module-container"
+            <div id="module-container"
                 class="ml-0 flex w-full flex-col items-center overflow-y-auto bg-white p-5 text-black dark:bg-gray-900">
                 <TrackManager />
                 <RegionSelector />

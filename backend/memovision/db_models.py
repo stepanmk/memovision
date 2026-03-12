@@ -3,13 +3,13 @@ from memovision import db
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String, unique=True)
-    email = db.Column(db.String, unique=True)
-    password = db.Column(db.String)
+    username = db.Column(db.String, unique=True, nullable=False)
+    email = db.Column(db.String, unique=True, nullable=True)
+    password = db.Column(db.String, nullable=False)
     selected_session = db.Column(db.String)
-    available_space = db.Column(db.Float, default=128)
+    available_space = db.Column(db.Float, default=512)
     occupied_space = db.Column(db.Float, default=0)
-    permissions = db.Column(db.String, default='generic_user')
+    is_admin = db.Column(db.Boolean, default=0)
     precise_sync = db.Column(db.Boolean, default=True)
     sessions = db.relationship('Session', backref='user', passive_deletes=True)
 

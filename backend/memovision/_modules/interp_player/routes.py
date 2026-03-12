@@ -4,6 +4,7 @@ import numpy as np
 import scipy
 from flask import Blueprint, jsonify
 from flask_jwt_extended import current_user, jwt_required
+
 from memovision.db_models import Session, Track
 from memovision.features.utils import load_measures
 

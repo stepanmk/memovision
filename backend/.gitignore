@@ -5,3 +5,6 @@
 *.pyc
 
 metadata
+migrations
+
+*.ini

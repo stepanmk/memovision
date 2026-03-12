@@ -2,24 +2,17 @@ import os
 # time
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, request
 # current user is a global variable, which can be accessed by all routes guarded by jwt
 # jwt auth
 from flask_jwt_extended import (create_access_token, current_user, get_jwt,
                                 jwt_required, set_access_cookies,
                                 unset_jwt_cookies, verify_jwt_in_request)
-from memovision.db_models import User
 
 from memovision import bcrypt, db, jwt
+from memovision.db_models import User
 
 auth = Blueprint('auth', __name__)
-
-
-# catch all the routes from Vue router (client-side routing)
-@auth.route('/', defaults={'path': ''})
-@auth.route('/<path:path>')
-def catch_all(path):
-    return render_template('index.html')
 
 
 # if the jwt is about to expire, add a new one to a given request response
@@ -103,6 +96,7 @@ def login_check():
             'username': current_user.username,
             'selectedSession': current_user.selected_session,
             'preciseSync': current_user.precise_sync,
+            'isAdmin': current_user.is_admin,
             'exp': datetime.fromtimestamp(t)
         })
     else:

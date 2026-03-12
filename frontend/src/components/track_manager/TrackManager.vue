@@ -158,24 +158,17 @@ async function closeLabelAssignment() {
 </script>
 
 <template>
-    <ModuleTemplate
-        :module-title="'Track manager'"
-        :module-identifier="'track-manager'"
-        :visible="modulesVisible.trackManager"
-        :is-disabled="isDisabled">
+    <ModuleTemplate :module-title="'Track manager'" :module-identifier="'track-manager'"
+        :visible="modulesVisible.trackManager" :is-disabled="isDisabled">
         <template v-slot:window>
-            <LoadingWindow
-                :visible="isLoading"
-                :loading-message="loadingMessage"
+            <LoadingWindow :visible="isLoading" :loading-message="loadingMessage"
                 :progress-bar-perc="progressBarPerc" />
 
             <DialogWindow :visible="duplicatesWindow" :message="duplicatesMessage">
                 <template v-slot:dialog-content>
                     <div
                         class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
-                        <div
-                            v-for="(obj, i) in duplicates"
-                            :id="`duplicate-${i}`"
+                        <div v-for="(obj, i) in duplicates" :id="`duplicate-${i}`"
                             class="flex h-7 w-full justify-start gap-2 rounded-md bg-neutral-200 pb-1 pl-2 pr-2 pt-1 text-sm dark:bg-gray-400 dark:hover:bg-gray-700">
                             <p class="flex items-center rounded-md bg-neutral-500 px-2 text-white">
                                 {{ truncateFilename(obj[0], 20) }}
@@ -200,9 +193,7 @@ async function closeLabelAssignment() {
                 <template v-slot:dialog-content>
                     <div
                         class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
-                        <div
-                            v-for="(obj, i) in diffRegions"
-                            :id="`bad-regions-${i}`"
+                        <div v-for="(obj, i) in diffRegions" :id="`bad-regions-${i}`"
                             class="flex h-7 w-full justify-between gap-2 rounded-md bg-neutral-200 pb-1 pl-2 pr-2 pt-1 text-sm dark:bg-gray-400 dark:hover:bg-gray-700">
                             <p class="flex items-center rounded-md">
                                 {{ truncateFilename(obj.filename, 20) }}
@@ -229,15 +220,13 @@ async function closeLabelAssignment() {
                 <template v-slot:dialog-content>
                     <div
                         class="flex h-[calc(100%-6rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
-                        <div
-                            v-for="obj in featureLists.rhythmMetadata"
+                        <div v-for="obj in featureLists.rhythmMetadata"
                             class="flex h-7 w-full items-center justify-between rounded-md bg-indigo-200 px-2 text-sm font-normal dark:text-gray-700">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
                             <Icon v-else icon="material-symbols:check" :inline="true" width="18" />
                         </div>
-                        <div
-                            v-for="obj in featureLists.dynamicsMetadata"
+                        <div v-for="obj in featureLists.dynamicsMetadata"
                             class="flex h-7 w-full items-center justify-between rounded-md bg-orange-200 px-2 text-sm font-normal dark:text-gray-700">
                             <p>{{ obj.name }}</p>
                             <Icon v-if="!obj.computed" icon="eos-icons:loading" :inline="true" width="18" />
@@ -246,14 +235,12 @@ async function closeLabelAssignment() {
                     </div>
                 </template>
                 <template v-slot:dialog-buttons>
-                    <button
-                        class="btn btn-blue font-normal"
-                        @click="
+                    <button class="btn btn-blue font-normal" @click="
                             {
-                                featureExtractionWindow = false;
-                                isDisabled = false;
-                                menuButtonsDisable.stopLoading();
-                            }
+                        featureExtractionWindow = false;
+                        isDisabled = false;
+                        menuButtonsDisable.stopLoading();
+                    }
                         ">
                         Close
                     </button>
@@ -269,24 +256,16 @@ async function closeLabelAssignment() {
             <div
                 class="items-left flex h-[calc(60%-6.5rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900">
                 <TransitionGroup name="list">
-                    <div
-                        v-for="(obj, i) in tracksFromDb.trackObjects"
-                        :id="`uploaded-file-${i}`"
-                        :key="obj.filename"
+                    <div v-for="(obj, i) in tracksFromDb.trackObjects" :id="`uploaded-file-${i}`" :key="obj.filename"
                         class="flex w-full justify-between rounded-md bg-neutral-200 pl-2 pr-2 text-sm hover:bg-neutral-300 dark:bg-gray-400 dark:hover:bg-gray-500"
                         :class="{
                             'bg-violet-300 hover:bg-violet-400 dark:bg-violet-400 dark:hover:bg-violet-500':
                                 obj.reference,
                         }">
-                        <div
-                            class="flex h-7 w-[calc(100%-22.5rem)] cursor-pointer flex-row items-center justify-between"
+                        <div class="flex h-7 w-[calc(100%-22.5rem)] cursor-pointer flex-row items-center justify-between"
                             @click="setReference(obj.filename)">
                             <div class="w-30 flex items-center justify-start px-1 text-sm">
-                                <Popper
-                                    :content="obj.filename"
-                                    hover
-                                    placement="right"
-                                    :arrow="true"
+                                <Popper :content="obj.filename" hover placement="right" :arrow="true"
                                     class="select-none">
                                     {{ truncateFilename(obj.filename, 14) }}
                                 </Popper>
@@ -307,8 +286,7 @@ async function closeLabelAssignment() {
                                     {{ getTimeString(obj.length_sec, 14, 19) }}
                                 </p>
 
-                                <div
-                                    v-if="obj.sync"
+                                <div v-if="obj.sync"
                                     class="flex h-5 w-16 flex-row items-center justify-center rounded-md bg-neutral-800 text-white">
                                     <p class="text-xs">Sync</p>
                                 </div>
@@ -318,47 +296,28 @@ async function closeLabelAssignment() {
 
                         <div class="flex flex-row items-center gap-2">
                             <div class="flex flex-row gap-2">
-                                <input
-                                    type="number"
-                                    maxlength="4"
-                                    class="w-16 rounded-md px-1 text-black dark:bg-gray-300"
-                                    v-model="obj.year"
-                                    :name="`year-${i}`"
-                                    @input="updateAllMetadata()" />
-                                <input
-                                    type="text"
-                                    class="w-32 rounded-md px-1 text-black dark:bg-gray-300"
-                                    v-model="obj.performer"
-                                    :name="`performer-${i}`"
-                                    @input="updateAllMetadata()" />
+                                <input type="number" maxlength="4"
+                                    class="w-16 rounded-md px-1 text-black dark:bg-gray-300" v-model="obj.year"
+                                    :name="`year-${i}`" @input="updateAllMetadata()" />
+                                <input type="text" class="w-32 rounded-md px-1 text-black dark:bg-gray-300"
+                                    v-model="obj.performer" :name="`performer-${i}`" @input="updateAllMetadata()" />
                             </div>
 
-                            <input
-                                :id="`measures-${i}`"
-                                type="file"
-                                class="hidden"
-                                accept=".txt, .csv"
-                                @change="uploadMeasures(obj.filename, i)"
-                                @click="$event.target.value = ''" />
+                            <input :id="`measures-${i}`" type="file" class="hidden" accept=".txt, .csv"
+                                @change="uploadMeasures(obj.filename, i)" @click="$event.target.value = ''" />
 
-                            <label
-                                :for="`measures-${i}`"
+                            <label :for="`measures-${i}`"
                                 class="flex h-full w-28 items-center justify-center hover:cursor-pointer">
-                                <div
-                                    :id="`upload-measures-btn-${i}`"
-                                    class="btn-blue flex h-5 w-full cursor-pointer items-center justify-center rounded-md px-1 text-xs text-white">
+                                <div :id="`upload-measures-btn-${i}`"
+                                    class="btn-blue flex h-5 w-full cursor-pointer items-center justify-center rounded-md text-xs text-white">
                                     <p v-if="!obj.gt_measures">Upload measures</p>
                                     <p v-else>Replace measures</p>
                                 </div>
                             </label>
 
-                            <div
-                                class="flex h-full w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
+                            <div class="flex h-full w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
                                 :id="`remove-button-${i}`">
-                                <Icon
-                                    icon="fluent:delete-48-regular"
-                                    :inline="true"
-                                    width="18"
+                                <Icon icon="fluent:delete-48-regular" :inline="true" width="18"
                                     @click="deleteFileFromDb(obj.filename)" />
                             </div>
                         </div>
@@ -375,58 +334,41 @@ async function closeLabelAssignment() {
             <div class="flex h-[3rem] w-full items-center justify-end gap-2 border-b px-7 dark:border-gray-700">
                 <div class="flex flex-row items-center gap-2">
                     <label for="precise-check" class="text-sm">Precise synchronization</label>
-                    <input
-                        type="checkbox"
-                        id="precise-check"
-                        class="accent-emerald-600"
-                        v-model="preciseSync"
+                    <input type="checkbox" id="precise-check" class="accent-emerald-600" v-model="preciseSync"
                         @change="setPreciseSync()" />
                 </div>
 
-                <button class="btn btn-blue bg-emerald-600 hover:bg-emerald-500" @click="processAllTracks()">
+                <button class="btn btn-blue " @click="tracksFromDb.refTrackHasMeasures ? processAllTracks() : null"
+                    :class="{
+                        'btn-disabled': !tracksFromDb.refTrackHasMeasures,
+                    }">
                     Process all tracks
                 </button>
 
-                <input
-                    id="upload-metadata"
-                    type="file"
-                    class="hidden"
-                    accept=".txt, .csv, .xlsx"
+                <input id="upload-metadata" type="file" class="hidden" accept=".txt, .csv, .xlsx"
                     @change="tracksFromDb.somethingUploaded ? uploadMetadata() : null"
                     @click="$event.target.value = ''" />
 
                 <label for="upload-metadata" class="flex h-full items-center justify-center hover:cursor-pointer">
-                    <div
-                        id="upload-metadata-btn"
-                        class="btn btn-blue"
-                        :class="{
-                            'btn-disabled': !tracksFromDb.somethingUploaded,
-                        }">
+                    <div id="upload-metadata-btn" class="btn btn-blue" :class="{
+                        'btn-disabled': !tracksFromDb.somethingUploaded,
+                    }">
                         <p>Upload metadata</p>
                     </div>
                 </label>
 
-                <button
-                    id="upload-btn"
-                    class="btn btn-blue"
-                    :class="{
-                        'btn-disabled': !tracksFromDb.allTracksHaveMeasures,
-                    }"
-                    @click="tracksFromDb.allTracksHaveMeasures ? downloadMeasures() : null">
+                <button id="upload-btn" class="btn btn-blue" :class="{
+                    'btn-disabled': !tracksFromDb.allTracksHaveMeasures,
+                }" @click="tracksFromDb.allTracksHaveMeasures ? downloadMeasures() : null">
                     Download measures
                 </button>
 
-                <button
-                    id="label-btn"
-                    class="btn btn-blue"
-                    :class="{ 'btn-disabled': !tracksFromDb.somethingUploaded }"
+                <button id="label-btn" class="btn btn-blue" :class="{ 'btn-disabled': !tracksFromDb.somethingUploaded }"
                     @click="tracksFromDb.somethingUploaded ? openLabelAssignment() : null">
                     Assign labels
                 </button>
 
-                <button
-                    id="delete-all-btn"
-                    class="btn btn-blue"
+                <button id="delete-all-btn" class="btn btn-blue"
                     :class="{ 'btn-disabled': !tracksFromDb.somethingUploaded }"
                     @click="tracksFromDb.somethingUploaded ? deleteAllFilesFromDb() : null">
                     Delete all files
@@ -439,21 +381,14 @@ async function closeLabelAssignment() {
                 <p class="select-none text-sm">Files to upload</p>
             </div>
 
-            <div
-                class="relative flex h-[calc(40%-4.75rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900"
-                ref="dropzone"
-                :class="{ 'bg-neutral-100 dark:bg-gray-700': isOverDropzone }">
-                <a
-                    v-if="!somethingToUpload"
+            <div class="relative flex h-[calc(40%-4.75rem)] w-full flex-col gap-1 overflow-y-scroll border-b px-5 py-3 dark:border-gray-700 dark:text-gray-900"
+                ref="dropzone" :class="{ 'bg-neutral-100 dark:bg-gray-700': isOverDropzone }">
+                <a v-if="!somethingToUpload"
                     class="absolute left-0 top-0 flex h-full w-full items-center justify-center dark:text-gray-300">
-                    Drag & drop audio files here.</a
-                >
+                    Drag & drop audio files here.</a>
 
                 <TransitionGroup name="list">
-                    <div
-                        v-for="(obj, i) in uploadList"
-                        :id="`file-${i}`"
-                        :key="obj.filename"
+                    <div v-for="(obj, i) in uploadList" :id="`file-${i}`" :key="obj.filename"
                         class="flex h-7 w-full shrink-0 rounded-md bg-neutral-200 pb-1 pl-2 pr-2 pt-1 text-sm dark:bg-gray-400">
                         <div class="flex w-[17rem] items-center px-1 text-sm">
                             <Popper :content="obj.filename" hover placement="right" :arrow="true" class="select-none">
@@ -468,19 +403,13 @@ async function closeLabelAssignment() {
                         </div>
 
                         <div class="w-[1.5rem]">
-                            <div
-                                v-if="!obj.beingUploaded"
+                            <div v-if="!obj.beingUploaded"
                                 class="flex w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-neutral-600"
                                 :id="`cancel-button-${i}`">
-                                <Icon
-                                    icon="ci:close-big"
-                                    :inline="true"
-                                    width="18"
+                                <Icon icon="ci:close-big" :inline="true" width="18"
                                     @click="removeFileFromUploadList(obj.filename)" />
                             </div>
-                            <div
-                                v-if="obj.beingConverted"
-                                class="flex w-[1.5rem] items-center justify-center"
+                            <div v-if="obj.beingConverted" class="flex w-[1.5rem] items-center justify-center"
                                 :id="`proc-icon-${i}`">
                                 <Icon icon="eos-icons:loading" :inline="true" width="18" />
                             </div>
@@ -498,29 +427,19 @@ async function closeLabelAssignment() {
                     </p>
                 </div>
                 <div class="flex gap-2">
-                    <input
-                        id="added-files"
-                        type="file"
-                        class="hidden"
-                        accept="audio/*"
-                        multiple
-                        @change="!isUploading ? addFilesToUploadList(false) : null"
-                        @click="$event.target.value = ''" />
+                    <input id="added-files" type="file" class="hidden" accept="audio/*" multiple
+                        @change="!isUploading ? addFilesToUploadList(false) : null" @click="$event.target.value = ''" />
                     <label for="added-files" class="hover:cursor-pointer">
                         <div id="add-files-btn" class="btn btn-blue" :class="{ 'btn-disabled': isUploading }">
                             Add files
                         </div>
                     </label>
-                    <button
-                        id="delete-all-btn"
-                        class="btn btn-blue"
+                    <button id="delete-all-btn" class="btn btn-blue"
                         :class="{ 'btn-disabled': !somethingToUpload || isUploading }"
                         @click="somethingToUpload || !isUploading ? clearUploadList() : null">
                         Clear upload list
                     </button>
-                    <button
-                        id="upload-btn"
-                        class="btn btn-blue"
+                    <button id="upload-btn" class="btn btn-blue"
                         :class="{ 'btn-disabled': !somethingToUpload || isUploading || notEnoughSpace }"
                         @click="somethingToUpload && !isUploading && !notEnoughSpace ? uploadAllFiles() : null">
                         Upload all files
@@ -548,6 +467,7 @@ async function closeLabelAssignment() {
     transition: opacity 0.2s ease;
     transition-delay: 0.2s;
 }
+
 .v-leave-to {
     opacity: 0;
 }

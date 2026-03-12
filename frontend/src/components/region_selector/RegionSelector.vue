@@ -120,14 +120,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <ModuleTemplate
-        :is-disabled="false"
-        :visible="modulesVisible.regionSelector"
-        :module-title="'Region selection'"
+    <ModuleTemplate :is-disabled="false" :visible="modulesVisible.regionSelector" :module-title="'Region selection'"
         :module-identifier="'region-selector'">
         <template v-slot:module-content>
-            <div
-                v-if="peaksReady"
+            <div v-if="peaksReady"
                 class="flex h-12 w-full select-none items-center justify-center gap-1 border-b text-sm dark:border-gray-700">
                 <p>Selected reference:</p>
                 <p
@@ -135,24 +131,20 @@ onBeforeUnmount(() => {
                     {{ refName }}
                 </p>
                 <p v-if="performer">Performer:</p>
-                <p
-                    v-if="performer"
+                <p v-if="performer"
                     class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-gray-900">
                     {{ performer }}
                 </p>
                 <p v-if="year">Year:</p>
-                <p
-                    v-if="year"
+                <p v-if="year"
                     class="flex h-7 items-center justify-center rounded-md bg-neutral-200 px-2 dark:bg-gray-400 dark:text-gray-900">
                     {{ year }}
                 </p>
             </div>
-            <div
-                v-else
+            <div v-else
                 class="flex h-12 w-full items-center justify-center gap-1 border-b text-sm dark:border-gray-700"></div>
             <div class="relative flex w-full flex-row border-b dark:border-b-gray-700">
-                <div
-                    v-if="!peaksReady"
+                <div v-if="!peaksReady"
                     class="absolute top-0 z-50 flex h-full w-full items-center justify-center dark:bg-gray-800">
                     <Icon icon="eos-icons:loading" width="35" :inline="true" />
                 </div>
@@ -164,30 +156,22 @@ onBeforeUnmount(() => {
                     <div class="flex w-full flex-row items-center justify-end gap-5 pl-2 dark:border-gray-700">
                         <div id="zoomview-container" class="h-40 w-full cursor-text dark:bg-gray-400"></div>
 
-                        <div
-                            id="zoomview-amplitude"
+                        <div id="zoomview-amplitude"
                             class="absolute flex h-32 w-7 flex-col items-center justify-center">
                             <div
                                 class="flex h-full w-full flex-col items-center justify-between rounded-md bg-neutral-200 dark:bg-gray-800">
                                 <Icon icon="ic:baseline-plus" width="18" />
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="4"
-                                    step="0.01"
-                                    class="h-1 w-20 accent-cyan-600"
-                                    id="amplitude-zoom"
-                                    v-model="amplitudeZoom" />
+                                <input type="range" min="1" max="4" step="0.01" class="h-1 w-20 accent-cyan-600"
+                                    id="amplitude-zoom" v-model="amplitudeZoom" />
                                 <Icon icon="ic:baseline-minus" width="18" />
                             </div>
                         </div>
                     </div>
                 </div>
-                <div
-                    class="flex w-[5rem] flex-col items-center justify-center gap-1 border-l px-[3px] pt-2 dark:border-l-gray-700"
+                <div class="flex w-[5rem] flex-col items-center justify-center gap-1 border-l px-[3px] pt-2 dark:border-l-gray-700"
                     @click="
                         maxRMS[0] = -60;
-                        maxRMS[1] = -60;
+                    maxRMS[1] = -60;
                     ">
                     <div
                         class="flex h-[1rem] w-full select-none rounded-md bg-neutral-200 text-xs dark:bg-gray-400 dark:text-gray-900">
@@ -213,98 +197,63 @@ onBeforeUnmount(() => {
                             class="mr-[2rem] flex h-[calc(100%-1rem)] w-[2rem] justify-center gap-[2px] dark:border-gray-700">
                             <div
                                 class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200 dark:bg-gray-600">
-                                <div
-                                    id="meter-rect-l"
-                                    class="w-full bg-neutral-400 dark:bg-gray-400"
-                                    :style="{ height: `calc(${(1 + currentRMS[0] / 60) * 100}%)` }"></div>
+                                <div id="meter-rect-l" class="w-full bg-neutral-400 dark:bg-gray-400"
+                                    :style="{ height: `${Math.max(0, Math.min(100, (1 + currentRMS[0] / 60) * 100))}%` }">
+                                </div>
                             </div>
                             <div
                                 class="flex h-full w-[calc(30%)] items-end overflow-clip rounded-sm bg-neutral-200 dark:bg-gray-600">
-                                <div
-                                    id="meter-rect-r"
-                                    class="w-full bg-neutral-400 dark:bg-gray-400"
-                                    :style="{ height: `calc(${(1 + currentRMS[1] / 60) * 100}%)` }"></div>
+                                <div id="meter-rect-r" class="w-full bg-neutral-400 dark:bg-gray-400"
+                                    :style="{ height: `${Math.max(0, Math.min(100, (1 + currentRMS[1] / 60) * 100))}%` }">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <MeasureSelector
-                :measure-count="measureData.measureCount"
-                :time-signatures="regionData.timeSignatures"
-                :current-measure="currentMeasure"
-                ref="measureSelector"
-                @go-to-measure="goToMeasure"
-                @select-region="addRegion"
-                @delete-time-signature="deleteTimeSignature" />
-            <div
-                id="player-controls"
+            <MeasureSelector :measure-count="measureData.measureCount" :time-signatures="regionData.timeSignatures"
+                :current-measure="currentMeasure" ref="measureSelector" @go-to-measure="goToMeasure"
+                @select-region="addRegion" @delete-time-signature="deleteTimeSignature" />
+            <div id="player-controls"
                 class="flex h-[3rem] w-full flex-row items-center justify-between gap-2 border-b pl-5 pr-5 dark:border-gray-700">
                 <div class="flex h-full flex-row items-center justify-center gap-1">
-                    <button
-                        id="pause-button"
-                        @click="playPause()"
+                    <button id="pause-button" @click="playPause()"
                         class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
                         :class="{ 'bg-cyan-700 text-white dark:bg-cyan-700': playing }">
                         <Icon v-if="playing" icon="ph:pause" width="20" />
                         <Icon v-else icon="ph:play" width="20" />
                     </button>
-                    <button
-                        id="back-button"
-                        @click="rewind()"
+                    <button id="back-button" @click="rewind()"
                         class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center">
                         <Icon icon="ph:skip-back" width="20" />
                     </button>
-                    <button
-                        id="loop-button"
-                        @click="toggleLooping()"
-                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
-                        :class="{
+                    <button id="loop-button" @click="toggleLooping()"
+                        class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center" :class="{
                             'bg-cyan-700 dark:bg-cyan-700': loopingActive,
                         }">
                         <Icon icon="mdi:loop" width="20" :class="{ 'text-white': loopingActive }" />
                     </button>
-                    <button
-                        id="measure-button"
-                        @click="toggleMeasures()"
+                    <button id="measure-button" @click="toggleMeasures()"
                         class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
                         :class="{ 'bg-cyan-700 dark:bg-cyan-700': measuresVisible }">
-                        <Icon
-                            icon="akar-icons:three-line-vertical"
-                            width="20"
+                        <Icon icon="akar-icons:three-line-vertical" width="20"
                             :class="{ 'text-white': measuresVisible }" />
                     </button>
                     <div class="flex h-8 flex-row items-center justify-center gap-1 rounded-md">
-                        <button
-                            id="metronome-button"
-                            @click="toggleMetronome()"
+                        <button id="metronome-button" @click="toggleMetronome()"
                             class="btn btn-gray flex h-[2rem] w-[2.5rem] items-center justify-center"
                             :class="{ 'bg-cyan-700 dark:bg-cyan-700': metronomeActive }">
                             <Icon icon="ph:metronome" width="22" :class="{ 'text-white': metronomeActive }" />
                         </button>
-                        <input
-                            type="range"
-                            min="-30"
-                            max="0"
-                            step="0.1"
-                            v-model="metronomeVolume"
-                            class="mr-2 h-1 w-24"
-                            id="metronome-volume"
-                            @dblclick="metronomeVolume = -6.0" />
+                        <input type="range" min="-30" max="0" step="0.1" v-model="metronomeVolume" class="mr-2 h-1 w-24"
+                            id="metronome-volume" @dblclick="metronomeVolume = -6.0" />
                     </div>
                 </div>
                 <div class="flex flex-row items-center justify-center gap-2">
                     <Icon icon="material-symbols:volume-up-outline" width="24" />
-                    <input
-                        type="range"
-                        min="-30"
-                        max="0"
-                        step="0.1"
-                        v-model="volume"
-                        class="h-1 w-24 accent-cyan-600"
-                        id="volume"
-                        @dblclick="volume = 0.0" />
+                    <input type="range" min="-30" max="0" step="0.1" v-model="volume" class="h-1 w-24 accent-cyan-600"
+                        id="volume" @dblclick="volume = 0.0" />
                     <div class="flex w-24 items-center justify-start rounded-md bg-yellow-400 pl-[18px] text-sm">
                         <p class="select-none text-black dark:text-black">{{ currentTime }}</p>
                     </div>
@@ -316,10 +265,7 @@ onBeforeUnmount(() => {
             </div>
             <div
                 class="items-left relative flex h-[calc(100%-30.25rem)] w-full flex-col gap-1 overflow-y-auto border-b px-5 py-3 dark:border-gray-700">
-                <div
-                    v-for="(obj, i) in regionData.selectedRegions"
-                    :id="`region-${i}`"
-                    :key="i"
+                <div v-for="(obj, i) in regionData.selectedRegions" :id="`region-${i}`" :key="i"
                     class="flex h-7 w-full items-center justify-between rounded-md bg-neutral-200 px-2 text-sm hover:bg-neutral-300 dark:bg-gray-400 dark:text-gray-900 dark:hover:bg-gray-500"
                     :class="{
                         'bg-neutral-300 dark:bg-gray-500': regionData.selected[i],
@@ -340,69 +286,39 @@ onBeforeUnmount(() => {
                             class="flex w-32 select-none items-center justify-center rounded-md bg-neutral-700 text-xs text-white">
                             Measures: {{ getStartMeasure(obj.startTime) }}–{{ getEndMeasure(obj.endTime) - 1 }}
                         </p>
-                        <div
-                            class="flex w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
+                        <div class="flex w-[1.5rem] cursor-pointer items-center justify-center transition hover:text-red-600"
                             :id="`remove-button-${i}`">
                             <Icon icon="fluent:delete-48-regular" :inline="true" width="18" @click="deleteRegion(i)" />
                         </div>
                     </div>
                 </div>
-                <div
-                    v-if="regionBeingNamed"
-                    id="region-name-overlay"
+                <div v-if="regionBeingNamed" id="region-name-overlay"
                     class="absolute left-0 top-0 flex h-full w-full flex-col items-center justify-center gap-1 bg-white dark:bg-gray-700">
                     <div class="flex flex-row gap-1">
                         <span
-                            class="flex h-5 w-20 select-none items-center justify-center rounded-md bg-green-500 text-sm text-white"
-                            >{{ startTimeString }}</span
-                        >
+                            class="flex h-5 w-20 select-none items-center justify-center rounded-md bg-green-500 text-sm text-white">{{
+                            startTimeString }}</span>
                         <span
-                            class="flex h-5 w-20 select-none items-center justify-center rounded-md bg-red-500 text-sm text-white"
-                            >{{ endTimeString }}</span
-                        >
+                            class="flex h-5 w-20 select-none items-center justify-center rounded-md bg-red-500 text-sm text-white">{{
+                            endTimeString }}</span>
                         <span
-                            class="flex h-5 w-36 select-none items-center justify-center rounded-md bg-neutral-900 text-sm text-white"
-                            >Measures: {{ startMeasureIdx + 1 }}–{{ endMeasureIdx + 1 }}</span
-                        >
+                            class="flex h-5 w-36 select-none items-center justify-center rounded-md bg-neutral-900 text-sm text-white">Measures:
+                            {{ startMeasureIdx + 1 }}–{{ endMeasureIdx + 1 }}</span>
                     </div>
-                    <input
-                        v-if="!timeSignatureEdit"
-                        type="text"
-                        id="name"
-                        required
-                        minlength="1"
-                        maxlength="256"
-                        size="20"
-                        autocomplete="off"
-                        class="input-field-nomargin h-7 border dark:bg-gray-300"
-                        placeholder="Region name"
-                        v-model="regionName"
-                        v-on:keyup.enter="saveRegion()" />
+                    <input v-if="!timeSignatureEdit" type="text" id="name" required minlength="1" maxlength="256"
+                        size="20" autocomplete="off" class="input-field-nomargin h-7 border dark:bg-gray-300"
+                        placeholder="Region name" v-model="regionName" v-on:keyup.enter="saveRegion()" />
                     <div v-if="timeSignatureEdit" id="measure-input" class="flex flex-row items-center gap-1">
                         <div
                             class="flex h-7 select-none items-center rounded-md bg-neutral-200 p-2 text-sm dark:bg-gray-400 dark:text-gray-900">
                             Time signature:
                         </div>
-                        <input
-                            type="number"
-                            id="note-value"
-                            minlength="1"
-                            maxlength="1"
-                            autocomplete="off"
-                            min="1"
-                            placeholder="1"
-                            v-model="noteCount"
+                        <input type="number" id="note-value" minlength="1" maxlength="1" autocomplete="off" min="1"
+                            placeholder="1" v-model="noteCount"
                             class="input-field-nomargin h-7 w-12 border dark:bg-gray-300" />
                         <p>/</p>
-                        <input
-                            type="number"
-                            id="note-count"
-                            minlength="1"
-                            maxlength="1"
-                            autocomplete="off"
-                            min="1"
-                            placeholder="1"
-                            v-model="noteValue"
+                        <input type="number" id="note-count" minlength="1" maxlength="1" autocomplete="off" min="1"
+                            placeholder="1" v-model="noteValue"
                             class="input-field-nomargin h-7 w-12 border dark:bg-gray-300" />
                     </div>
                     <div id="region-adding-buttons" class="flex flex-row items-center justify-center gap-2">
@@ -417,15 +333,11 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="flex h-[3rem] w-full flex-row items-center justify-end gap-2 p-5">
-                <button
-                    @click="regionBeingNamed ? null : (timeSignatureEdit = !timeSignatureEdit)"
-                    class="btn btn-gray"
+                <button @click="regionBeingNamed ? null : (timeSignatureEdit = !timeSignatureEdit)" class="btn btn-gray"
                     :class="{ 'bg-cyan-700 text-white dark:bg-cyan-700 dark:text-white': timeSignatureEdit }">
                     <span>Edit time signatures</span>
                 </button>
-                <button
-                    @click="regionBeingNamed ? null : deleteAllRegions()"
-                    class="btn btn-blue"
+                <button @click="regionBeingNamed ? null : deleteAllRegions()" class="btn btn-blue"
                     :class="{ 'btn-disabled': regionBeingNamed }">
                     <span>Delete all regions</span>
                 </button>

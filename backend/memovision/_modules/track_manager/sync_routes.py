@@ -9,6 +9,9 @@ from madmom.audio import Signal
 from madmom.audio.chroma import DeepChromaProcessor
 from madmom.features.beats import DBNBeatTrackingProcessor
 from madmom.features.chords import DeepChromaChordRecognitionProcessor
+from tensorflow import keras
+
+from memovision import db
 from memovision.db_models import DiffRegion, Session, Track
 from memovision.duplicate_finder.functions import (run_duplicate_finder,
                                                    run_structure_checker,
@@ -17,9 +20,6 @@ from memovision.helpers.functions import (PreProcessor,
                                           compute_chroma_from_audio,
                                           compute_dtw_path,
                                           transfer_step_annotations)
-from tensorflow import keras
-
-from memovision import db
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 beat_tracking_model = keras.models.load_model(
@@ -89,6 +89,7 @@ def sync_track(audio_name):
         f'./user_uploads/{current_user.username}/{current_user.selected_session}/{target.filename}/annotations/steps.txt',
         steps,
         fmt='%.5f')
+        
     return jsonify({'message': 'success'})
 
 

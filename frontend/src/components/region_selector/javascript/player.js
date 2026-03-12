@@ -85,12 +85,17 @@ async function initPeaks() {
             this.externalPlayer.volume.value = volume.value;
             this.metronome.volume.value = metronomeVolume.value;
             this.meterInterval = setInterval(() => {
-                currentRMS.value = this.meter.getValue();
+                const v = this.meter.getValue();
+                const vals = Array.isArray(v) ? [...v] : [v, v];
+                currentRMS.value = vals;
             }, 40);
             this.meterIntervalMax = setInterval(() => {
-                const currValue = this.meter.getValue();
-                if (currValue[0] > maxRMS.value[0]) maxRMS.value[0] = currValue[0];
-                if (currValue[1] > maxRMS.value[1]) maxRMS.value[1] = currValue[1];
+                const v = this.meter.getValue();
+                const vals = Array.isArray(v) ? v : [v, v];
+                const newMax = [...maxRMS.value];
+                if (vals[0] > newMax[0]) newMax[0] = vals[0];
+                if (vals[1] > newMax[1]) newMax[1] = vals[1];
+                maxRMS.value = newMax;
             }, 250);
             Tone.Transport.scheduleRepeat(() => {
                 const time = this.getCurrentTime();
