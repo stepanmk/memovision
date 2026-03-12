@@ -9,7 +9,6 @@ from madmom.audio import Signal
 from madmom.audio.chroma import DeepChromaProcessor
 from madmom.features.beats import DBNBeatTrackingProcessor
 from madmom.features.chords import DeepChromaChordRecognitionProcessor
-from tensorflow import keras
 
 from memovision import db
 from memovision.db_models import DiffRegion, Session, Track
@@ -21,9 +20,12 @@ from memovision.helpers.functions import (PreProcessor,
                                           compute_dtw_path,
                                           transfer_step_annotations)
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-beat_tracking_model = keras.models.load_model(
-    './models/simple_tcn_dp_skip_dilations_22_fps50.h5')
+# from tensorflow import keras
+
+
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# beat_tracking_model = keras.models.load_model(
+#     './models/simple_tcn_dp_skip_dilations_22_fps50.h5')
 sync_routes = Blueprint('sync_routes', __name__)
 
 
@@ -274,24 +276,24 @@ def compute_chroma(audio_name):
     return jsonify({'message': 'success'})
 
 
-@sync_routes.route('/compute-act-func/<audio_name>', methods=['PUT'])
-@jwt_required()
-def compute_act_func(audio_name):
-    session = Session.query.filter_by(name=current_user.selected_session,
-                                      user=current_user).first()
-    track = Track.query.filter_by(filename=audio_name, session=session).first()
-    if not track.act_func:
-        act_func_path = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/beatfun.npy'
-        audio_data, sr = load(track.path_22, mono=True)
-        audio_signal = Signal(audio_data, sr)
-        preprocessed = PreProcessor()(audio_signal)
-        act_fun = beat_tracking_model(
-            preprocessed[np.newaxis, ..., np.newaxis]).numpy().flatten('C')
-        np.save(act_func_path, act_fun)
-        track.act_func = True
-        dbn_proc = DBNBeatTrackingProcessor(fps=50)
-        beats = dbn_proc(act_fun)
-        beats_path = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/beats.txt'
-        np.savetxt(beats_path, beats, fmt='%.10f')
-        db.session.commit()
-    return jsonify({'message': 'success'})
+# @sync_routes.route('/compute-act-func/<audio_name>', methods=['PUT'])
+# @jwt_required()
+# def compute_act_func(audio_name):
+#     session = Session.query.filter_by(name=current_user.selected_session,
+#                                       user=current_user).first()
+#     track = Track.query.filter_by(filename=audio_name, session=session).first()
+#     if not track.act_func:
+#         act_func_path = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/beatfun.npy'
+#         audio_data, sr = load(track.path_22, mono=True)
+#         audio_signal = Signal(audio_data, sr)
+#         preprocessed = PreProcessor()(audio_signal)
+#         act_fun = beat_tracking_model(
+#             preprocessed[np.newaxis, ..., np.newaxis]).numpy().flatten('C')
+#         np.save(act_func_path, act_fun)
+#         track.act_func = True
+#         dbn_proc = DBNBeatTrackingProcessor(fps=50)
+#         beats = dbn_proc(act_fun)
+#         beats_path = f'./user_uploads/{current_user.username}/{current_user.selected_session}/{track.filename}/features/beats.txt'
+#         np.savetxt(beats_path, beats, fmt='%.10f')
+#         db.session.commit()
+#     return jsonify({'message': 'success'})

@@ -73,8 +73,7 @@ import {
     keepDiffStructureTracks,
     keepDuplicates,
     processAllTracks,
-    resetProgress,
-    setPreciseSync,
+    resetProgress
 } from './javascript/process';
 
 /* pinia stores */
@@ -332,11 +331,11 @@ async function closeLabelAssignment() {
 
             <!-- buttons top -->
             <div class="flex h-[3rem] w-full items-center justify-end gap-2 border-b px-7 dark:border-gray-700">
-                <div class="flex flex-row items-center gap-2">
+                <!-- <div class="flex flex-row items-center gap-2">
                     <label for="precise-check" class="text-sm">Precise synchronization</label>
                     <input type="checkbox" id="precise-check" class="accent-emerald-600" v-model="preciseSync"
                         @change="setPreciseSync()" />
-                </div>
+                </div> -->
 
                 <button class="btn btn-blue " @click="tracksFromDb.refTrackHasMeasures ? processAllTracks() : null"
                     :class="{

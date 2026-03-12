@@ -10,7 +10,7 @@ class User(db.Model):
     available_space = db.Column(db.Float, default=512)
     occupied_space = db.Column(db.Float, default=0)
     is_admin = db.Column(db.Boolean, default=0)
-    precise_sync = db.Column(db.Boolean, default=True)
+    precise_sync = db.Column(db.Boolean, default=False)
     sessions = db.relationship('Session', backref='user', passive_deletes=True)
 
 

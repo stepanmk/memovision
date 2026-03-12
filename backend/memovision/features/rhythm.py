@@ -1,6 +1,7 @@
 import numpy as np
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
+
 from memovision.db_models import Session, Track
 from memovision.features.extractors import compute_duration, compute_tempo
 from memovision.features.relevance import compute_relevance
@@ -30,18 +31,20 @@ metadata = [{
     'timeAxis': False,
     'relevance': False,
     'computed': False
-}, {
-    'id': 'beatfun',
-    'name': 'Beat tracking act. fun.',
-    'units': '[–]',
-    'fpm': 50,
-    'yMin': 0,
-    'yMax': 0.5,
-    'measureAxis': False,
-    'timeAxis': True,
-    'relevance': False,
-    'computed': True
-}]
+}
+# {
+#     'id': 'beatfun',
+#     'name': 'Beat tracking act. fun.',
+#     'units': '[–]',
+#     'fpm': 50,
+#     'yMin': 0,
+#     'yMax': 0.5,
+#     'measureAxis': False,
+#     'timeAxis': True,
+#     'relevance': False,
+#     'computed': True
+# }
+]
 
 time = ['beatfun']
 
