@@ -1,5 +1,5 @@
-import os
-# time
+
+import re
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
@@ -14,6 +14,7 @@ from memovision.db_models import User
 
 auth = Blueprint('auth', __name__)
 
+USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
 
 # if the jwt is about to expire, add a new one to a given request response
 @auth.after_request
@@ -58,24 +59,56 @@ def validate_email(email):
 
 @auth.route('/login', methods=['POST'])
 def login():
-    username = request.json['username']
-    password = request.json['password']
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({'message': 'invalid request body'}), 400
+
+    username = data.get('username')
+    password = data.get('password')
+
+    if not isinstance(username, str) or not isinstance(password, str):
+        return jsonify({'message': 'invalid credentials format'}), 400
+
+    username = username.strip()
+
+    if not username or not password:
+        return jsonify({'message': 'username and password are required'}), 400
+
+    if len(username) > 64 or len(password) > 128:
+        return jsonify({'message': 'input too long'}), 400
+
+    if '\x00' in username or '\x00' in password:
+        return jsonify({'message': 'invalid characters'}), 400
+
+    if any(ord(c) < 32 or ord(c) == 127 for c in username):
+        return jsonify({'message': 'invalid characters'}), 400
+
+    if any(ord(c) < 32 or ord(c) == 127 for c in password):
+        return jsonify({'message': 'invalid characters'}), 400
+
+    if not USERNAME_RE.fullmatch(username):
+        return jsonify({'message': 'invalid username format'}), 400
+
     user = User.query.filter_by(username=username).first()
-    if user:
-        # check if the password is correct
-        pw_correct = bcrypt.check_password_hash(user.password, password)
-        if pw_correct:
-            response = jsonify({'message': 'login successful'})
-            # create access token with user from the db for later identification
-            access_token = create_access_token(
-                identity=user, expires_delta=timedelta(hours=12))
-            set_access_cookies(response=response,
-                               encoded_access_token=access_token)
-            return response
-        else:
-            return jsonify({'message': 'wrong password'})
-    else:
-        return jsonify({'message': 'user does not exist'})
+
+    if not user:
+        return jsonify({'message': 'invalid username or password'}), 401
+
+    pw_correct = bcrypt.check_password_hash(user.password, password)
+    if not pw_correct:
+        return jsonify({'message': 'invalid username or password'}), 401
+
+    response = jsonify({'message': 'login successful'})
+    access_token = create_access_token(
+        identity=user,
+        expires_delta=timedelta(hours=12),
+    )
+    set_access_cookies(
+        response=response,
+        encoded_access_token=access_token,
+    )
+    return response, 200
 
 
 @auth.route('/logout', methods=['POST'])
@@ -103,29 +136,29 @@ def login_check():
         return jsonify({'valid': False})
 
 
-@auth.route('/register', methods=['POST'])
-def register():
-    username_exists = validate_username(request.json['username'])
-    email_exists = validate_email(request.json['email'])
-    if username_exists or email_exists:
-        if username_exists and email_exists:
-            return jsonify({'message': 'email and username already exist'})
-        elif username_exists:
-            return jsonify({'message': 'username already exists'})
-        elif email_exists:
-            return jsonify({'message': 'email already exists'})
-    else:
-        hashed_password = bcrypt.generate_password_hash(
-            request.json['password']).decode('utf-8')
-        new_user = User(username=request.json['username'],
-                        email=request.json['email'],
-                        password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        # create folder for audio file uploads
-        username = request.json['username']
-        try:
-            os.mkdir(f'./user_uploads/{username}')
-        except:
-            IOError
-        return jsonify({'message': 'registration successful'})
+# @auth.route('/register', methods=['POST'])
+# def register():
+#     username_exists = validate_username(request.json['username'])
+#     email_exists = validate_email(request.json['email'])
+#     if username_exists or email_exists:
+#         if username_exists and email_exists:
+#             return jsonify({'message': 'email and username already exist'})
+#         elif username_exists:
+#             return jsonify({'message': 'username already exists'})
+#         elif email_exists:
+#             return jsonify({'message': 'email already exists'})
+#     else:
+#         hashed_password = bcrypt.generate_password_hash(
+#             request.json['password']).decode('utf-8')
+#         new_user = User(username=request.json['username'],
+#                         email=request.json['email'],
+#                         password=hashed_password)
+#         db.session.add(new_user)
+#         db.session.commit()
+#         # create folder for audio file uploads
+#         username = request.json['username']
+#         try:
+#             os.mkdir(f'./user_uploads/{username}')
+#         except:
+#             IOError
+#         return jsonify({'message': 'registration successful'})
