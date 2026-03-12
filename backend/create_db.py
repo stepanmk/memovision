@@ -1,14 +1,18 @@
-
-
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import make_url
+
+from memovision.app_config import Config
+
+target_url = make_url(Config.SQLALCHEMY_DATABASE_URI)
+
+admin_url = target_url.set(database="postgres")
 
 admin_engine = create_engine(
-    "postgresql+psycopg://stepan:pswd123@127.0.0.1:5432/postgres",
+    admin_url,
     isolation_level="AUTOCOMMIT",
 )
 
 with admin_engine.connect() as conn:
-    # terminate existing connections
     conn.execute(
         text(
             """
@@ -18,11 +22,10 @@ with admin_engine.connect() as conn:
               AND pid <> pg_backend_pid();
             """
         ),
-        {"dbname": "memovision"},
+        {"dbname": target_url.database},
     )
 
-    # drop & create
-    conn.execute(text(f'DROP DATABASE IF EXISTS "memovision"'))
-    conn.execute(text(f'CREATE DATABASE "memovision"'))
+    conn.execute(text(f'DROP DATABASE IF EXISTS "{target_url.database}"'))
+    conn.execute(text(f'CREATE DATABASE "{target_url.database}"'))
 
 admin_engine.dispose()
