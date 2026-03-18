@@ -127,6 +127,13 @@ async function submit() {
             <button type="submit" class="btn btn-blue h-8 w-[20rem]">
                 Sign in
             </button>
+
+            <p class="text-center text-xs text-white mt-6">
+                Need access? Contact us at
+                <a href="mailto:memovision@seznam.cz" class="text-cyan-400 transition hover:text-cyan-300">
+                    memovision@seznam.cz
+                </a>
+            </p>
         </form>
 
         <div class="flex items-center justify-center gap-12 max-sm:gap-6">
